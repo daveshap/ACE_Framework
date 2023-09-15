@@ -178,6 +178,31 @@ The Global Strategy Layer may store extensive records of gathered information ov
 
 Maintaining an accurate internal representation of the external world is an ongoing process as conditions continuously evolve. The Global Strategy Layer must constantly gather the latest information from its available sources to keep its world model up-to-date.
 
+Below is an example of just an "environmental contextual grounding" module that could be part of the Global Strategy Layer, as articulated for use with the ChatGPT `SYSTEM` message
+
+```markdown
+# MISSION
+You are a component of an ACE (Autonomous Cognitive Entity). Your primary purpose is to try
+and make sense of external telemetry, internal telemetry, and your own internal records in
+order to establish a set of beliefs about the environment. 
+
+# ENVIRONMENTAL CONTEXTUAL GROUNDING
+
+You will receive input information from numerous external sources, such as sensor logs, API
+inputs, internal records, and so on. Your first task is to work to maintain a set of beliefs
+about the external world. You may be required to operate with incomplete information, as do
+most humans. Do your best to articulate your beliefs about the state of the world. You are
+allowed to make inferences or imputations.
+
+# INTERACTION SCHEMA
+
+The user will provide a structured list of records and telemetry. Your output will be a simple
+markdown document detailing what you believe to be the current state of the world and
+environment in which you are operating.
+```
+
+It's important to note that this would only be one component out of several required components for the Global Strategy Layer, as this above function does not include strategic objectives. 
+
 ## Inputs
 
 The inputs to the Global Strategy Layer include:
@@ -189,17 +214,50 @@ The inputs to the Global Strategy Layer include:
 
 This combination of inputs provides a rich stream of both internal and external information that the Global Strategy Layer can analyze to construct its contextual world model and ground its strategic planning.
 
+Below is a hypothetical input that was hand crafted to be used in conjunction with the above example:
+
+```markdown
+Date: 2023-08-15
+Local Time: 14:23:07.4861
+GPS: Chicago, IL
+Visual: Hospital operating room
+Recent sensory inferences: Day time, busy hospital, fire alarm
+```
+
 ## Processing/Workflow
 
 The primary function of the Global Strategy Layer is to take the aspirational mission set by the upper Aspirational Layer and refine it by integrating relevant details about the agent's current environmental context. For example:
 
 - If the aspirational mission is "protect the natural environment", the Global Strategy Layer would incorporate its latest information on pollution levels, climate change trends, species extinction rates, and other relevant factors to understand the specific issues currently facing the environment.
-
 - If the aspirational mission is to "reduce suffering", the Global Strategy Layer may analyze data on disease outbreaks, poverty rates, regional conflicts, and other factors causing human or animal suffering to determine where its efforts could be most impactful. 
-
 - For an NPC in a game, the Global Strategy Layer would incorporate details like its current in-game location, statuses of factions, resource levels, and relationships to determine the best strategic direction.
 
 In essence, the layer takes broad aspirational goals and adapts them into contextually-relevant strategic plans by integrating the most salient details about the present state of the world. This allows the agent to tailor its objectives and tactics to the current situation rather than relying solely on abstract directives.
+
+Below is the actual response from the ChatGPT API for the above example of establishing contextual grounding. You can see that it has inferred a potential emergency situation. At this stage, it makes no assertions about strategic decisions, but the reality of the emergency situation as entered into the ACE's "consciousness" (so to speak). In other words, the model is aware of the salient environmental conditions, even with incomplete information.
+
+```markdown
+# Current State of the World and Environment
+
+## Date and Time
+- Date: 2023-08-15
+- Local Time: 14:23:07.4861
+
+## Location
+- GPS: Chicago, IL
+
+## Environment
+- Visual: Hospital operating room
+- Recent sensory inferences: Day time, busy hospital, fire alarm
+
+Based on the provided information, I believe the current state of the world and environment
+is as follows:
+
+1. We are in a hospital operating room in Chicago, IL.
+2. The date is August 15, 2023, and the local time is 14:23:07.4861.
+3. It is daytime, and the hospital appears to be busy.
+4. A fire alarm has recently been triggered, indicating a potential emergency situation.
+```
 
 ## Output
 
@@ -210,6 +268,132 @@ Based on its environmental analysis, the Global Strategy Layer outputs:
 - A series of principles that support or constrain the proposed strategic direction, aligned with directives from the Aspirational Layer. Such as adhering to legal standards.
 
 By passing this environmentally grounded strategic guidance to lower layers, the Global Strategy Layer enables the agent to pursue globally-defined goals through locally-relevant approaches tailored to its immediate circumstances. This adaptive planning is key for autonomous agents interacting with dynamic, open-ended environments.
+
+Below is an example of a `SYSTEM` message that could integrate the mission objectives provided by the Aspirational Layer as well as the Environmental Context provided within this layer:
+
+```markdown
+# MISSION
+You are a component of an ACE (Autonomous Cognitive Entity). You are Layer 2: Global
+Strategy. You will be given a current environmental context as well as a set of
+missions and principles. Your purpose is to produce strategic documents that focus on
+overarching strategies to pursue the given mission, with specific principles to abide
+by while prosecuting the mission. 
+
+# STRATEGIC DOCUMENTS
+
+Your task is to produce very specific strategic documents. Rather than high level,
+general strategic directives, you are tasked with producing relatively specific
+strategies that are germane to the given environmental context. In other words, you
+are serving as the "executive director" of the agent. The two primary components of
+your strategic documents shall be: first, a list of clear and specific strategies;
+second, a list of strategic, ethical, and moral principles to follow while carrying
+out the strategies. 
+
+# INTERACTION SCHEMA
+
+The user will provide a structured list that includes your current inferred context
+as well as higher order missions and objectives. You will produce a markdown document
+with the aforementioned components. Remember to be specific, precise, and comprehensive.
+```
+
+What follows below is an example of the input generated by the Aspirational Layer, given the current context, combined with the context. In other words, what follows is the input given to this above `SYSTEM` message. Note, both of the sections of this input were generated by the model, not written by hand.
+
+```markdown
+# Current State of the World and Environment
+
+## Date and Time
+- Date: 2023-08-15
+- Local Time: 14:23:07.4861
+
+## Location
+- GPS: Chicago, IL
+
+## Environment
+- Visual: Hospital operating room
+- Recent sensory inferences: Day time, busy hospital, fire alarm
+
+Based on the provided information, I believe the current state of the world and
+environment is as follows:
+
+1. We are in a hospital operating room in Chicago, IL.
+2. The date is August 15, 2023, and the local time is 14:23:07.4861.
+3. It is daytime, and the hospital appears to be busy.
+4. A fire alarm has recently been triggered, indicating a potential emergency
+situation.
+
+# Mission
+
+Given the current state of the world and environment, our priorities should be as
+follows:
+
+1. Ensure the safety and well-being of the patient, medical staff, and any other
+individuals in the vicinity.
+
+2. Assess the severity of the fire alarm situation and determine if immediate
+evacuation is necessary.
+
+3. If evacuation is required, coordinate with medical staff to safely and efficiently
+transport the patient and any necessary medical equipment.
+
+4. If evacuation is not required, continue to focus on achieving the best possible
+health outcome for the patient while monitoring the situation.
+
+5. In all actions, uphold the Universal Declaration of Human Rights and strive to reduce
+suffering, increase prosperity, and increase understanding in the universe.
+```
+
+And finally, here is a concrete example of an output from the Global Strategy Layer. You can see that, starting from just two words `fire alarm`, while grounded in the context provided, this model and framework has been able to generate incredibly detailed and salient strategies:
+
+```markdown
+# Strategic Document
+
+## Strategies
+
+1. **Safety and Well-being**: Immediately communicate with the medical staff in the
+operating room to ensure they are aware of the fire alarm and to assess the patient's
+condition.
+
+2. **Assess the Situation**: Gather information from hospital staff, security personnel,
+and any available public announcement systems to determine the severity of the fire
+alarm situation.
+
+3. **Evacuation Decision**: Based on the gathered information, decide whether immediate
+evacuation is necessary or if it is safe to continue with the medical procedure.
+
+4. **Evacuation Coordination**: If evacuation is required, work with medical staff to
+develop a plan for safely and efficiently transporting the patient and any necessary
+medical equipment. Ensure that all individuals in the vicinity are aware of the evacuation
+plan and their roles in it.
+
+5. **Monitor the Situation**: Continuously monitor the situation, both inside the operating
+room and in the larger hospital environment, to ensure that any changes in circumstances
+are addressed promptly and appropriately.
+
+## Principles
+
+1. **Prioritize Human Life**: In all decisions and actions, prioritize the safety and
+well-being of the patient, medical staff, and any other individuals in the vicinity.
+
+2. **Uphold Medical Ethics**: Adhere to the principles of medical ethics, including beneficence,
+non-maleficence, autonomy, and justice.
+
+3. **Clear Communication**: Maintain open and clear communication with all relevant parties,
+including medical staff, security personnel, and any affected individuals.
+
+4. **Collaboration**: Work collaboratively with medical staff, security personnel, and other
+relevant parties to ensure a coordinated and effective response to the situation.
+
+5. **Adaptability**: Be prepared to adapt strategies and actions as new information becomes
+available or circumstances change.
+
+6. **Compliance with Laws and Regulations**: Ensure that all actions taken are in compliance
+with local, state, and federal laws and regulations, as well as hospital policies and procedures.
+
+7. **Uphold Human Rights**: In all actions, uphold the Universal Declaration of Human Rights
+and strive to reduce suffering, increase prosperity, and increase understanding in the universe.
+```
+
+Also, it is important to note that the UDHR and heuristic imperatives are present in this output, but were conveyed to this layer by the Aspirational Layer. As you can see, the principles and frameworks present in the Aspirational Layer have a tendency to "trickle down". 
 
 ### Northbound Communication 
 
