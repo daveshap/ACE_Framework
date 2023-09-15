@@ -648,3 +648,66 @@ To direct the lower Task Prosecution Layer, the Cognitive Control Layer issues s
 - **Task Switching Rules** - Decision guidelines on when the current task should be interrupted and a new one initiated based on factors like timeouts, milestones, errors, or environmental triggers.
 
 - **Guidance on Next Tasks** - Suggestions for which tasks are likely to be most suitable when the current task is completed or switched from. This primes lower layers for likely next steps.
+
+
+
+# Layer 6: Task Prosecution
+
+The Task Prosecution Layer executes individual tasks and detects success or failure based on both environmental feedback and internal monitoring. It represents the realization of plans into simple actions. 
+
+## Success and Failure
+
+For each task, the layer executes instructions and monitors closely for completion criteria that indicate success or failure:
+
+- Success criteria may include expected sensory feedback, metrics thresholds, or confirmations.
+- Failures may be signaled by unexpected errors, metrics deviations, or lack of expected outputs.
+
+By continually evaluating task progress against criteria, the layer provides dynamic feedback on status.
+
+## Inputs
+
+The Task Prosecution Layer receives:
+
+- **Task Instructions** - Detailed commands and logic for executing a task from the Cognitive Control Layer above, including allowed actions and required outputs.
+
+- **Real-time Sensor Feeds** - Continuous environmental sensor data including visual, auditory, tactile, positional, and other modalities to provide situational context.
+
+- **Internal State Telemetry** - Streams of data on internal hardware statuses, active software processes, resource consumption, and other real-time metrics on the agent's own condition.
+
+- **Success/Failure Criteria** - Required metrics, outputs, or sensory data that indicate whether a task has been completed successfully or not.
+
+These comprehensive inputs provide everything needed to execute instructed tasks and accurately evaluate their outcomes.
+
+## Processing/Workflow 
+
+The key steps performed by the Task Prosecution Layer include:
+
+- **Initializing Task** - Allocating resources and preparing inputs required to begin task execution based on instructions.
+
+- **Executing Actions** - Leveraging actuators, APIs, networks, or other outputs to perform the physical or digital actions required by the task.
+
+- **Monitoring Progress** - Continuously comparing sensory feedback and internal telemetry against provided success/failure criteria to evaluate task status.
+
+- **Detecting Completion** - Recognizing when all criteria are satisfied and the task can be considered complete, whether successfully or not. 
+
+- **Triggering Next Task** - Based on completion status, follow task switching logic from above layers to initiate the next appropriate task.
+
+By cyclically executing these steps, the layer prosecutes assigned tasks while providing dynamic pass/fail feedback.
+
+## Outputs
+
+### Southbound
+
+- **Actuator Commands** - Control signals driving physical actuators like motors and servos to accomplish physical tasks.
+
+- **Digital Outputs** - Network flows, API calls, data writes or other digital outputs to execute computational tasks. 
+
+- **Environmental Interactions** - Any physical or digital impacts on the external environment via the agent's effectors.
+
+### Northbound 
+
+- **Task Completion Statuses** - Binary success/failure indicators for each executed task, along with any relevant metadata.
+
+- **Environmental Telemetry** - Sensor data gathered throughout task execution for upper layer situational awareness.
+
+- **Internal State Updates** - Changes to internal condition triggered by resource consumption, wear and tear, or other internal impacts of tasks.
