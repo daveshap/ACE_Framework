@@ -17,7 +17,12 @@ Information flows bidirectionally between adjacent layers to coordinate cognitio
 
 The ACE framework provides a conceptual blueprint for autonomous agents that are corrigible, transparent, and beneficial by design. It balances goal-directedness with moral principles to shape behavior. By elucidating this layered cognitive architecture, the ACE framework offers a comprehensive reference for developing aligned AGI.
 
-[[/images/ACE%20Framework%20Overall%20Architecture.png|ACE Framework Overall Architecture]]
+<div alt style="text-align: center; transform: scale(.5);">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+		<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+	</picture>
+</div>
 
 ## Interlayer Communication Buses
 
