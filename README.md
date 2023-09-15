@@ -24,6 +24,16 @@ The ACE framework provides a conceptual blueprint for autonomous agents that are
 	</picture>
 </div>
 
+# Table of Contents
+
+- [Layer 1: Aspirational Layer](#layer-1-aspirational-layer)
+- [Layer 2: Global Strategy Layer](#layer-2-global-strategy-layer)  
+- [Layer 3: Agent Model](#layer-3-agent-model)  
+- [Layer 4: Executive Function](#layer-4-executive-function)  
+- [Layer 5: Cognitive Control](#layer-5-cognitive-control)  
+- [Layer 6: Task Prosecution](#layer-6-task-prosecution)
+- [Security](#security)
+
 ## Interlayer Communication Buses
 
 The ACE framework employs two unidirectional communication busss to coordinate information flow between layers:
