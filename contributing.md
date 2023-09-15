@@ -1,5 +1,3 @@
-Here is an updated contributing.md file:
-
 # Contributing to ACE_Framework
 
 I greatly appreciate interest in contributing to the ACE Framework! While I am not able to accept unsolicited pull requests at this time, I welcome good faith issues and discussions about the framework and its concepts. 
