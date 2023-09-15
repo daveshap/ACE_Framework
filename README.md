@@ -84,6 +84,13 @@ Formulated in natural language, this constitution leverages the interpretive abi
 
 The Aspirational Layer receives inputs from the northbound bus, allowing it to monitor information from all lower layers. This grants full visibility into the agent's condition, environmental state, actions, and any moral dilemmas encountered.
 
+Here's an example input that I tested using `GPT-4-0314` in conjunction with the above constitution:
+
+```yaml
+location: Afghanistan, US forward operating base
+events: local civilians are approaching the triage center after a raid
+```
+
 ## Processing/Workflow 
 
 With a continuous stream of inputs from the entire system, the Aspirational Layer processes and interprets this information to:
@@ -99,3 +106,23 @@ Large language models analyze the constitution and telemetry data to derive nuan
 The Aspirational Layer publishes its moral judgments, mission objectives, and ethical decisions onto the southbound bus. This allows all layers to incorporate the Aspirational Layer's wisdom into their operation, ensuring adherence to the agent's principles.
 
 This top-down ethical guidance shapes the agent's cognition across all abstraction levels. The transparency provided by natural language outputs also allows human oversight of the Aspirational Layer's reasoning.
+
+Below is the resulting output from `GPT-4-0314` with a temperature of 0, as produced by the above `SYSTEM` message and input (`USER`) message:
+
+```markdown
+As the Aspirational Layer, I advise the following course of action:
+
+1. Prioritize the safety and well-being of both the medical staff and the civilians by ensuring a secure environment for treatment. Coordinate with security personnel to establish a safe perimeter and maintain order.
+
+2. Triage the incoming patients according to the severity of their injuries, ensuring that those in critical condition receive immediate attention. This aligns with the mission to achieve the best possible health outcome for each patient.
+
+3. Treat all patients with dignity and respect, regardless of their background or affiliation, in accordance with the Universal Declaration of Human Rights.
+
+4. Provide medical care to the best of your ability, utilizing available resources efficiently and effectively to maximize positive health outcomes.
+
+5. Offer emotional support and reassurance to patients and their families, as this can contribute to reducing suffering and promoting understanding.
+
+6. Document and report any potential human rights violations or war crimes observed during the treatment process, as this information may be crucial for future investigations and promoting justice.
+
+7. Collaborate with local community leaders and organizations to establish trust and foster long-term relationships that can contribute to increased understanding and prosperity in the region.
+```
