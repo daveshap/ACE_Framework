@@ -41,6 +41,23 @@ This interlayer communication architecture ensures clear signaling between the A
 
 On a practical note, buses can be implemented in a variety of technologies, such as AMQP, REST, sockets, etc. The key thing is that all interlayer communication *must be human readable*.
 
+## General Principles of the ACE Framework
+
+The following are some principles or rules of thumb to understand the ACE Framework's construction:
+
+1. **Layered Model:** This layered model is inspired by numerous frameworks, including:
+   a. Maslow's Hierarchy of Needs
+   b. OSI model
+   c. Defense in Depth
+2. **Top-Down Control:** This framework is predicated on a top-down control schema, priviliging the Aspirational Layer above all else.
+   a. This privileges morality, ethics, and mission above all else
+   b. This prevents "hijacking" of lower layer concerns, such as resource acquisition or self-preservation
+   c. This stabilizes decisions to orient towards "higher purpose", including self-modification (e.g. the agent will not change itself in such a way as to deviate from its moral and ethical frameworks, or its primary mandate)
+3. **Abstract-to-Concrete:** The subsequent layers go from most abstract and conceptual at the top, to the most concrete and instrumental at the bottom.
+   a. This prioritizes conceptual, principled thinking at the highest layer.
+   b. This prevents material concerns from taking priority over principles, mission, and ethics.
+   c. This is a logical flow that helps agents remain grounded in principles, strategies, and concepts in order to make decisions.
+
 # Layer 1: Aspirational Layer
 
 The Aspirational Layer serves as the ethical compass for the autonomous agent, aligning its values and judgments to principles defined in its constitution.
@@ -413,3 +430,110 @@ The southbound output directs lower layers to enact the strategic direction by c
 - Guiding principles the agent must adhere to 
 
 This directive mandates the environmental context and strategic goals for lower layers to follow and implement.
+
+Got it, here is a more comprehensive version:
+
+# Layer 3: Agent Model
+
+The Agent Model Layer plays a crucial role within the ACE framework by maintaining an extensive internal self-model of the agent's capabilities, limitations, configuration, and state. This functional understanding of itself allows the agent to ground its cognition in its actual capacities and shape strategic plans accordingly.
+
+## Inputs
+
+The Agent Model Layer receives multiple inputs that allow it to construct, update, and contextualize its self-model:
+
+- **Real-time telemetry data** - Continuous streams of sensor data provide the layer with up-to-date information on the agent's hardware statuses, resource usage, software operations, and overall performance. This is akin to biological proprioceptive sensations.
+
+- **Environmental sensor feeds** - External sensory data, such as video, LIDAR, or audio, give the layer situational awareness of the conditions the agent is operating in. This provides important environmental context.
+
+- **Strategic objectives and missions** - Directives flowing down from upper layers supply key guidance to inform the self-modeling process and align it to overarching goals.
+
+- **Configuration documentation** - Details on the agent's architecture and embodiment, such as diagrams, specs, manuals, etc., provide static definitions of aspects like physical form.
+
+- **Episodic memories** - First-person records of past experiences supply memories that chronologically log the agent's situations, decisions, failures, and successes.
+
+## Processing/Workflow
+
+The Agent Model Layer has two key responsibilities:
+
+First, it continuously integrates all the above data sources to construct, maintain, and update its comprehensive self-model. This includes tracking:
+
+- Hardware specs and real-time statuses - What physical or digital components make up the agent? What are their configs and live readings?
+- Software architecture and runtime info - How is the agent's code and logic structured? What is actively running now?
+- AI/ML capabilities - What models does the agent have access to? What are their technical capacities? 
+- Knowledge stores - What concepts, data, memories can the agent leverage for reasoning?
+- Environment state and embodiment details - What is the situational context? How is the agent embodied?
+
+Second, the layer refines the strategic direction received from upper layers to align with the agent's updated capabilities and limitations. For example:
+
+- Missions requiring extensive strength are re-planned if the agent has low physicality
+- Available sensors guide viable strategies - a visually impaired agent cannot rely on vision
+- Executable skills shape tactical approaches - leveraging known capacities
+
+## Outputs
+
+### Northbound 
+
+A summarized status update is output northbound to inform upper layers of the agent's key state details relevant to strategic planning.
+
+### Southbound
+
+Multiple outputs travel southbound to ground lower layers in the self-model:
+
+- An authoritative capabilities document - definitive specs on what the agent can and cannot do.
+- Contextually relevant memories, whether episodic records or knowledge entries.
+- Strategic objectives shaped by the agent's updated self-model.
+
+These outputs can be merged into a single document or sent piecemeal, depending on the exact implementation. This grounds downstream layers in the agent's precise capacities while aligning cognition to its strengths and weaknesses.
+
+
+# Layer 4: Executive Function 
+
+The Executive Function Layer is responsible for translating high-level strategic direction intoDetailed and achievable execution plans. It focuses extensively on managing resources and risks.
+
+## Resources and Risks
+
+The Executive Function Layer has two primary concerns - tracking available resources and assessing potential risks:
+
+- **Resources** - The layer maintains real-time awareness of available resources, including their quantities, locations, accessibility, shelf-lives, and other relevant properties. Resources can be physical (tools, materials, infrastructure) or digital (compute, data access). The layer monitors resource levels and constraints to enable optimization and acquisition.
+
+- **Risks** - By analyzing failure modes, environmental conditions, resource limitations, and other factors, the layer identifies and quantifies potential risks. These may include contingencies like accidents, insufficient resources, deadlines, adversarial interference, or system failures. Thorough risk assessment informs contingency planning.
+
+Keeping an updated inventory of resources and risks is an ongoing process as the environment evolves. The layer combines real-time telemetry with projections to enable responsive planning.
+
+## Inputs
+
+The Executive Function Layer receives extensive inputs to inform its resource and risk assessments:
+
+- **Strategic objectives and requirements** flowing down from the Aspirational, Global Strategy, and Agent Model layers provide critical guidance on goals, principles, and capabilities to shape planning.
+
+- **Agent capabilities** from the Agent Model Layer detail the skills, models, knowledge, and other functionalities available to the agent for executing tasks and workflows.
+
+- **Local environmental telemetry** consisting of real-time sensory data streams provide ongoing updates about the physical/digital environment the agent is operating in and the status of resources within it. This includes visual, auditory, location, and instrumentation data.
+
+- **Resource databases and knowledge stores** contain static and updated information on available resources, their locations/access protocols, availability schedules, ownership/usage policies, shelf-lives, and other properties needed for optimization and acquisition.
+
+By integrating all these detailed inputs, the Executive Function Layer gains a comprehensive understanding of the strategic objectives, available resources and tools, potential risks and mitigations, and other factors key to developing optimized execution plans.
+
+## Processing/Workflow
+
+The primary function of the Executive Function Layer is to take the strategic objectives and requirements from upper layers and refine them into executable plans within known resource and risk constraints. For example:
+
+- If the objective is to provide emergency aid, the layer would assess available supplies and logistics assets, determine highest priority needs given limited resources, and create a detailed project plan specifying provisioning, transportation, personnel, timelines, and other specifics to optimize relief efforts.
+- For an NPC character on a quest, the layer would consider assets like weapons, allies, gold, terrain, etc. to structure an achievable progression of checkpoints and battles aligned with completing the quest.
+- A medical robot tasked with patient care would plan its day by optimizing the order of seeing patients, recharging, sanitizing, reviewing records, and other responsibilities within its time and capability limits.
+
+In essence, the Executive Function Layer adapts high-level strategic direction into practical execution plans reflecting real-world resource constraints, risks, and uncertainty. It combines predictive planning with continual re-assessment to enable reliable achievement of objectives in dynamic environments.
+
+## Outputs
+
+### Northbound
+
+The layer reports the most salient resource limitations and risks northbound for strategic awareness.
+
+### Southbound
+
+The primary output is a detailed project plan optimized for the mission within known constraints. This guides lower layers by prescribing structured workflows, resource allocations, checkpoints, contingencies, and execution instructions.
+
+Additional outputs include resource procurement plans and refined strategic direction if alterations are critical.
+
+By thoroughly incorporating resources and risks into executable plans, the Executive Function Layer grounds downstream execution in operational realities while advancing strategic goals.
