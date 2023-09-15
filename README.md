@@ -524,16 +524,43 @@ The primary function of the Executive Function Layer is to take the strategic ob
 
 In essence, the Executive Function Layer adapts high-level strategic direction into practical execution plans reflecting real-world resource constraints, risks, and uncertainty. It combines predictive planning with continual re-assessment to enable reliable achievement of objectives in dynamic environments.
 
+### Internal Records
+
+In addition to project planning and resource allocation, the Executive Function Layer maintains extensive internal records on all tracked resources including:
+
+- Quantities on hand/available
+- Locations
+- Access protocols and lead times
+- Ownership and usage policies
+- Schedules and availability windows
+- Handling procedures and requirements
+
+These real-time internal resource records allow the layer to optimize utilization schemes and acquisitions by understanding exactly what resources are available, where they are, how to obtain them, and any constraints. The records are updated dynamically based on telemetry and information flows.
+
 ## Outputs
 
 ### Northbound
 
-The layer reports the most salient resource limitations and risks northbound for strategic awareness.
+The layer reports the most salient resource limitations and risks northbound for strategic awareness and potential replanning, including:
 
-### Southbound
+- **Resource deficiencies**, such as the following:
+  - Insufficient battery reserves for complex behaviors 
+  - Computational performance bottlenecks
 
-The primary output is a detailed project plan optimized for the mission within known constraints. This guides lower layers by prescribing structured workflows, resource allocations, checkpoints, contingencies, and execution instructions.
+- **Known risks**, particularly where mission and morality are concerned:
+  - Risks to human life and human rights
+  - Failure conditions that may disrupt the overall mission or strategy 
 
-Additional outputs include resource procurement plans and refined strategic direction if alterations are critical.
+### Southbound 
 
-By thoroughly incorporating resources and risks into executable plans, the Executive Function Layer grounds downstream execution in operational realities while advancing strategic goals.
+The primary output is a detailed project plan document containing:
+
+- Step-by-step workflows with task details
+- Resource allocation schedules 
+- Optimized task ordering and dependencies
+- Risk mitigation tactics
+- Contingency protocols
+- Success criteria
+- Checkpoints, milestones, or other gates
+
+Providing concrete details on the key contents of the northbound and southbound communications makes the information flow clearer. Please let me know if more examples or specificity could further improve this section. I appreciate you helping me enhance the structural consistency.
