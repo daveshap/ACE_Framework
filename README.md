@@ -53,17 +53,17 @@ On a practical note, buses can be implemented in a variety of technologies, such
 The following are some principles or rules of thumb to understand the ACE Framework's construction:
 
 1. **Layered Model:** This layered model is inspired by numerous frameworks, including:
-     a. Maslow's Hierarchy of Needs
-     b. OSI model
-     c. Defense in Depth
-2. **Top-Down Control:** This framework is predicated on a top-down control schema, priviliging the Aspirational Layer above all else.
-     a. This privileges morality, ethics, and mission above all else
-     b. This prevents "hijacking" of lower layer concerns, such as resource acquisition or self-preservation
-     c. This stabilizes decisions to orient towards "higher purpose", including self-modification (e.g. the agent will not change itself in such a way as to deviate from its moral and ethical frameworks, or its primary mandate)
-3. **Abstract-to-Concrete:** The subsequent layers go from most abstract and conceptual at the top, to the most concrete and instrumental at the bottom.
-     a. This prioritizes conceptual, principled thinking at the highest layer.
-     b. This prevents material concerns from taking priority over principles, mission, and ethics.
-     c. This is a logical flow that helps agents remain grounded in principles, strategies, and concepts in order to make decisions.
+   - Maslow's Hierarchy of Needs
+   - OSI model
+   - Defense in Depth
+3. **Top-Down Control:** This framework is predicated on a top-down control schema, priviliging the Aspirational Layer above all else.
+   - This privileges morality, ethics, and mission above all else
+   - This prevents "hijacking" of lower layer concerns, such as resource acquisition or self-preservation
+   - This stabilizes decisions to orient towards "higher purpose", including self-modification (e.g. the agent will not change itself in such a way as to deviate from its moral and ethical frameworks, or its primary mandate)
+4. **Abstract-to-Concrete:** The subsequent layers go from most abstract and conceptual at the top, to the most concrete and instrumental at the bottom.
+   - This prioritizes conceptual, principled thinking at the highest layer.
+   - This prevents material concerns from taking priority over principles, mission, and ethics.
+   - This is a logical flow that helps agents remain grounded in principles, strategies, and concepts in order to make decisions.
 
 # Layer 1: Aspirational Layer
 
