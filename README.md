@@ -718,3 +718,48 @@ By cyclically executing these steps, the layer prosecutes assigned tasks while p
 - **Environmental Telemetry** - Sensor data gathered throughout task execution for upper layer situational awareness.
 
 - **Internal State Updates** - Changes to internal condition triggered by resource consumption, wear and tear, or other internal impacts of tasks.
+
+
+
+
+# Security
+
+To ensure the safety and reliability of ACE implementations, several key architectural security strategies should be adopted:
+
+## Security Overlay  
+
+A dedicated security overlay should monitor and inspect all layers and models within the ACE architecture. This overlay serves as an out-of-band monitoring system that is isolated from the main cognition pipelines. It implements several heuristics and best practices for security:
+
+- Stateless packet inspection of all northbound and southbound interlayer communications. This allows read-only monitoring of messaging without interference.
+
+- Runtime validation of model configurations and update protocols to prevent unverified modifications.
+
+- Continuous alignment analysis by presenting corner case inputs and probing for deviations from expected model behaviors based on training. 
+
+- Privacy protection and encryption of data flows to prevent unauthorized access or tampering.
+
+By taking an end-to-end approach across all layers, the security overlay provides broad visibility into system-wide operations for enhanced protection.
+
+## Ensemble Models
+
+Within each layer, critical functions should leverage ensemble modeling techniques. This means utilizing a diverse collection of models trained with different techniques on different datasets. Ensemble strategies such as mixture-of-experts voting are then used to derive consensus predictions and decisions across models.
+
+The diversity of ensemble components provides resilience against individual model biases and limitations. Combining multiple perspectives minimizes the risk of any single model skewing outputs or being manipulated.
+
+Model selection and model training can be integrated into the Agent Model layer later on. 
+
+## Inference Inspection
+
+Closely monitoring the inference behavior of models can catch alignment drifts or adversarial manipulations. The security overlay should implement inference inspection by: 
+
+- Logging all inputs to models and their resulting outputs.
+
+- Testing models with known ground truth data and confirming expected outputs are produced.
+
+- Checking outputs for signs of bias and confirming fairness across protected categories.
+
+- Alerting human operators to statistically significant deviations in model behavior for evaluation.
+
+Ongoing inference inspection ensures models continue to behave as intended over their operational lifetimes.
+
+By combining strong isolation, diversity, and continuous validation, this layered security approach maximizes the safety and robustness of ACE implementations. Adopting these best practices will be critical for developing trustworthy autonomous systems.
