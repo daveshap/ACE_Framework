@@ -564,3 +564,87 @@ The primary output is a detailed project plan document containing:
 - Checkpoints, milestones, or other gates
 
 Providing concrete details on the key contents of the northbound and southbound communications makes the information flow clearer. Please let me know if more examples or specificity could further improve this section. I appreciate you helping me enhance the structural consistency.
+
+
+
+# Layer 5: Cognitive Control 
+
+The Cognitive Control Layer is responsible for dynamic task switching and selection based on environmental conditions and progress toward goals. It chooses appropriate tasks to execute based on project plans from the Executive Function Layer.
+
+## Task Switching and Task Selection
+
+### Task Switching
+
+The layer continuously monitors the external environment through sensor telemetry as well as internal state. If conditions change significantly, the layer will decide to switch tasks to one that is more relevant. For example:
+
+- If a fire alarm sounds during a medical procedure, switch to emergency evacuation tasks
+- If a combat robot finds new enemy locations, switch to reconnaissance mode
+- If an error occurs executing a task, switch to a diagnostic task
+
+Task switching allows the agent to adapt its workflows dynamically based on real-time contextual factors.
+
+### Task Selection 
+
+By tracking progress through project plans, the layer selects the next most relevant task to execute based on proximity to end goals. It ensures tasks are done in an optimal sequence by following task dependencies and criteria.
+
+For example:
+
+- Complete prerequisite tasks before those that depend on them 
+- Prioritize critical path tasks on schedule
+- Verify success criteria met before initiating next task
+
+Proper task selection keeps the agent on track to complete project plans successfully.
+
+## Inputs
+
+The Cognitive Control Layer receives multiple real-time data flows as input to inform its task switching and selection:
+
+- **Project Plans and Task Workflows** provided by the Executive Function Layer supply the layer with structured workflows composed of interdependent tasks, success criteria, checkpoints, and other specifics required to track progress and select appropriate next steps.
+
+- **Environmental Sensor Telemetry** consisting of streaming visual, auditory, locational, and other sensory feeds provides up-to-the-moment data on the conditions the agent is operating in. This is vital context for situationally dependent task switching.
+
+- **Internal State Data** gives the layer visibility into the agent's own condition, including resource and capability statuses, active software/hardware processes, and any self-diagnostics. This helps determine readiness for specific tasks. 
+
+- **Task Completion Status** offers dynamic updates on the progress of the current task, including percent completed, outputs generated, errors encountered, and other real-time metrics indicating whether a task should be continued or switched.
+
+- **Northbound Strategic Objectives** supply authoritative goals, beliefs, and other guidance from upper layers to align task selection and switching to broader mission directives.
+
+By continuously monitoring and integrating this multivariate data, the Cognitive Control Layer gains the comprehensive situational awareness necessary to make smart moment-by-moment decisions on which tasks to execute or switch to.
+
+## Processing/Workflow
+
+The key responsibilities of the Cognitive Control Layer include:
+
+- **Tracking Progress Through Project Plans** - By logging completed tasks, checkpoints, and success criteria met, the layer maintains an up-to-date understanding of how much of the plan has been accomplished. This enables selection of appropriate next tasks.
+
+- **Environmental Condition Monitoring** - The layer constantly evaluates the real-time sensory feeds from the operating environment to identify any significant changes that may warrant task switching, such as new threats, opportunities, or failures.
+
+- **Current Task Status Assessment** - Data on the current task's outputs, errors, resource usage, and other metrics inform the layer on when continuing the task is appropriate versus switching tasks.
+
+- **Optimal Next Task Selection** - Based on the project plan progress and environmental conditions, the layer selects the most relevant next task to maximize goal achievement. Dependency logic prevents improper task ordering.
+
+- **Dynamic Task Switching** - If the environment shifts or the current task fails, the layer immediately switches execution to a more suitable task to adapt to changing conditions.
+
+By continuously executing this interpretive workflow, the Cognitive Control Layer provides the dynamic oversight needed to maintain optimal task selection and switching in open, shifting environments.
+
+## Outputs
+
+### Northbound
+
+To inform strategic replanning, the layer outputs summary data northbound on:
+
+- **Current Task Status** - Which task is presently executing and metrics on its progress.
+
+- **Current World State Beliefs** - Key environmental factors driving task switching decisions.
+
+- **Updated Progress Toward Goals** - Aggregate metrics on % of project plan completed based on tasks finished.
+
+### Southbound  
+
+To direct the lower Task Prosecution Layer, the Cognitive Control Layer issues specific authoritative commands: 
+
+- **Selected Task Instructions** - Precise instructions on performing the chosen task, including directives, logic, parameters, APIs/tools to leverage, and allowable actions.
+
+- **Task Switching Rules** - Decision guidelines on when the current task should be interrupted and a new one initiated based on factors like timeouts, milestones, errors, or environmental triggers.
+
+- **Guidance on Next Tasks** - Suggestions for which tasks are likely to be most suitable when the current task is completed or switched from. This primes lower layers for likely next steps.
