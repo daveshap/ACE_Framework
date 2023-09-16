@@ -18,10 +18,10 @@ Information flows bidirectionally between adjacent layers to coordinate cognitio
 The ACE framework provides a conceptual blueprint for autonomous agents that are corrigible, transparent, and beneficial by design. It balances goal-directedness with moral principles to shape behavior. By elucidating this layered cognitive architecture, the ACE framework offers a comprehensive reference for developing aligned AGI.
 
 <div alt style="text-align: center; transform: scale(.5);">
-	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
-		<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
-	</picture>
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+</picture>
 </div>
 
 # Table of Contents
@@ -149,7 +149,7 @@ With a continuous stream of inputs from the entire system, the Aspirational Laye
 - Set overarching mission objectives that align with the agent's principles and role.
 - Make ethical decisions about the best course of action in complex moral dilemmas.
 
-Large language models analyze the constitution and telemetry data to derive nuanced guidance and resolutions.
+Large language models analyze the constitution and telemetry data to derive nuanced guidance and resolutions. 
 
 ## Outputs
 
@@ -456,16 +456,12 @@ The Agent Model Layer plays a crucial role within the ACE framework by maintaini
 
 ## Inputs
 
-The Agent Model Layer receives multiple inputs that allow it to construct, update, and contextualize its self-model:
+The Agent Model Layer receives multiple inputs that allow it to construct, update, and contextualize its self-model. Some of these inputs come from the Northbound and Southbound buses, but some of them are recorded internally via telemetry. 
 
 - **Real-time telemetry data** - Continuous streams of sensor data provide the layer with up-to-date information on the agent's hardware statuses, resource usage, software operations, and overall performance. This is akin to biological proprioceptive sensations.
-
 - **Environmental sensor feeds** - External sensory data, such as video, LIDAR, or audio, give the layer situational awareness of the conditions the agent is operating in. This provides important environmental context.
-
 - **Strategic objectives and missions** - Directives flowing down from upper layers supply key guidance to inform the self-modeling process and align it to overarching goals.
-
 - **Configuration documentation** - Details on the agent's architecture and embodiment, such as diagrams, specs, manuals, etc., provide static definitions of aspects like physical form.
-
 - **Episodic memories** - First-person records of past experiences supply memories that chronologically log the agent's situations, decisions, failures, and successes.
 
 ## Processing/Workflow
@@ -474,17 +470,24 @@ The Agent Model Layer has two key responsibilities:
 
 First, it continuously integrates all the above data sources to construct, maintain, and update its comprehensive self-model. This includes tracking:
 
-- Hardware specs and real-time statuses - What physical or digital components make up the agent? What are their configs and live readings?
-- Software architecture and runtime info - How is the agent's code and logic structured? What is actively running now?
-- AI/ML capabilities - What models does the agent have access to? What are their technical capacities? 
-- Knowledge stores - What concepts, data, memories can the agent leverage for reasoning?
-- Environment state and embodiment details - What is the situational context? How is the agent embodied?
+- **Hardware specs and real-time statuses** - What physical or digital components make up the agent? What are their configs and live readings?
+- **Software architecture and runtime info** - How is the agent's code and logic structured? What is actively running now?
+- **AI/ML capabilities** - What models does the agent have access to? What are their technical capacities? 
+- **Knowledge stores** - What concepts, data, memories can the agent leverage for reasoning?
+- **Environment state and embodiment details** - What is the situational context? How is the agent embodied?
 
 Second, the layer refines the strategic direction received from upper layers to align with the agent's updated capabilities and limitations. For example:
 
 - Missions requiring extensive strength are re-planned if the agent has low physicality
 - Available sensors guide viable strategies - a visually impaired agent cannot rely on vision
 - Executable skills shape tactical approaches - leveraging known capacities
+
+<div alt style="text-align: center; transform: scale(.5);">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+</picture>
+</div>
 
 ## Outputs
 
