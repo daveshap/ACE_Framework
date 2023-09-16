@@ -756,7 +756,19 @@ By cyclically executing these steps, the layer prosecutes assigned tasks while p
 
 # Security
 
-To ensure the safety and reliability of ACE implementations, several key architectural security strategies should be adopted:
+The creation of sophisticated autonomous systems carries immense promise to benefit society, but also poses potential risks if not developed safely and responsibly. As autonomous agents become more capable and widespread, human oversight will become increasingly challenging. Furthermore, highly capable agents may reach a point where they can modify themselves or block human attempts to interfere. 
+
+To mitigate these risks, the ACE framework must incorporate architectural strategies and best practices to ensure stability, self-correction, transparency, and integrity across large fleets of decentralized autonomous entities. This security focus aims to make ACE agents inherently resistant to unaligned runaway recursions, adversarial manipulations, and other potentially dangerous phenomena.
+
+We propose three core strategies to achieve principled security within the ACE framework:
+
+1. A dedicated **Security Overlay** that provides system-wide threat monitoring across all layers and communication buses. This stateless overlay allows holistic protection without compromising autonomy.
+
+2. **Ensemble Models** within each layer, using diversity and voting schemes to prevent individual model failure or manipulation from skewing outputs. 
+
+3. **Inference Inspection** processes that continuously monitor all inputs and outputs of models to detect alignment drifts or deviations from expected behaviors.
+
+Together, these techniques can maximize the safety and reliability of autonomous systems developed using the ACE framework. With robust security built into its architecture, the framework promotes transparency, oversight, and ethical alignment across decentralized networks of ACE agents.
 
 ## Security Overlay  
 
