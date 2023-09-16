@@ -587,6 +587,14 @@ The layer reports the most salient resource limitations and risks northbound for
   - Risks to human life and human rights
   - Failure conditions that may disrupt the overall mission or strategy 
 
+
+<div alt style="text-align: center; transform: scale(.5);">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Executive%20Function%20Plans.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Executive%20Function%20Plans.png" />
+</picture>
+</div>
+
 ### Southbound 
 
 The primary output is a detailed project plan document containing:
