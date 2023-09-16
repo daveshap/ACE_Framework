@@ -484,8 +484,8 @@ Second, the layer refines the strategic direction received from upper layers to 
 
 <div alt style="text-align: center; transform: scale(.5);">
 <picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model.png" />
-<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model.png" />
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model%20Layer.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model%20Layer.png" />
 </picture>
 </div>
 
