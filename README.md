@@ -708,11 +708,8 @@ By continually evaluating task progress against criteria, the layer provides dyn
 The Task Prosecution Layer receives:
 
 - **Task Instructions** - Detailed commands and logic for executing a task from the Cognitive Control Layer above, including allowed actions and required outputs.
-
 - **Real-time Sensor Feeds** - Continuous environmental sensor data including visual, auditory, tactile, positional, and other modalities to provide situational context.
-
 - **Internal State Telemetry** - Streams of data on internal hardware statuses, active software processes, resource consumption, and other real-time metrics on the agent's own condition.
-
 - **Success/Failure Criteria** - Required metrics, outputs, or sensory data that indicate whether a task has been completed successfully or not.
 
 These comprehensive inputs provide everything needed to execute instructed tasks and accurately evaluate their outcomes.
@@ -722,16 +719,19 @@ These comprehensive inputs provide everything needed to execute instructed tasks
 The key steps performed by the Task Prosecution Layer include:
 
 - **Initializing Task** - Allocating resources and preparing inputs required to begin task execution based on instructions.
-
 - **Executing Actions** - Leveraging actuators, APIs, networks, or other outputs to perform the physical or digital actions required by the task.
-
 - **Monitoring Progress** - Continuously comparing sensory feedback and internal telemetry against provided success/failure criteria to evaluate task status.
-
 - **Detecting Completion** - Recognizing when all criteria are satisfied and the task can be considered complete, whether successfully or not. 
-
 - **Triggering Next Task** - Based on completion status, follow task switching logic from above layers to initiate the next appropriate task.
 
 By cyclically executing these steps, the layer prosecutes assigned tasks while providing dynamic pass/fail feedback.
+
+<div alt style="text-align: center; transform: scale(.5);">
+<picture>
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Task%20Prosecution.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Task%20Prosecution.png" />
+</picture>
+</div>
 
 ## Outputs
 
