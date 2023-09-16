@@ -484,10 +484,12 @@ Second, the layer refines the strategic direction received from upper layers to 
 
 <div alt style="text-align: center; transform: scale(.5);">
 <picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
-<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
+<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model.png" />
+<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Agent%20Model.png" />
 </picture>
 </div>
+
+Rather than a ton of prompts, I think that a diagram showing the Agent Model layer will be more effective. It has a lot to keep track of, but the entire mission is very simple. All of this information is primarily to maintain a functional understanding of what the agent is.
 
 ## Outputs
 
