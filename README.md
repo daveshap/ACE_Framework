@@ -6,12 +6,12 @@ At the core of the ACE framework is a "cognition-first" approach that emphasizes
 
 The framework consists of six hierarchical layers, each handling distinct functions:
 
-- **Aspirational Layer** - Provides an ethical constitution to align the agent's values and judgements. Formulated in natural language principles.
-- **Global Strategy Layer** - Considers the agent's context to set high-level goals and strategic plans.
-- **Agent Model Layer** - Develops a functional self-model of the agent's capabilities and limitations. 
-- **Executive Function Layer** - Translates strategic direction into detailed project plans and resource allocation.
-- **Cognitive Control Layer** - Dynamically selects tasks and switches between them based on environment and internal state.
-- **Task Prosecution Layer** - Executes tasks using digital functions or physical actions. Interacts with the environment.
+- **[Aspirational Layer](#layer-1-aspirational-layer)** - Provides an ethical constitution to align the agent's values and judgements. Formulated in natural language principles.
+- **[Global Strategy Layer](#layer-2-global-strategy-layer)** - Considers the agent's context to set high-level goals and strategic plans.
+- **[Agent Model Layer](#layer-3-agent-model)** - Develops a functional self-model of the agent's capabilities and limitations. 
+- **[Executive Function Layer](#layer-4-executive-function)** - Translates strategic direction into detailed project plans and resource allocation.
+- **[Cognitive Control Layer](#layer-5-cognitive-control)** - Dynamically selects tasks and switches between them based on environment and internal state.
+- **[Task Prosecution Layer](#layer-6-task-prosecution)** - Executes tasks using digital functions or physical actions. Interacts with the environment.
 
 Information flows bidirectionally between adjacent layers to coordinate cognition from abstract reasoning to concrete actions. Together, these layers aim to produce an AGI architecture grounded in ethics and aligned with human values.
 
