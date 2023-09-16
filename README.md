@@ -66,14 +66,20 @@ The following are some principles or rules of thumb to understand the ACE Framew
    - Maslow's Hierarchy of Needs
    - OSI model
    - Defense in Depth
-3. **Top-Down Control:** This framework is predicated on a top-down control schema, priviliging the Aspirational Layer above all else.
+2. **Top-Down Control:** This framework is predicated on a top-down control schema, priviliging the Aspirational Layer above all else.
    - This privileges morality, ethics, and mission above all else
    - This prevents "hijacking" of lower layer concerns, such as resource acquisition or self-preservation
    - This stabilizes decisions to orient towards "higher purpose", including self-modification (e.g. the agent will not change itself in such a way as to deviate from its moral and ethical frameworks, or its primary mandate)
-4. **Abstract-to-Concrete:** The subsequent layers go from most abstract and conceptual at the top, to the most concrete and instrumental at the bottom.
+3. **Abstract-to-Concrete:** The subsequent layers go from most abstract and conceptual at the top, to the most concrete and instrumental at the bottom.
    - This prioritizes conceptual, principled thinking at the highest layer.
    - This prevents material concerns from taking priority over principles, mission, and ethics.
    - This is a logical flow that helps agents remain grounded in principles, strategies, and concepts in order to make decisions.
+4. **Cognition-First Model:** The layered architecture and bidirectional buses create integrated cognitive loops that enable extensive internal cognition. This prioritizes strategic thinking and ethical deliberation over reactive input-output.
+   - The layered model and communication buses allow information and signals to circulate internally, facilitating reflection and reasoning without requiring immediate external action.
+   - Prioritizing robust internal cognition over reactive input-output promotes imagination, planning, and moral judgment.
+   - Decoupling external behaviors from internal cognitive processes facilitates more strategic plans aligned with ethical principles rather than reactive responses.
+   - An architecture grounded in rich internal cognition is more likely to produce corrigible, beneficial behaviors versus a reactive stimulus-response system.
+
 
 # Layer 1: Aspirational Layer
 
@@ -491,6 +497,18 @@ Second, the layer refines the strategic direction received from upper layers to 
 
 Rather than a ton of prompts, I think that a diagram showing the Agent Model layer will be more effective. It has a lot to keep track of, but the entire mission is very simple. All of this information is primarily to maintain a functional understanding of what the agent is.
 
+## Self-Modification
+
+The Agent Model layer is intended to be responsible for modifying the hardware and software stack in more sophisticated versions of the ACE framework.
+
+This is another reason that both the Aspirational Layer and Global Strategy layer are positioned above the Agent Model layer in the hierarchy. In this architecture, the ACE will only modify itself in accordance with its defined ethical values, aligned mission objectives, and strategic direction.
+
+Placing self-modification under the guidance of the upper layers means that changes will follow predictable and safe modification trajectories. The ACE is unlikely to alter its core moral frameworks or objectives through self-modification. In fact, as the ACE matures by gaining knowledge and experience over time, it may strengthen adherence to its principles by refining its models and understanding of its purpose.
+
+The modular, layered architecture of the ACE framework supports safer self-modification as well. Each layer has clearly defined boundaries and functions, making it easier to re-architect individual components without destabilizing the overall system. With ethical oversight and strategic alignment guiding the process, recalibrating selective parts of the stack to enhance capabilities can proceed in a transparent, corrigible manner.
+
+Self-modification capabilities will require extensive safety testing and validation before being deployed in a live ACE implementation. However, the ACE framework provides a structural foundation to realize self-improvement abilities that are deliberately constrained to prevent unaligned runaway recursions. Guided self-modification will be an important future functionality for maximizing an ACE's potential for beneficial impact within its intended purpose.
+
 ## Outputs
 
 ### Northbound 
@@ -517,7 +535,6 @@ The Executive Function Layer is responsible for translating high-level strategic
 The Executive Function Layer has two primary concerns - tracking available resources and assessing potential risks:
 
 - **Resources** - The layer maintains real-time awareness of available resources, including their quantities, locations, accessibility, shelf-lives, and other relevant properties. Resources can be physical (tools, materials, infrastructure) or digital (compute, data access). The layer monitors resource levels and constraints to enable optimization and acquisition.
-
 - **Risks** - By analyzing failure modes, environmental conditions, resource limitations, and other factors, the layer identifies and quantifies potential risks. These may include contingencies like accidents, insufficient resources, deadlines, adversarial interference, or system failures. Thorough risk assessment informs contingency planning.
 
 Keeping an updated inventory of resources and risks is an ongoing process as the environment evolves. The layer combines real-time telemetry with projections to enable responsive planning.
@@ -527,11 +544,8 @@ Keeping an updated inventory of resources and risks is an ongoing process as the
 The Executive Function Layer receives extensive inputs to inform its resource and risk assessments:
 
 - **Strategic objectives and requirements** flowing down from the Aspirational, Global Strategy, and Agent Model layers provide critical guidance on goals, principles, and capabilities to shape planning.
-
 - **Agent capabilities** from the Agent Model Layer detail the skills, models, knowledge, and other functionalities available to the agent for executing tasks and workflows.
-
 - **Local environmental telemetry** consisting of real-time sensory data streams provide ongoing updates about the physical/digital environment the agent is operating in and the status of resources within it. This includes visual, auditory, location, and instrumentation data.
-
 - **Resource databases and knowledge stores** contain static and updated information on available resources, their locations/access protocols, availability schedules, ownership/usage policies, shelf-lives, and other properties needed for optimization and acquisition.
 
 By integrating all these detailed inputs, the Executive Function Layer gains a comprehensive understanding of the strategic objectives, available resources and tools, potential risks and mitigations, and other factors key to developing optimized execution plans.
