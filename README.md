@@ -34,6 +34,8 @@ The ACE framework provides a conceptual blueprint for autonomous agents that are
 - [Layer 6: Task Prosecution](#layer-6-task-prosecution)
 - [Security](#security)
 
+Here's a YouTube video I made as a deep dive walkthrough of this repo: https://youtu.be/A_BL_pu4Gtk 
+
 ## Interlayer Communication Buses
 
 The ACE framework employs two unidirectional communication busss to coordinate information flow between layers:
