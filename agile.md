@@ -46,6 +46,6 @@ The idea here is that we will probably also learn valuable lessons before we sca
 - Release 4 - Deployability
   - Focus on **"anywhere, anytime"** mentality
   - Create kernels that can run in any container, any environment, thus can be used for games, robots, enterprise agents, etc
-- Release 5 - polymorphic
+- Release 5 - Polymorphic
   - Focus on self-modification (e.g. self-configuration, self-extension, etc)
   - Self-transforming in order to better pursue aspirations
