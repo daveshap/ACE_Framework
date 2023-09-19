@@ -530,7 +530,7 @@ These outputs can be merged into a single document or sent piecemeal, depending 
 
 # Layer 4: Executive Function 
 
-The Executive Function Layer is responsible for translating high-level strategic direction intoDetailed and achievable execution plans. It focuses extensively on managing resources and risks.
+The Executive Function Layer is responsible for translating high-level strategic direction into detailed and achievable execution plans. It focuses extensively on managing resources and risks.
 
 ## Resources and Risks
 
