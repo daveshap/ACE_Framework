@@ -1,17 +1,5 @@
 # ACE Agile Chart
 
-## Roles
-
-- **Product Owner:** Dave
-  - Sets overall requirements and acceptance criteria
-  - Writes user stories, roadmap, etc
-- **Scrum Master:** ???
-  - Primary stakeholder responsible for process
-  - Communicates with product owner (creates boundary)
-- **Lead Developer:** ???
-  - Senior-most developer (or one with most relevant experience
-  - Responsible for major architectural decisions, etc
-
 ## MVP/POC
 
 The purpose of the ACE Framework MVP is to create a small "toy" example of the ACE Framework primarily as demonstration purposes. In other words, this is a super simple implementation to show "Hey look, it actually works."
@@ -49,3 +37,29 @@ The idea here is that we will probably also learn valuable lessons before we sca
 - Release 5 - Polymorphic
   - Focus on self-modification (e.g. self-configuration, self-extension, etc)
   - Self-transforming in order to better pursue aspirations
+
+
+# Teams
+
+In the future, as there is growing interest (and as we learn to coordinate better) we will work to enable and facilitate multiple teams. We will follow an Agile/Scrum model whereby each team is capped at 7 members. At the same time, the core ACE team will be available to provide guidance and oversight. 
+
+## Core Team
+
+The Core Team will have several roles that can be leveraged to help other teams.
+
+- **Product Owner:** Dave
+  - Sets overall requirements and acceptance criteria
+  - Writes user stories, roadmap, etc
+  - Available to consult with other teams
+  - Possibly split into multiple roles
+- **Scrum Master:** ??? (TBD)
+  - Primary stakeholder responsible for process
+  - Communicates with product owner (creates boundary)
+
+## Scrum Teams
+
+Each individual scrum team will need a project lead or lead developer. This is someone who will take full ownership of the codebase and see the project through to the end. 
+
+- **Lead Developer:** ???
+  - Senior-most developer (or one with most relevant experience
+  - Responsible for major architectural decisions, etc
