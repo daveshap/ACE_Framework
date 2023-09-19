@@ -31,3 +31,10 @@
   - A layered, abstraction model that underpins all of computer networking today
 - DEFENSE IN DEPTH
   - A layered, nested model of cybersecurity  
+
+## YouTube Videos
+
+- Synaptic Labs: The Autonomous Cognitive Entities Framework
+  - https://youtu.be/O249nnUDCgw?si=QiGcJPygWQ3zSbj8 
+- David Shapiro: ACE Intro and Overview
+  - https://youtu.be/A_BL_pu4Gtk  
