@@ -46,3 +46,6 @@ There are many possible implementations of the ACE Framework. Rather than detail
    - This is a version of the ACE that is meant to carry out meaningful and productive work inside a corporation.
    - Whether this is a digital CSR or backoffice worker depends on the deployment.
    - It could also be a "digital team member" that primarily interacts via Discord, Slack, or Microsoft Teams.
+4. **Embodied Robot**
+   - The ACE Framework is ideal to create self-contained, autonomous machines.
+   - Whether they are domestic aid robots or something like WALL-E
