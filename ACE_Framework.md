@@ -456,8 +456,6 @@ The southbound output directs lower layers to enact the strategic direction by c
 
 This directive mandates the environmental context and strategic goals for lower layers to follow and implement.
 
-Got it, here is a more comprehensive version:
-
 # Layer 3: Agent Model
 
 The Agent Model Layer plays a crucial role within the ACE framework by maintaining an extensive internal self-model of the agent's capabilities, limitations, configuration, and state. This functional understanding of itself allows the agent to ground its cognition in its actual capacities and shape strategic plans accordingly.
