@@ -38,7 +38,7 @@ Here's a YouTube video I made as a deep dive walkthrough of this repo: https://y
 
 ## Interlayer Communication Buses
 
-The ACE framework employs two unidirectional communication busss to coordinate information flow between layers:
+The ACE framework employs two unidirectional communication buses to coordinate information flow between layers:
 
 ### Northbound Bus
 
