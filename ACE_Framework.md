@@ -647,7 +647,7 @@ The Cognitive Control Layer receives multiple real-time data flows as input to i
 - **Environmental Sensor Telemetry** consisting of streaming visual, auditory, locational, and other sensory feeds provides up-to-the-moment data on the conditions the agent is operating in. This is vital context for situationally dependent task switching.
 - **Internal State Data** gives the layer visibility into the agent's own condition, including resource and capability statuses, active software/hardware processes, and any self-diagnostics. This helps determine readiness for specific tasks. 
 - **Task Completion Status** offers dynamic updates on the progress of the current task, including percent completed, outputs generated, errors encountered, and other real-time metrics indicating whether a task should be continued or switched.
-- **Northbound Strategic Objectives** supply authoritative goals, beliefs, and other guidance from upper layers to align task selection and switching to broader mission directives.
+- **Southbound Strategic Objectives** supply authoritative goals, beliefs, and other guidance from upper layers to align task selection and switching to broader mission directives.
 
 By continuously monitoring and integrating this multivariate data, the Cognitive Control Layer gains the comprehensive situational awareness necessary to make smart moment-by-moment decisions on which tasks to execute or switch to.
 
