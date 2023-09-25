@@ -17,40 +17,49 @@ def main():
     client = docker.from_env()
 
     # Start containers based on dependencies.
+    containers = {}
     for resource, config in deps['ace_framework'].items():
         # Start dependencies first using docker-py.
-        depends_on = {dep: {'condition': 'service_started'} for dep in config['dependencies']}
-        client.containers.run(f"{resource}:latest",
-                              name=resource,
-                              detach=True,
-                              healthcheck={
-                                  "test": ["CMD", "layer_status"],
-                                  "interval": 5,
-                                  "timeout": 3,
-                                  "retries": 3
-                              },
-                              depends_on=depends_on)
-        logger.debug(f"{resource} started")
+        containers[resource] = client.containers.run(f"{resource}:latest",
+                                                     name=resource,
+                                                     detach=True,
+                                                     healthcheck={
+                                                         "test": ["CMD", "/usr/local/bin/check_resource_health"],
+                                                         "interval": 5000000000,
+                                                         "timeout": 3000000000,
+                                                         "start_period": 0,
+                                                         "retries": 3
+                                                     })
+        logger.info(f"Resource {resource} started")
+
+    def restart_with_deps(resource, restarted=None):
+        restarted = restarted or set()
+        if resource in restarted:
+            logger.info(f"Resource {resource} already restarted, skipping")
+            return
+        logger.warning(f"Restarting resource {resource} and its dependencies...")
+        containers[resource].restart()
+        restarted.add(resource)
+        for dep, config in deps['ace_framework'].items():
+            if resource in config['dependencies']:
+                restart_with_deps(dep, restarted)
 
     try:
         while True:
-            for container in client.containers.list():
+            logger.debug("Checking health of all resources")
+            for resource, container in containers.items():
                 # Check container health.
-                health = container.healthcheck.get('Status')
-                if health != 'Up':
-                    logger.warning(f"{container.name} health check failed, restarting...")
-                    container.restart()
-
-                else:
-                    logger.debug(f"{container.name} health check succeeded")
+                health = container.attrs['State']['Health']['Status']
+                if health != 'healthy':
+                    restart_with_deps(resource)
             time.sleep(5)
 
     except KeyboardInterrupt:
-        logger.info("Keyboard interrupt received, shutting down...")
+        logger.info("Keyboard interrupt received, shutting down all resources...")
         # Stop containers in reverse order.
-        for container in reversed(client.containers.list()):
-            logger.info(f"Stopping {container.name}")
-            container.stop()
+        for resource in reversed(list(containers.keys())):
+            logger.info(f"Stopping resource {resource}")
+            containers[resource].stop()
         logger.info("All resources stopped")
 
 
