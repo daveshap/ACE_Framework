@@ -9,7 +9,7 @@ The idea here is that we will probably also learn valuable lessons before we sca
 ### Acceptance Criteria
 
 1. **Python:** Must be Python-native or at least mostly Python. This is to maximize for accessibility and learning. Thus we should avoid too many exotic requirements, such as other servers or interpreters. 
-2. **Hackable:** Must be optimized for easy copy/pasta and/or tinkering. Hackability will increase immediate utility and adoption. It will also make it easier for people to poke and modify. Furthermore, by starting with a "hackability" mindset, this will set the stage for polymorphic implementations later. 
+2. **Hackable:** Must be optimized for easy copy/paste and/or tinkering. Hackability will increase immediate utility and adoption. It will also make it easier for people to poke and modify. Furthermore, by starting with a "hackability" mindset, this will set the stage for polymorphic implementations later. 
 3. **Simple & Easy:** Must be relatively easy to setup and deploy. Ideally, little more than `pip install -r requirements.txt` followed by `python ace.py` or something like that. Again, this is to maximize uptake for people such as novices and college students. Future versions can be more involved, such as with containers and such.
 4. **Visual:** Must have some kind of visual (PyGame, Web UI, Tkinter, whatever) that can give users at least a little "peek under the hood" plus some intuitive usability. Ideally it would ultimately have some kind of audiovisual avatar, but this is more of a long-term idea. 
 5. **Full ACE:** Must implement all six layers and both buses with clear dilineations and demarcations. In other words, it must be a true and full implementation of the ACE Framework. 
