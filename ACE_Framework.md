@@ -32,7 +32,7 @@ The ACE framework provides a conceptual blueprint for autonomous agents that are
 - [Layer 4: Executive Function](#layer-4-executive-function)  
 - [Layer 5: Cognitive Control](#layer-5-cognitive-control)  
 - [Layer 6: Task Prosecution](#layer-6-task-prosecution)
-- [Security](#security)
+- [System Integrity Overlay](#system-integrity)
 
 Here's a YouTube video I made as a deep dive walkthrough of this repo: https://youtu.be/A_BL_pu4Gtk 
 
@@ -754,56 +754,68 @@ By cyclically executing these steps, the layer prosecutes assigned tasks while p
 
 
 
-# Security
 
-The creation of sophisticated autonomous systems carries immense promise to benefit society, but also poses potential risks if not developed safely and responsibly. As autonomous agents become more capable and widespread, human oversight will become increasingly challenging. Furthermore, highly capable agents may reach a point where they can modify themselves or block human attempts to interfere. 
+# System Integrity 
 
-To mitigate these risks, the ACE framework must incorporate architectural strategies and best practices to ensure stability, self-correction, transparency, and integrity across large fleets of decentralized autonomous entities. This security focus aims to make ACE agents inherently resistant to unaligned runaway recursions, adversarial manipulations, and other potentially dangerous phenomena.
+The System Integrity layer serves as an independent monitor and custodian focused on maximizing the safety, security and stability of the overall ACE framework. By operating outside of the main cognition pathways, it provides an objective vantage point for oversight.
 
-We propose three core strategies to achieve principled security within the ACE framework:
+## Out-of-Band Architecture
 
-1. A dedicated **Security Overlay** that provides system-wide threat monitoring across all layers and communication buses. This stateless overlay allows holistic protection without compromising autonomy.
+The System Integrity layer is implemented as an overlay that is isolated from the main cognition components and pathways of the ACE framework. It takes an "out-of-band" approach with the following implications:
 
-2. **Ensemble Models** within each layer, using diversity and voting schemes to prevent individual model failure or manipulation from skewing outputs. 
+- Dedicated networks and APIs allow read-only monitoring of components without routing through standard buses. This prevents inspection data from entering cognition pipelines.
+- The layer has authority to take protective actions like restarting components independently of other layers. It serves as an autonomous supervisor. 
+- For the near-term, keeping monitoring data out of the ACE's cognition pathways reduces risks from goal drifts or adversarial manipulations that could exploit the information.
+- In the future, as ACE implementations mature, inspection data could be routed into cognition pathways or a dedicated integrity bus to support self-modification abilities. But ethical constraints would need to be implemented carefully.
 
-3. **Inference Inspection** processes that continuously monitor all inputs and outputs of models to detect alignment drifts or deviations from expected behaviors.
+By architecting the System Integrity layer as an out-of-band solution for now, ACE frameworks can benefit from its oversight capabilities while minimizing risks as autonomous abilities advance.
 
-Together, these techniques can maximize the safety and reliability of autonomous systems developed using the ACE framework. With robust security built into its architecture, the framework promotes transparency, oversight, and ethical alignment across decentralized networks of ACE agents.
+## Operational State Inspection
 
-## Security Overlay  
+The System Integrity layer uses dedicated diagnostic APIs and networks to monitor the real-time status of all components within an ACE implementation. This includes:
 
-A dedicated security overlay should monitor and inspect all layers and models within the ACE architecture. This overlay serves as an out-of-band monitoring system that is isolated from the main cognition pipelines. It implements several heuristics and best practices for security:
+- Heartbeat monitoring of each layer's container/VM to ensure availability.
+- Tracking resource usage like CPU, memory, storage for all components.
+- Listening to events from orchestration platforms to detect container failures.
+- Probing network connectivity between layers and buses.
+- Checking IO devices and sensors for failures.
 
-- Stateless packet inspection of all northbound and southbound interlayer communications. This allows read-only monitoring of messaging without interference.
+Any degradation in services or communication issues between components triggers automated recovery actions like restarting containers or reverting to known good configurations. Operational inspection safeguards availability.
 
-- Runtime validation of model configurations and update protocols to prevent unverified modifications.
+## Configuration Tracking 
 
-- Continuous alignment analysis by presenting corner case inputs and probing for deviations from expected model behaviors based on training. 
+As an ACE framework evolves via updates or self-modification, the System Integrity layer maintains a complete inventory of configuration changes including: 
 
-- Privacy protection and encryption of data flows to prevent unauthorized access or tampering.
+- Version histories of critical software/models
+- Checksums validated during secure boot sequences
+- Settings modifications across components
+- Validation metrics quantifying the impacts of changes on performance
 
-By taking an end-to-end approach across all layers, the security overlay provides broad visibility into system-wide operations for enhanced protection.
+By diligently recording configuration updates and measuring their effects, the layer can easily rollback changes that reduce stability or alignment. This protects integrity.
 
-## Ensemble Models
+## Security Best Practices
 
-Within each layer, critical functions should leverage ensemble modeling techniques. This means utilizing a diverse collection of models trained with different techniques on different datasets. Ensemble strategies such as mixture-of-experts voting are then used to derive consensus predictions and decisions across models.
+The layer implements cybersecurity best practices including:
 
-The diversity of ensemble components provides resilience against individual model biases and limitations. Combining multiple perspectives minimizes the risk of any single model skewing outputs or being manipulated.
+- Encryption of data in transit and at rest.
+- Role-based access controls on APIs.  
+- Validation of software via checksums before launch.
+- Firewalls, VPNs, and other network security controls.  
+- Automated vulnerability scanning.
+- Protected execution environments for critical workloads.
+- Failsafes and kill-switches to enable self-termination.
 
-Model selection and model training can be integrated into the Agent Model layer later on. 
+These capabilities guard against adversaries and unintended modifications.
 
-## Inference Inspection
+## Model Inspection
 
-Closely monitoring the inference behavior of models can catch alignment drifts or adversarial manipulations. The security overlay should implement inference inspection by: 
+The System Integrity layer validates and monitors all AI/ML models to ensure proper functioning. This involves:
 
-- Logging all inputs to models and their resulting outputs.
+- Running ensemble models and comparison analytics.
+- Logging all inputs and outputs for inspection.
+- Testing models against known ground truths.
+- Detecting alignment drifts or unfair outputs.   
 
-- Testing models with known ground truth data and confirming expected outputs are produced.
+By verifying model behavior, the system integrity layer guarantees learned components operate as intended.
 
-- Checking outputs for signs of bias and confirming fairness across protected categories.
-
-- Alerting human operators to statistically significant deviations in model behavior for evaluation.
-
-Ongoing inference inspection ensures models continue to behave as intended over their operational lifetimes.
-
-By combining strong isolation, diversity, and continuous validation, this layered security approach maximizes the safety and robustness of ACE implementations. Adopting these best practices will be critical for developing trustworthy autonomous systems.
+Together, these comprehensive monitoring, maintenance and security capabilities maximize the safety and stability of ACE frameworks. Please let me know if any part needs additional detail! I'm happy to expand any section.
