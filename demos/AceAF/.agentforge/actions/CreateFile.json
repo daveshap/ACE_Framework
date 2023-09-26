@@ -1,0 +1,7 @@
+{
+  "Name": "Create File",
+  "Description": "This action first uses the 'Read Directory' tool to display the structure of a directory, then utilizes the 'Write File' tool to write or append text to a specified file in a given directory. It offers the flexibility to either create a new file or append to an existing one.",
+  "Example": "directory_structure = read_directory(directory, max_depth=3); response = write_file('path/to/folder', 'filename.txt', 'This is the content', mode='a')",
+  "Instruction": "Start by using the 'Read Directory' tool to view the structure of a directory, specifying a dictionary that represents the directory structure and an optional depth. Then, to create or modify a file, specify the target folder, the desired filename, and the content you wish to write. Optionally, provide a mode ('a' for append and 'w' for overwrite) to determine how the content should be added to the file.",
+  "Tools": "Read Directory, Write File"
+}

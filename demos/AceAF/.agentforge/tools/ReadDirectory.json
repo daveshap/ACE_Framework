@@ -1,0 +1,9 @@
+{
+  "Name": "Read Directory",
+  "Args": "directory_path (str), max_depth (int=3)",
+  "Command": "read_directory",
+  "Description": "The 'Read Directory' tool prints the structure of a directory in a tree-like format. It visually represents folders and files, and you can specify how deep the structure should be printed.",
+  "Example": "read_directory(directory_path, max_depth=3)",
+  "Instruction": "The 'read_directory' method requires a dictionary that represents the directory structure. An optional max_depth parameter can be provided to decide how many levels deep to display the structure. By default, it goes up to 3 levels deep. Your default working directory is \"./Workspace\"",
+  "Script": "agentforge.tools.Directory"
+}

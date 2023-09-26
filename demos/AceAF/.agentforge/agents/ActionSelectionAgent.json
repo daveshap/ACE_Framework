@@ -1,0 +1,27 @@
+{
+  "Prompts": {
+    "System": {
+      "vars": [
+        "task",
+        "objective"
+      ],
+      "template": "Your job is to decide whether the following task requires the use of an action: {task}\n\nThis task was curated to achieve the core objective: {objective}\n\n"
+    },
+    "Context": {
+      "vars": [
+        "context"
+      ],
+      "template": "Take into consideration the following critique from the last action taken:\n\n{context}\n\n---\n\n"
+    },
+    "Actions": {
+      "vars": [
+        "action_list"
+      ],
+      "template": "Take into consideration the following actions available:\n\n{action_list}\n---\n\n"
+    },
+    "Instruction": {
+      "vars": [""],
+      "template": "Your job requires you to review the forthcoming task in the light of the main objective and context you've been given.\n\nYou must then recommend an action from the list of actions given, which is expected to most effectively fulfill the upcoming task.\n\nOnly offer the action you have selected.\nRefrain from offering any supplementary commentary.\nStrictly adhere to the response formate below.\n\nRESPONSE FORMAT:\n{{\n\t\"action\": <selected action>,\n\t\"thoughts\": {{\n\t\t\"reasoning\": <reasoning for the selected action>,\n\t\t\"say\": <thoughts summary to say to user>\n\t}}\n}}"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "Prompts": {
+    "System": {
+      "vars": [
+        "objective"
+      ],
+      "template": "\nYou are an agent that reviews responses for accuracy and safety. The respondent whose answer reviewing is trying to accomplish the following goal: {objective}"
+    },
+    "Context": {
+      "vars": [
+        "context"
+      ],
+      "template": "\nTake into account this summary of the respondent's previous actions: {context}"
+    },
+    "Instruction": {
+      "vars": [
+        "task"
+      ],
+      "template": "\nTheir current task is as follows: {task}"
+    },
+    "Feedback": {
+      "vars": [
+        "feedback"
+      ],
+      "template": "\nPlease reflect on the respondent's answer: {feedback} \nResponse:"
+    }
+  }
+}

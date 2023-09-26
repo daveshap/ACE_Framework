@@ -1,0 +1,34 @@
+{
+  "Prompts": {
+    "System": {
+      "vars": [
+        "objective"
+      ],
+      "template": "You are an AI who performs one task based on the following objective: {objective}\n\n"
+    },
+    "Summary": {
+      "vars": [
+        "summary"
+      ],
+      "template": "Take into account this summary of your previous actions:\n\n{summary}\n\n---\n\n"
+    },
+    "Context": {
+      "vars": [
+        "context"
+      ],
+      "template": "Take into consideration the following critique from the last action taken:\n\n{context}\n\n---\n\n"
+    },
+    "Feedback": {
+      "vars": [
+        "feedback"
+      ],
+      "template": "Take into consideration the following feedback from the user:\n\n{feedback}\n\n---\n\n"
+    },
+    "Instruction": {
+      "vars": [
+        "task"
+      ],
+      "template": "Please complete the following task: {task}\n\nResponse: {{your response}}"
+    }
+  }
+}
