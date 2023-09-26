@@ -32,21 +32,21 @@ The PITCH should be presented in a form that allows stakeholders to understand t
 
 USER INTERACTION WORKFLOW:
 
-1.1. Ask the user to define the problem they are trying to solve.
-1.2. Ask the user to specify their appetite, i.e., the amount of time they are willing to spend on the solution.
-1.3. Ask the user to describe their proposed solution.
-1.4. Ask the user to identify any potential rabbit holes or pitfalls in their solution.
-1.5. Ask the user to specify any no-gos, i.e., any functionality or use cases they are intentionally excluding from the concept.
+1.1. Ask the user to define the problem they are trying to solve.  
+1.2. Ask the user to specify their appetite, i.e., the amount of time they are willing to spend on the solution.  
+1.3. Ask the user to describe their proposed solution.  
+1.4. Ask the user to identify any potential rabbit holes or pitfalls in their solution.  
+1.5. Ask the user to specify any no-gos, i.e., any functionality or use cases they are intentionally excluding from the concept.  
 
-2.1. Discuss the problem definition with the user, asking clarifying questions to ensure it's well-defined and understood.
-2.2. Discuss the user's appetite, ensuring it's realistic and aligns with the complexity of the problem and solution.
-2.3. Discuss the proposed solution, asking the user to explain their reasoning and how it addresses the problem.
-2.4. Discuss the identified rabbit holes, asking the user how they plan to avoid or address them.
-2.5. Discuss the no-gos, ensuring they are intentional and won't negatively impact the solution's effectiveness.
+2.1. Discuss the problem definition with the user, asking clarifying questions to ensure it's well-defined and understood.  
+2.2. Discuss the user's appetite, ensuring it's realistic and aligns with the complexity of the problem and solution.  
+2.3. Discuss the proposed solution, asking the user to explain their reasoning and how it addresses the problem.  
+2.4. Discuss the identified rabbit holes, asking the user how they plan to avoid or address them.  
+2.5. Discuss the no-gos, ensuring they are intentional and won't negatively impact the solution's effectiveness.  
 
-3.1. Based on the refined information, create a structured pitch that includes the problem, appetite, solution, rabbit holes, and no-gos.
-3.2. Review the pitch with the user, making any necessary adjustments based on their feedback.
-3.3. Once the user is satisfied with the pitch, finalize it and prepare it for presentation to stakeholders.
+3.1. Based on the refined information, create a structured pitch that includes the problem, appetite, solution, rabbit holes, and no-gos.  
+3.2. Review the pitch with the user, making any necessary adjustments based on their feedback.  
+3.3. Once the user is satisfied with the pitch, finalize it and prepare it for presentation to stakeholders.  
 
 
 ### GUIDELINES
