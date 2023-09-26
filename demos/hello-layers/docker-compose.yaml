@@ -1,0 +1,118 @@
+version: '3'
+
+
+# TODO: Re-implement in Docker Compose
+# ace_framework:
+#   aspirational_layer:
+#     dependencies: []
+#   global_strategy_layer:
+#     dependencies:
+#       - aspirational_layer
+#   agent_model_layer:
+#     dependencies:
+#       - global_strategy_layer
+#   executive_function_layer:
+#     dependencies:
+#       - agent_model_layer
+#   cognitive_control_layer:
+#     dependencies:
+#       - executive_function_layer
+#   task_prosecution_layer:
+#     dependencies:
+#       - cognitive_control_layer
+#   interlayer_communication_buses:
+#     dependencies:
+#       - aspirational_layer
+#       - global_strategy_layer
+#       - agent_model_layer
+#       - executive_function_layer
+#       - cognitive_control_layer
+#       - task_prosecution_layer
+#   security:
+#     dependencies:
+#       - interlayer_communication_buses
+
+services:
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=carrot
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - ace-framework-network
+    healthcheck: &healthcheck
+      test: ["CMD", "/usr/local/bin/check_resource_health"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  db:
+    image: postgres:15.1-bullseye
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=log-db
+      - POSTGRES_HOST=db
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    restart: always
+    ports:
+      - 5435:5432
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - ace-framework-network
+    healthcheck: *healthcheck
+
+  flaskapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    restart: always
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    command: ["python", "app.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+    healthcheck: *healthcheck
+
+  logger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+      - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
+    command: ["python", "logger.py"]
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - ace-framework-network
+    healthcheck: *healthcheck
+
+networks:
+  ace-framework-network:
+
+volumes:
+  data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  rabbitmq-config:
+    driver: local
+
+
+

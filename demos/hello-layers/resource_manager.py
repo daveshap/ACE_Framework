@@ -3,6 +3,9 @@ import yaml
 import time
 import logging
 import signal
+import subprocess
+
+DOCKER_COMPOSE_FILE = 'docker-compose.yaml'
 
 
 def main():
@@ -10,27 +13,30 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger('manage_containers')
 
-    # Load dependencies.
-    with open('config.yaml') as f:
-        deps = yaml.safe_load(f)
+    # Start containers based on dependencies.
+    try:
+        logger.info("Starting containers")
+        subprocess.check_call(["docker-compose", "up", "--build", "-d"])
+        logger.info("Containers started")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Docker Compose up command failed with error: {e}")
+        raise
+
+    # Load docker-compose.yaml.
+    logger.debug(f"Loading docker-compose file: {DOCKER_COMPOSE_FILE}")
+    with open(DOCKER_COMPOSE_FILE) as f:
+        compose_config = yaml.safe_load(f)
+    # Extract dependencies.
+    logger.debug(f"Extracting dependencies for services: {compose_config['services'].keys()}")
+    services = {service: config.get('depends_on', []) for service, config in compose_config['services'].items()}
+
     # Initialize Docker client.
+    logger.debug("Initializing Docker client")
     client = docker.from_env()
 
-    # Start containers based on dependencies.
-    containers = {}
-    for resource, config in deps['ace_framework'].items():
-        # Start dependencies first using docker-py.
-        containers[resource] = client.containers.run(f"{resource}:latest",
-                                                     name=resource,
-                                                     detach=True,
-                                                     healthcheck={
-                                                         "test": ["CMD", "/usr/local/bin/check_resource_health"],
-                                                         "interval": 5000000000,
-                                                         "timeout": 3000000000,
-                                                         "start_period": 0,
-                                                         "retries": 3
-                                                     })
-        logger.info(f"Resource {resource} started")
+    # Get container objects for the services.
+    logger.debug(f"Extracting container objects for services: {services.keys()}")
+    containers = {service: client.containers.get(service) for service in services.keys()}
 
     def restart_with_deps(resource, restarted=None):
         restarted = restarted or set()
@@ -40,9 +46,9 @@ def main():
         logger.warning(f"Restarting resource {resource} and its dependencies...")
         containers[resource].restart()
         restarted.add(resource)
-        for dep, config in deps['ace_framework'].items():
-            if resource in config['dependencies']:
-                restart_with_deps(dep, restarted)
+        for service, deps in services.items():
+            if resource in deps:
+                restart_with_deps(service, restarted)
 
     try:
         while True:
