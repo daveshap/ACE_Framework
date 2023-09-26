@@ -2,3 +2,5 @@
 .idea/
 
 demos/AceAF/logs/
+/demos/AceAF/DB/
+/demos/AceAF/salience.py
