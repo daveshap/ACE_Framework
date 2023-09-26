@@ -1,0 +1,74 @@
+{
+  "Persona" : {
+    "selected" : "persona"
+  },
+  "Objective": "Create a batch file that can update a pip library as a test build, separate from the main distribution.",
+  "Storage": {
+    "Tasks": [
+      "Plan the Batch File: Outline the commands that will be included, such as activation of a virtual environment, installation or upgrading of the library, and any additional steps like running tests.",
+      "Create the Batch File",
+      "Document the Batch File: Include comments within the batch file to explain what each command does. Provide external documentation if this batch file will be used by other team members."
+    ],
+    "Results": "",
+    "Tools": "",
+    "Actions": ""
+  },
+  "ChromaDB" : {
+    "chroma_db_impl" : "duckdb+parquet",
+    "persist_directory" : "./DB/ChromaDB",
+    "collection_name" : "collection-test",
+    "DBFreshStart" : "True",
+    "embedding" : "all-distilroberta-v1"
+  },
+  "EmbeddingLibrary" : {
+    "library" : "sentence_transformers"
+  },
+  "LanguageModelAPI" : {
+    "library" : "openai_api",
+    "oobabooga" : "oobabooga_api",
+    "oobaboogaV2" : "oobabooga_v2_api"
+  },
+  "ModelLibrary" : {
+    "claude" : "claude-1",
+    "fast_model" : "gpt-3.5-turbo-0613",
+    "smart_model" : "gpt-4"
+  },
+  "StorageAPI" : {
+    "selected" : "chroma"
+  },
+  "Pinecone" : {
+    "environment" : "us-east4-gcp",
+    "index_name" : "test-table",
+    "dimension" : "768"
+  },
+  "Defaults" : {
+    "API" : "openai_api",
+    "Model": "fast_model",
+    "Params": {
+      "max_new_tokens": 2000,
+      "temperature": 0.5,
+      "top_p": 0.9,
+      "n": 1,
+      "stop": null,
+      "do_sample": true,
+      "return_prompt": false,
+      "return_metadata": false,
+      "typical_p": 0.95,
+      "repetition_penalty": 1.05,
+      "encoder_repetition_penalty": 1.0,
+      "top_k": 0,
+      "min_length": 0,
+      "no_repeat_ngram_size": 2,
+      "num_beams": 1,
+      "penalty_alpha": 0,
+      "length_penalty": 1.0,
+      "early_stopping": false,
+      "pad_token_id": null,
+      "eos_token_id": null,
+      "use_cache": true,
+      "num_return_sequences": 1,
+      "bad_words_ids": null,
+      "seed": -1
+    }
+  }
+}

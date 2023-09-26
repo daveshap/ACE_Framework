@@ -1,0 +1,23 @@
+{
+  "Web_Scrape": {
+    "Args": "url: {url}",
+    "Command": "get_plain_text",
+    "Description": "The 'WebScraper' tool is used to pull all text from a webpage. Simply provide the web address (URL), and the tool will return the webpage's content in plain text.",
+    "Example": "scrapped = web_scrape.get_plain_text(url)",
+    "Instruction": "The 'get_plain_text' method of the 'WebScraper' instance takes a URL as an input, which represents the webpage to scrape. It returns the textual content of that webpage as a string. You can send only one URL, so if you receive more than one, choose the most likely URL to contain the results you expect."
+  },
+  "Intelligent_Chunk": {
+    "Args": "text: {text}, chunk_size: {int: 0-3}",
+    "Command": "intelligent_chunk",
+    "Description": "The 'Intelligent Chunk' tool splits a provided text into smaller, manageable parts or 'chunks'. The user decides the size of these chunks based on their needs.",
+    "Example": "chunks = intelligent_chunk(text, chunk_size)",
+    "Instruction": "The 'intelligent_chunk' function takes a string of text and a chunk size as inputs. The chunk size is an integer that determines the number of sentences per chunk: 0 for 5 sentences, 1 for 13 sentences, 2 for 34 sentences, and 3 for 55 sentences. The function returns a list of text chunks, each containing a specified number of sentences."
+  },
+  "Google_Search": {
+    "Args": "query: {text}, number_result: {int}",
+    "Command": "google_search",
+    "Description": "The 'GoogleSearch' tool searches the web for a specified query and retrieves a set number of results. Each result consists of a URL and a short snippet describing its contents.",
+    "Example": "search_results = google.google_search(query, number_of_results)",
+    "Instruction": "The 'google_search' function takes a query string and a number of results as inputs. The query string is what you want to search for, and the number of results is how many search results you want returned. The function returns a list of tuples, each tuple containing a URL and a snippet description of a search result."
+  }
+}

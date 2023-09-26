@@ -1,0 +1,23 @@
+{
+  "Prompts": {
+    "System": {
+      "vars": [
+        "task",
+        "objective"
+      ],
+      "template": "Your task is to prepare for the following assignment: {task}\n\nThis task was curated to achieve the core goal: {objective}\n\n"
+    },
+    "Context": {
+      "vars": [
+        "context"
+      ],
+      "template": "Take into consideration the following critique from the last action taken:\n\n{context}\n\n---\n\n"
+    },
+    "Instruction": {
+      "vars": [
+        ""
+      ],
+      "template": "Your job requires you to review the forthcoming task in the light of the main objective and context you've been given.\n\nYou must recommend an action alongside a description of that action, which is expected to most effectively fulfill the upcoming task.\n\nPlease adhere to the following example for your response:\n\nAction Name: Web search\n\nDescription: This action executes a Google search with a query, extracts the text from one of the retrieved URLs, and divides the harvested text into smaller portions\n\nOnly offer the action you have selected.\nStrictly adhere to the given format.\nRefrain from offering any supplementary commentary."
+    }
+  }
+}
