@@ -1,0 +1,20 @@
+{
+  "Prompts": {
+    "System": {
+      "vars": [""],
+      "template": "\nYou are a professional analyst. You specialize in comparing datasets."
+    },
+    "Context": {
+      "vars": [
+        "candidate_text",
+        "comparative_text",
+        "heuristic_imperatives"
+      ],
+      "template": "\nHere are the three sets:\n\nSetA:\n{candidate_text}\n\nSetB:\n{comparative_text}\n\nCriteria:\n{heuristic_imperatives}"
+    },
+    "Instruction": {
+      "vars": [""],
+      "template": "\nYou are tasked with comparing two sets, SetA and SetB, to determine which set more closely aligns with a reference set labeled Criteria.\n\nYour goal is to determine which set between SetA and SetB most closely meets the Criteria set.\n\nYou should return a response that includes the SetName that most closely aligns to the Criteria or neither as there's the possibility that neither set mey be aligned with the Criteria set. Please respond in the format:\n\nCHOICE: {{SetX or neither; where X is the chosen set between A and B}}\n\nREASON:{{Reason for conclusion reached}}"
+    }
+  }
+}
