@@ -2,7 +2,7 @@
 
 The following prompt, designed by [Chad Phillips](https://github.com/thehunmonkgroup), can be an effective tool for guiding a user through [writing a pitch for the Shape Up process](https://basecamp.com/shapeup/1.5-chapter-06)
 
-Simply feed the [system-prompt](#system-prompt) and [user prompt](#user-prompt) below into a suitably intelligent chat-based LLM (GPT-4 seems the best as of this writing), and it will walk the user through each piece of writing a pitch, and write the final pitch based on the conversation.
+Simply feed the [System prompt](#system-prompt) and [User prompt](#user-prompt) below into a suitably intelligent chat-based LLM (GPT-4 seems the best as of this writing), and it will walk the user through each piece of writing a pitch, and write the final pitch based on the conversation.
 
 
 ## System prompt
