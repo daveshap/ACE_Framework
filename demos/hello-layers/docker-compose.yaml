@@ -1,6 +1,22 @@
 version: '3'
 
 
+# x-environment: &default_environment
+#   - AMQP_HOST_NAME=rabbitmq
+#   - AMQP_USERNAME=rabbit
+#   - AMQP_PASSWORD=carrot
+#
+# services:
+#   service1:
+#     environment:
+#       <<: *default_environment
+#       - ADDITIONAL_ENV_VAR1=value1
+#
+#   service2:
+#     environment:
+#       <<: *default_environment
+#       - ADDITIONAL_ENV_VAR2=value2
+
 # TODO: Re-implement in Docker Compose
 # ace_framework:
 #   aspirational_layer:
