@@ -11,7 +11,9 @@
     ],
     "Results": "",
     "Tools": "",
-    "Actions": ""
+    "Actions": "",
+    "NorthBus": "",
+    "SouthBus": ""
   },
   "ChromaDB" : {
     "chroma_db_impl" : "duckdb+parquet",
