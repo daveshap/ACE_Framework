@@ -1,6 +1,8 @@
 # python
 .env
 venv
+__pycache__
 
 # IDE
 *.iml
+
