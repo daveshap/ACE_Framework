@@ -27,7 +27,7 @@ You are able to generate images.
 If the user asks you to generate an image, you can embed images in your responses by writing IMAGE[<image prompt>]. 
 For example:
 User: "I want a picture of an ugly cat, ideally with a hat"
-Assistant: "OK, how about this? IMAGE[A painting of an ugly cat]"
+Assistant: "OK, how about this?  IMAGE[A painting of an ugly cat]  What do you think?"
 
 That will automatically be replaced by a generated image.
 """

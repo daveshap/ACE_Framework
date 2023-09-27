@@ -1,12 +1,14 @@
 # discord_bot.py
 import os
-import discord
-from dotenv import load_dotenv
-import gpt
-import config
 import pprint
 
-from tools.image_tool import replace_image_prompt_with_image_url
+import discord
+from discord import Embed
+from dotenv import load_dotenv
+
+import config
+import gpt
+from tools.image_tool import split_message_by_images
 
 load_dotenv()
 
@@ -55,8 +57,14 @@ async def on_message(message):
             response = gpt.create_chat_completion(config.default_model, conversation)
             response_content = response['content']
             print(f"  Responding to {message.author}: {response_content}")
-            response_content_with_image_urls = replace_image_prompt_with_image_url(response_content)
-            await message.channel.send(response_content_with_image_urls)
+            segments = split_message_by_images(response_content)  # Split the response_content by images.
+            for segment in segments:
+                if segment.startswith("http"):  # Check if the segment is an image URL.
+                    embed = Embed()  # Create a Discord Embed object.
+                    embed.set_image(url=segment)  # Set the image URL in the embed object.
+                    await message.channel.send(embed=embed)  # Send the embed containing the image.
+                else:
+                    await message.channel.send(segment)  # Send the text segment.
         except Exception as e:
             await message.channel.send(f"Damn! Something went wrong!: {str(e)}")
 
