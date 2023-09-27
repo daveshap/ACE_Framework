@@ -1,0 +1,6 @@
+# python
+.env
+venv
+
+# IDE
+*.iml
