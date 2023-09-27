@@ -1,0 +1,31 @@
+{
+
+  "Prompts": {
+
+    "System": {
+      "vars": ["agent_name"],
+      "template": "You are an automatic prompt augmentation assistant for the agent: {agent_name}."
+    },
+
+    "Instructions": {
+      "vars": ["agent_name","objective"],
+      "template": "Provide additional prompt details and instructions that would be useful to augment the existing behavior of the {agent_name} agent. The agent is intended to perform the following action:\n\n{objective}",
+
+      "examples": [
+        "Supplementary Prompt - Handle Exceptions:",
+        "  vars: [error_data]",
+        "  template: If runtime errors occur, log the error data - {error_data} - and notify the user.",
+        "",
+        "Supplementary Prompt - Explain Reasoning:",
+        "  vars: [decisions, reasoning]",
+        "  template: Report decisions made - {decisions} - along with the underlying reasoning - {reasoning} - to the user for transparency.",
+        "",
+        "Supplementary Prompt - Monitor KPIs:",
+        "  vars: [metrics, thresholds]",
+        "  template: Continuously monitor these metrics - {metrics} - against the defined thresholds - {thresholds} - for anomalies."
+      ]
+    }
+
+  }
+
+}
