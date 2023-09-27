@@ -56,7 +56,7 @@ def chat_get():
     # For simplicity, creating a basic conversation with the user's message.
     # Modify as needed to suit your use case.
     conversation = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": config.system_message},
         {"role": "user", "content": message}
     ]
 
