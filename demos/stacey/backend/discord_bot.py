@@ -21,4 +21,8 @@ async def on_message(message):
     if 'stacey' in message.content.lower():
         await message.channel.send('Hello! Stacey here.')
 
-client.run(os.getenv("DISCORD_BOT_TOKEN"))
+def run():
+    client.run(os.getenv("DISCORD_BOT_TOKEN"))
+
+if __name__ == '__main__':
+    run()

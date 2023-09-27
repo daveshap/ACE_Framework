@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import the CORS library
 from dotenv import load_dotenv
@@ -61,6 +62,8 @@ def chat_get():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+def run():
+    app.run(port=5000, debug=False)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    run()
