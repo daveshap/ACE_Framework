@@ -1,4 +1,6 @@
 # Stacey
+![stacey-160.png](frontend/public/images/stacey-160.png)
+
 This a work-in-progress demo prototype for the ace framework.
 
 Currently this is a simple GPT chatbot that you can talk to through the web or discord.
@@ -20,4 +22,9 @@ Surf to http://localhost:5000/chat?message=hi to test the backend & openai conne
 - `npm install`
 - `npm run dev`
 
-Surf to http://localhost:3000
+Surf to http://localhost:3000 and start chatting.
+
+## Discord
+
+Here's info about to get Stacey into a discord server
+https://discordpy.readthedocs.io/en/stable/discord.html#discord-intro
