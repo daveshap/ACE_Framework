@@ -19,6 +19,7 @@ Surf to http://localhost:5000/chat?message=hi to test the backend & openai conne
 
 ## Frontend
 - `cd frontend`
+- `cp .env.example .env.local`
 - `npm install`
 - `npm run dev`
 
