@@ -1,9 +1,12 @@
+# discord_bot.py
 import os
 import discord
 from dotenv import load_dotenv
 import gpt
 import config
 import pprint
+
+from tools.image_tool import replace_image_prompt_with_image_url
 
 load_dotenv()
 
@@ -49,10 +52,11 @@ async def on_message(message):
         conversation.append({"role": "user", "name": user_name, "content": message.content})
 
         try:
-            print(f"  Sending conversation to GPT-3: {pprint.pformat(conversation)}")
-            response = gpt.create_chat_completion('gpt-3.5-turbo', conversation)
-            print(f"  Responding to {message.author}: {response['content']}")
-            await message.channel.send(response['content'])
+            response = gpt.create_chat_completion(config.default_model, conversation)
+            response_content = response['content']
+            print(f"  Responding to {message.author}: {response_content}")
+            response_content_with_image_urls = replace_image_prompt_with_image_url(response_content)
+            await message.channel.send(response_content_with_image_urls)
         except Exception as e:
             await message.channel.send(f"Damn! Something went wrong!: {str(e)}")
 

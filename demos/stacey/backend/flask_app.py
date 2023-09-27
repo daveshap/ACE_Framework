@@ -1,14 +1,16 @@
 # flask_app.py
 from flask import Flask, request, jsonify
-from flask_cors import CORS  # Import the CORS library
+from flask_cors import CORS
 from dotenv import load_dotenv
 import gpt
 import config
+from tools.image_tool import replace_image_prompt_with_image_url
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
 
 @app.route('/')
 def root():
@@ -34,10 +36,11 @@ def chat():
 
     try:
         response = gpt.create_chat_completion(model, conversation)
+        response.content = replace_image_prompt_with_image_url(response.content, markdown=True)
         return jsonify(response)
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 400
-
 
 
 @app.route('/chat', methods=['GET'])
@@ -57,13 +60,15 @@ def chat_get():
     ]
 
     try:
-        response = gpt.create_chat_completion('gpt-3.5-turbo', conversation)
+        response = gpt.create_chat_completion(config.default_model, conversation)
         return response.content
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+
 def run():
     app.run(port=5000, debug=False)
+
 
 if __name__ == '__main__':
     run()
