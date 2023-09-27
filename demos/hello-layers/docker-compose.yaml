@@ -1,106 +1,185 @@
 version: '3'
 
+x-python-image: &default_python_image python:3.11-slim
+x-networks: &default_networks
+  - ace-framework-network
 
-# TODO: Re-implement in Docker Compose
-# ace_framework:
-#   aspirational_layer:
-#     dependencies: []
-#   global_strategy_layer:
-#     dependencies:
-#       - aspirational_layer
-#   agent_model_layer:
-#     dependencies:
-#       - global_strategy_layer
-#   executive_function_layer:
-#     dependencies:
-#       - agent_model_layer
-#   cognitive_control_layer:
-#     dependencies:
-#       - executive_function_layer
-#   task_prosecution_layer:
-#     dependencies:
-#       - cognitive_control_layer
-#   interlayer_communication_buses:
-#     dependencies:
-#       - aspirational_layer
-#       - global_strategy_layer
-#       - agent_model_layer
-#       - executive_function_layer
-#       - cognitive_control_layer
-#       - task_prosecution_layer
-#   security:
-#     dependencies:
-#       - interlayer_communication_buses
+x-build: &default_build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    BASE_IMAGE: *default_python_image
+
+x-rabbitmq-username: &rabbitmq-username rabbit
+x-rabbitmq-password: &rabbitmq-password carrot
+x-rabbitmq-environment: &rabbitmq_environment
+  AMQP_HOST_NAME: rabbitmq
+  AMQP_USERNAME: *rabbitmq-username
+  AMQP_PASSWORD: *rabbitmq-password
+
+x-healthcheck: &healthcheck
+  test: ["CMD", "/usr/local/bin/check_resource_health.py"]
+  interval: 5s
+  timeout: 3s
+  retries: 3
+
+x-command: &default_command ["python3", "main.py"]
 
 services:
 
   rabbitmq:
-    image: "rabbitmq:management"
+    image: rabbitmq:management
+    restart: always
     environment:
-      - RABBITMQ_DEFAULT_USER=rabbit
-      - RABBITMQ_DEFAULT_PASS=carrot
+      RABBITMQ_DEFAULT_USER: *rabbitmq-username
+      RABBITMQ_DEFAULT_PASS: *rabbitmq-password
     ports:
       - "15672:15672"
       - "5672:5672"
-    networks:
-      - ace-framework-network
-    healthcheck: &healthcheck
-      test: ["CMD", "/usr/local/bin/check_resource_health"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+    networks: *default_networks
 
-  db:
-    image: postgres:15.1-bullseye
+  # db:
+  #   image: postgres:15.1-bullseye
+  #   environment:
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_DB=log-db
+  #     - POSTGRES_HOST=db
+  #     - PGDATA=/var/lib/postgresql/data/pgdata
+  #   ports:
+  #     - 5435:5432
+  #   volumes:
+  #     - data:/var/lib/postgresql/data
+  #   networks: *default_networks
+  #   healthcheck: *healthcheck
+  #
+  # flaskapp:
+  #   build:
+  #     <<: *default_build
+  #   ports:
+  #     - "5000:5000"
+  #   environment:
+  #     <<: *rabbitmq_environment
+  #     ACE_RESOURCE_NAME: flaskapp
+  #   command: *default_command
+  #   depends_on:
+  #     - rabbitmq
+  #   networks: *default_networks
+  #     - *default_networks
+  #   healthcheck: *healthcheck
+  #
+  # logger:
+  #   build:
+  #     <<: *default_build
+  #   environment:
+  #     <<: *rabbitmq_environment
+  #     ACE_RESOURCE_NAME: logger
+  #     DATABASE_URI: postgresql://postgres:password@db:5432/log-db
+  #   command: *default_command
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   networks: *default_networks
+  #     - *default_networks
+  #   healthcheck: *healthcheck
+
+  aspirational_layer:
+    build:
+      <<: *default_build
     environment:
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=log-db
-      - POSTGRES_HOST=db
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    restart: always
-    ports:
-      - 5435:5432
-    volumes:
-      - data:/var/lib/postgresql/data
-    networks:
-      - ace-framework-network
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: aspirational_layer
+    command: *default_command
+    networks: *default_networks
     healthcheck: *healthcheck
 
-  flaskapp:
+  global_strategy_layer:
     build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    restart: always
+      <<: *default_build
     environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
-    command: ["python", "app.py"]
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: global_strategy_layer
+    command: *default_command
     depends_on:
-      - rabbitmq
-    networks:
-      - ace-framework-network
+      - aspirational_layer
+    networks: *default_networks
     healthcheck: *healthcheck
 
-  logger:
+  agent_model_layer:
     build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
+      <<: *default_build
     environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
-      - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
-    command: ["python", "logger.py"]
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: agent_model_layer
+    command: *default_command
     depends_on:
-      - db
+      - global_strategy_layer
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  executive_function_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: executive_function_layer
+    command: *default_command
+    depends_on:
+      - agent_model_layer
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  cognitive_control_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: cognitive_control_layer
+    command: *default_command
+    depends_on:
+      - executive_function_layer
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  task_prosecution_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: task_prosecution_layer
+    command: *default_command
+    depends_on:
+      - cognitive_control_layer
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  interlayer_communication_buses:
+    build:
+      <<: *default_build
+    environment:
+      ACE_RESOURCE_NAME: interlayer_communication_buses
+    command: *default_command
+    depends_on:
       - rabbitmq
-    networks:
-      - ace-framework-network
+      - aspirational_layer
+      - global_strategy_layer
+      - agent_model_layer
+      - executive_function_layer
+      - cognitive_control_layer
+      - task_prosecution_layer
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  security:
+    build:
+      <<: *default_build
+    environment:
+      <<: *rabbitmq_environment
+      ACE_RESOURCE_NAME: security
+    command: *default_command
+    depends_on:
+      - interlayer_communication_buses
+    networks: *default_networks
     healthcheck: *healthcheck
 
 networks:
@@ -113,6 +192,3 @@ volumes:
     driver: local
   rabbitmq-config:
     driver: local
-
-
-
