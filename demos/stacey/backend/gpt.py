@@ -14,20 +14,25 @@ def create_chat_completion(model, conversation):
         model=model,
         messages=conversation
     )
-    return chat_completion.choices[0].message
+    response = chat_completion.choices[0].message
+    print(f"  Got response: {response.content}")
+    return response
 
 
 def create_image(prompt, size='256x256'):
     """
     Returns a short-lived image URL
     """
+    print("Generating image for prompt: " + prompt)
     openai.api_key = os.getenv("OPENAI_API_KEY")
     result = openai.Image.create(
         prompt=prompt,
         n=1,
         size=size
     )
-    return result.data[0].url
+    image_url = result.data[0].url
+    print(".... finished generating image for prompt" + prompt + ":\n" + image_url)
+    return image_url
 
 
 if __name__ == '__main__':

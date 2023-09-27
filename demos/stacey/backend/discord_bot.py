@@ -56,7 +56,6 @@ async def on_message(message):
         try:
             response = gpt.create_chat_completion(config.default_model, conversation)
             response_content = response['content']
-            print(f"  Responding to {message.author}: {response_content}")
             segments = split_message_by_images(response_content)  # Split the response_content by images.
             for segment in segments:
                 if segment.startswith("http"):  # Check if the segment is an image URL.
