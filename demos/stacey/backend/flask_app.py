@@ -1,4 +1,4 @@
-# app.py
+# flask_app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import the CORS library
 from dotenv import load_dotenv

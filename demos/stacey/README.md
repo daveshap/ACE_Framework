@@ -10,7 +10,7 @@ Currently this is a simple GPT chatbot that you can talk to through the web or d
 - `python main.py`
 
 That runs both the web server and the discord bot. You can also run just one or the other.
-- `python app.py`
+- `python flask_app.py`
 - `python discord_bot.py`
 
 Surf to http://localhost:5000/chat?message=hi to test the backend & openai connection.
