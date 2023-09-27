@@ -8,7 +8,7 @@ function Chat() {
     const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
-    const [model, setModel] = useState('gpt-3.5-turbo');
+    const [model, setModel] = useState('gpt-4');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     if (!backendUrl) {
