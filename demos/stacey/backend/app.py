@@ -18,6 +18,17 @@ def root():
 
 @app.route('/chat', methods=['POST'])
 def chat():
+    """
+**Sample input:**
+model: "gpt-3.5-turbo"
+conversation: [
+    {"role": "system", "content": "You are a helpful assistant"},
+    {"role": "user", "content": "Say hello to me"}
+]
+
+**Sample output:**
+{"role": "assistant", "content": "Hello, how are you?"}
+"""
     data = request.json
     model = data.get('model', 'gpt-3.5-turbo')
     conversation = data.get('conversation', [])
@@ -31,6 +42,9 @@ def chat():
 
 @app.route('/chat', methods=['GET'])
 def chat_get():
+    """
+    A simpler GET endpoint for quick testing.
+    """
     message = request.args.get('message')
     if not message:
         return jsonify({"error": "message parameter is required"}), 400
