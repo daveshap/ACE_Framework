@@ -1,3 +1,4 @@
 flask
 python-dotenv
 openai
+flask-cors
