@@ -1,0 +1,2 @@
+aio-pika==9.3.0
+pydantic-settings==2.0.3

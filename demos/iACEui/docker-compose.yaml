@@ -1,0 +1,182 @@
+version: '3'
+
+services:
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=carrot
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - ace-framework-network
+
+  api:
+    build:
+      context: ./src/ace/app/api
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  # db:
+  #   image: postgres:15.1-bullseye
+  #   environment:
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_DB=log-db
+  #     - POSTGRES_HOST=db
+  #     - PGDATA=/var/lib/postgresql/data/pgdata
+  #   restart: always
+  #   ports:
+  #     - 5435:5432
+  #   volumes:
+  #     - data:/var/lib/postgresql/data
+  #   networks:
+  #     - ace-framework-network
+
+  # flaskapp:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5000:5000"
+  #   restart: always
+  #   environment:
+  #     - AMQP_HOST_NAME=rabbitmq
+  #     - AMQP_USERNAME=rabbit
+  #     - AMQP_PASSWORD=carrot
+  #   command: ["python", "app.py"]
+  #   depends_on:
+  #     - rabbitmq
+  #   networks:
+  #     - ace-framework-network
+
+  # logger:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   restart: always
+  #   environment:
+  #     - AMQP_HOST_NAME=rabbitmq
+  #     - AMQP_USERNAME=rabbit
+  #     - AMQP_PASSWORD=carrot
+  #     - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
+  #   command: ["python", "logger.py"]
+  #   depends_on:
+  #     - db
+  #     - rabbitmq
+  #   networks:
+  #     - ace-framework-network
+
+
+  layer_1_aspirant:
+    build:
+      context: ./src/ace/app/layer_1_aspirational
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./aspirant.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  layer_2_strategist:
+    build:
+      context: ./src/ace/app/layer_2_global_strategy
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./strategist.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  layer_3_agent:
+    build:
+      context: ./src/ace/app/layer_3_agent_model
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./agent.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  layer_4_executive:
+    build:
+      context: ./src/ace/app/layer_4_executive
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./executive.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  layer_5_controller:
+    build:
+      context: ./src/ace/app/layer_5_cognitive_control
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./controller.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+  layer_6_prosecutor:
+    build:
+      context: ./src/ace/app/layer_6_task_prosecution
+      dockerfile: Dockerfile
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+    restart: always
+    command: ["python", "./prosecutor.py"]
+    depends_on:
+      - rabbitmq
+    networks:
+      - ace-framework-network
+
+networks:
+  ace-framework-network:
+
+volumes:
+  data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  rabbitmq-config:
+    driver: local
