@@ -2,12 +2,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS  # Import the CORS library
 from dotenv import load_dotenv
 import gpt
+import config
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes and origins
-
+CORS(app)
 
 @app.route('/')
 def root():
@@ -21,25 +21,22 @@ def root():
 @app.route('/chat', methods=['POST'])
 def chat():
     """
-**Sample input:**
-model: "gpt-3.5-turbo"
-conversation: [
-    {"role": "system", "content": "You are a helpful assistant"},
-    {"role": "user", "content": "Say hello to me"}
-]
-
-**Sample output:**
-{"role": "assistant", "content": "Hello, how are you?"}
-"""
+    Sample input: {"model": "gpt-3.5-turbo", "conversation": [{"role": "user", "content": "Say hello to me"}]}
+    Sample output: {"role": "assistant", "content": "Hello, how are you?"}
+    """
     data = request.json
     model = data.get('model', 'gpt-3.5-turbo')
     conversation = data.get('conversation', [])
+
+    # Insert Stacey's personality at the beginning of the conversation
+    conversation.insert(0, {"role": "system", "content": config.system_message})
 
     try:
         response = gpt.create_chat_completion(model, conversation)
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 
 @app.route('/chat', methods=['GET'])
