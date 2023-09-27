@@ -23,7 +23,7 @@ def replace_image_prompt_with_image_url(message, markdown=False):
         if markdown:  # Check if the format should be Markdown.
             replacement = f"![{image_prompt}]({image_url})"
         else:
-            replacement = image_url
+            replacement = image_url + " \n"
 
         message = message.replace(f"IMAGE[{image_prompt}]", replacement)  # Replace the IMAGE[<prompt>] in the message.
 
