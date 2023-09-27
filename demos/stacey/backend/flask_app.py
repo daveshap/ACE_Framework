@@ -1,10 +1,11 @@
 # flask_app.py
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv
-import gpt
+
 import config
-from tools.image_tool import replace_image_prompt_with_image_url
+import gpt
+from tools.image_tool import replace_image_prompt_with_image_url_formatted_as_markdown
 
 load_dotenv()
 
@@ -36,7 +37,7 @@ def chat():
 
     try:
         response = gpt.create_chat_completion(model, conversation)
-        response.content = replace_image_prompt_with_image_url(response.content, markdown=True)
+        response.content = replace_image_prompt_with_image_url_formatted_as_markdown(response.content)
         return jsonify(response)
     except Exception as e:
         print(e)
