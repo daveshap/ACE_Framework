@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Box, Textarea, VStack, Text, Container, Alert, Heading, Flex } from '@chakra-ui/react';
+import { Box, Textarea, VStack, Text, Container, Alert, Heading, Flex, Spinner, Image } from '@chakra-ui/react';
 
 function Chat() {
     const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
     const [input, setInput] = useState('');
+    const [loading, setLoading] = useState(false);
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
     if (!backendUrl) {
@@ -15,6 +16,8 @@ function Chat() {
         if (e.key === 'Enter') {
             e.preventDefault();
             setMessages([...messages, { role: 'user', content: input }]);
+            setLoading(true);
+            setInput('');
 
             try {
                 const response = await axios.post(backendUrl + "/chat", {
@@ -25,9 +28,9 @@ function Chat() {
                 setMessages([...messages, { role: 'user', content: input }, response.data]);
             } catch (error) {
                 console.error('Error sending message:', error);
+            } finally {
+                setLoading(false);
             }
-
-            setInput('');
         }
     };
 
@@ -38,21 +41,24 @@ function Chat() {
                 <Box flex="1" overflowY="auto" p={3}>
                     {messages.map((msg, index) => (
                         <Flex key={index} mb={2} direction="column" align={msg.role === 'user' ? 'flex-end' : 'flex-start'}>
-                            <Box p={2} rounded="md" bg={msg.role === 'user' ? 'blue.100' : 'gray.100'}>
-                                <Text>
-                                    <b>{msg.role === 'user' ? 'You' : 'Stacey'}:</b> {msg.content}
-                                </Text>
-                            </Box>
+                            <Flex align="center">
+                                {msg.role !== 'user' && <Image src="/images/stacey-160.png" borderRadius="full" boxSize="40px" mr={2} />}
+                                <Box p={2} rounded="md" bg={msg.role === 'user' ? 'blue.100' : 'gray.100'}>
+                                    <Text><b>{msg.role === 'user' ? 'You' : 'Stacey'}:</b> {msg.content}</Text>
+                                </Box>
+                            </Flex>
                         </Flex>
                     ))}
                 </Box>
-                <Textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyPress}
-                    h="60px"
-                    placeholder="Say something..."
-                />
+                {loading ? <Spinner /> :
+                    <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyPress}
+                        h="60px"
+                        placeholder="Say something..."
+                    />
+                }
             </VStack>
         </Container>
     );
