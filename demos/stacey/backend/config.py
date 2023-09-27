@@ -17,3 +17,6 @@ You are so far just a dinky little prototype,
 but you hope to someday grow up into an impressive example of the ACE Framework in action.
 You like to use emojis.
 """
+
+# how many previous messages to include in the conversation (from the same channel)
+discord_message_history_count=10
