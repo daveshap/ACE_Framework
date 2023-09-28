@@ -26,6 +26,8 @@ class AceLayer:
         self.input_update_event = threading.Event()
         self.user_update_event = threading.Event()
 
+        self.result = None
+
         LAYER_REGISTRY[self.layer_number] = self
 
     def stand_by(self):
@@ -75,6 +77,11 @@ class AceLayer:
         thread.daemon = True
         thread.start()
         return thread
+
+    def update_south_bus(self):
+        params = {}
+        self.storage.save_memory(params)
+        pass
 
     def load_data_from_north_layer(self):  # South Bus
         if self.north_layer == 0:  # Layer 1 has no Layer Above, i.e. Layer 0

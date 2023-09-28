@@ -7,6 +7,9 @@ from layers.L5Cognitive import L5Cognitive
 from layers.L6Prosecution import L6Prosecution
 from layers.Interface import Interface
 
+import time
+import keyboard
+
 
 class ACE:
 
@@ -29,8 +32,25 @@ class ACE:
         for layer_number in sorted(self.layers.keys()):
             self.layers[layer_number].stand_by()
 
-        # self.layers[1].stand_by()
-        # Load Immutable Data for L1 (Constitution/Heuristics/Mission)
+        print("\nAll Layers Initialized, ACE Running...\n")
+
+        # Main loop
+        while True:
+            # Check for 'ESC' key press
+            if keyboard.is_pressed('esc'):
+                print("Escape key detected! Exiting...")
+                break
+
+            for layer_number, layer_instance in self.layers.items():
+                for thread_info in layer_instance.threads:
+                    # Check if the thread is not alive
+                    if not thread_info['thread'].is_alive():
+                        print(f"Thread with UID {thread_info['uid']} from {layer_instance.layer_name} has stopped!")
+                        # Reinitialize the layer
+                        layer_instance.stand_by()
+
+            # Sleep for some time (e.g., 1 second) before checking again
+            time.sleep(1)
 
 
 if __name__ == '__main__':
