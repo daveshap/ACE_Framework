@@ -4,3 +4,5 @@
 demos/AceAF/logs/
 /demos/AceAF/DB/
 /demos/AceAF/salience.py
+
+demos/AceAF/layers/__pycache__/

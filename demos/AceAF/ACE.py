@@ -12,17 +12,26 @@ class ACE:
 
     def __init__(self):
         self.storage = StorageInterface().storage_utils
-        self.l1 = L1Aspiration()
-        self.l2 = L2Strategy()
-        self.l3 = L3Agent()
-        self.l4 = L4Executive()
-        self.l5 = L5Cognitive()
-        self.l6 = L6Prosecution()
         self.io = Interface()
 
+        # Initializing layers
+        self.layers = {
+            1: L1Aspiration(),
+            2: L2Strategy(),
+            3: L3Agent(),
+            4: L4Executive(),
+            5: L5Cognitive(),
+            6: L6Prosecution()
+        }
+
     def run(self):
+        # Sequentially set layers on stand_by
+        for layer_number in sorted(self.layers.keys()):
+            self.layers[layer_number].stand_by()
+
+        # self.layers[1].stand_by()
         # Load Immutable Data for L1 (Constitution/Heuristics/Mission)
-        # Start Initializing The Layers and Running them
-        pass
 
 
+if __name__ == '__main__':
+    ACE().run()

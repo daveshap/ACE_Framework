@@ -1,28 +1,51 @@
+from threading import Event
+
+from . import LAYER_REGISTRY
 from agentforge.utils.storage_interface import StorageInterface
 import threading
+
+
+# def get_layer_by_number(layer_number):
+#     return LAYER_REGISTRY.get(layer_number, None)
 
 
 class AceLayer:
 
     def __init__(self):
         self.layer_name = self.__class__.__name__
-        self.layer_number = int(self.layer_name[1:-1])  # Strip the 'L' prefix and layer name to get the number
+        self.layer_number = int(self.layer_name[1])  # Strip the 'L' prefix and layer name to get the number
         self.north_layer = self.layer_number - 1
         self.south_layer = self.layer_number + 1
 
         self.storage = StorageInterface().storage_utils
         self.threads = []
 
+        self.events = []
+        self.north_bus_update_event = threading.Event()
+        self.south_bus_update_event = threading.Event()
+        self.input_update_event = threading.Event()
+        self.user_update_event = threading.Event()
+
+        LAYER_REGISTRY[self.layer_number] = self
+
+    def stand_by(self):
+        # Threads for each event
+        self.events.append(self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
+        self.events.append(self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
+        self.events.append(self.create_event_thread('Input', self.input_update_event, self.handle_input_update))
+        self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
+
     def start(self):
         # Create a new thread for the first layer
         uid = 'unique ID'
         thread = threading.Thread(target=self.run)
+        thread.daemon = True
+        thread.uid = uid
         thread.start()
-
-        new_thread = {'uid': uid, 'thread': thread}
-        self.threads.append(new_thread)
+        self.threads.append(thread)
 
     def run(self):
+        print(f"\n\n{self.layer_name} Ran!!!\n\n")
         # Load Data From North Bus
         # Load Data From South Bus
         # Load Relevant Data From Input
@@ -34,11 +57,24 @@ class AceLayer:
         # Update North Bus
         # Update South Bus
         # Remove Thread from self.threads
-        pass
 
     def run_agents(self):
         # Call individual Agents
         pass
+
+    def create_event_thread(self, event_name, event, callback):
+        def event_loop():
+            while True:
+                event.wait()
+                callback()
+                event.clear()
+
+        print(f"{self.layer_name} - Listening to {event_name}!!!")
+
+        thread = threading.Thread(target=event_loop)
+        thread.daemon = True
+        thread.start()
+        return thread
 
     def load_data_from_north_layer(self):  # South Bus
         if self.north_layer == 0:  # Layer 1 has no Layer Above, i.e. Layer 0
@@ -66,5 +102,20 @@ class AceLayer:
         # Load Relevant Memories
         pass
 
+    def handle_north_bus_update(self):
+        # Load Data From North Bus and process
+        self.start()
+
+    def handle_south_bus_update(self):
+        # Load Data From South Bus and process
+        self.start()
+
+    def handle_input_update(self):
+        # Load Relevant Data From Input and process
+        self.start()
+
+    def handle_user_update(self):
+        # Load Relevant Data From Input and process
+        self.start()
 
 
