@@ -7,7 +7,7 @@ from discord import Embed
 from dotenv import load_dotenv
 
 import config
-import gpt
+from response_generator import generate_response
 from tools.image_tool import split_message_by_images
 
 load_dotenv()
@@ -54,7 +54,12 @@ async def on_message(message):
         conversation.append({"role": "user", "name": user_name, "content": message.content})
 
         try:
-            response = gpt.create_chat_completion(config.default_model, conversation)
+            communication_context = f"discord server '{message.guild.name}', channel #{message.channel.name}"
+            response = generate_response(config.default_model, conversation, communication_context)
+            if response is None:
+                print("GPT decided to not respond to this, so I won't write anything on discord.")
+                return
+
             response_content = response['content']
             segments = split_message_by_images(response_content)  # Split the response_content by images.
             for segment in segments:
