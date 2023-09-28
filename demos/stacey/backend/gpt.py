@@ -1,21 +1,19 @@
 # gpt.py
 import os
-import pprint
 
 import openai
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
 def create_chat_completion(model, conversation):
-    print(f"  Sending conversation to {model}: {pprint.pformat(conversation)}")
     openai.api_key = os.getenv("OPENAI_API_KEY")
     chat_completion = openai.ChatCompletion.create(
         model=model,
         messages=conversation
     )
     response = chat_completion.choices[0].message
-    print(f"  Got response: {response.content}")
     return response
 
 

@@ -1,7 +1,5 @@
 import aio_pika
 import asyncio
-
-from settings import settings
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -10,22 +8,24 @@ logger = logging.getLogger(__name__)
 
 async def get_connection(
     loop,
+    username: str,
+    password: str,
+    amqp_host_name: str,
+    role_name: str = "undefined",
     delay_factor=5,
     heartbeat=500,
-    username=settings.amqp_username,
-    password=settings.amqp_password,
 ):
     connection = None
     while True:
         try:
             connection = await aio_pika.connect_robust(
-                host=settings.amqp_host_name,
+                host=amqp_host_name,
                 login=username,
                 password=password,
                 loop=loop,
                 heartbeat=heartbeat,
             )
-            logger.info(f"{settings.role_name} connection established...")
+            logger.info(f"{role_name} connection established...")
             return connection
 
         except Exception as e:

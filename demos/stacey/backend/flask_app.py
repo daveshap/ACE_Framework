@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import config
-import gpt
+from response_generator import generate_response
 from tools.image_tool import replace_image_prompt_with_image_url_formatted_as_markdown
 
 load_dotenv()
@@ -36,9 +36,14 @@ def chat():
     conversation.insert(0, {"role": "system", "content": config.system_message})
 
     try:
-        response = gpt.create_chat_completion(model, conversation)
-        response.content = replace_image_prompt_with_image_url_formatted_as_markdown(response.content)
-        return jsonify(response)
+        response = generate_response(model, conversation, "web")
+        if response is None:
+            # Handle no response scenario as per your needs, maybe just return with a 204 status.
+            print("GPT decided to not respond to this")
+            return '', 204
+
+        response_content = replace_image_prompt_with_image_url_formatted_as_markdown(response['content'])
+        return jsonify({"role": response["role"], "content": response_content})
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
@@ -61,7 +66,7 @@ def chat_get():
     ]
 
     try:
-        response = gpt.create_chat_completion(config.default_model, conversation)
+        response = generate_response(config.default_model, conversation, "web")
         return response.content
     except Exception as e:
         return jsonify({"error": str(e)}), 400
