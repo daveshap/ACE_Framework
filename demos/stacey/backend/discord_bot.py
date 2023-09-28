@@ -82,8 +82,11 @@ def get_user_display_name(msg):
     return msg.author.name
 
 
-
 def run():
+    if os.getenv("DISCORD_BOT_TOKEN") is None:
+        print("DISCORD_BOT_TOKEN environment variable isn't set, so I won't connect to discord.")
+        return
+
     client.run(os.getenv("DISCORD_BOT_TOKEN"))
 
 
