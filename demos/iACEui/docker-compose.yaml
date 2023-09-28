@@ -84,10 +84,7 @@ services:
     build:
       context: ./src/ace/app/layer_1_aspirational
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_1_aspirational/.env
     restart: always
     command: ["python", "./aspirant.py"]
     depends_on:
@@ -99,10 +96,7 @@ services:
     build:
       context: ./src/ace/app/layer_2_global_strategy
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_2_global_strategy/.env
     restart: always
     command: ["python", "./strategist.py"]
     depends_on:
@@ -114,10 +108,7 @@ services:
     build:
       context: ./src/ace/app/layer_3_agent_model
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_3_agent_model/.env
     restart: always
     command: ["python", "./agent.py"]
     depends_on:
@@ -129,10 +120,7 @@ services:
     build:
       context: ./src/ace/app/layer_4_executive
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_4_executive/.env
     restart: always
     command: ["python", "./executive.py"]
     depends_on:
@@ -144,10 +132,7 @@ services:
     build:
       context: ./src/ace/app/layer_5_cognitive_control
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_5_cognitive_control/.env
     restart: always
     command: ["python", "./controller.py"]
     depends_on:
@@ -159,10 +144,7 @@ services:
     build:
       context: ./src/ace/app/layer_6_task_prosecution
       dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+    env_file: ./src/ace/app/layer_6_task_prosecution/.env
     restart: always
     command: ["python", "./prosecutor.py"]
     depends_on:

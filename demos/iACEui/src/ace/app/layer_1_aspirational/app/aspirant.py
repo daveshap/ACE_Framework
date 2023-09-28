@@ -8,9 +8,11 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class Layer1Aspirant(BaseLayer):
     pass
 
 if __name__ == "__main__":
     layer = Layer1Aspirant(settings)
     layer.run()
+3
