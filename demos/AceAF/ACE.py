@@ -30,15 +30,16 @@ class ACE:
             6: L6Prosecution()
         }
 
-    def run(self):
-        # Sequentially set layers on stand_by in their own threads
-        for layer_number in sorted(self.layers.keys()):
-            thread = threading.Thread(target=self.init_layer, args=(layer_number,))
+        self.layer_threads = {}  # To hold the threads
+
+        for layer_number, layer_instance in self.layers.items():
+            thread = threading.Thread(target=layer_instance.stand_by)
+            thread.daemon = True
             thread.start()
-            self.layer_threads[layer_number] = thread
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
+    def run(self):
         # Trigger L1
         self.layers[1].input_update_event.set()
 
