@@ -23,7 +23,7 @@ def generate_response(llm, model, conversation, communication_context):
     # Generate response using gpt.create_chat_completion
     print(f"  Sending conversation to {model} in context {communication_context}:\n{pprint.pformat(conversation)}")
 
-    response = llm.create_chat_completion(model, conversation)
+    response = llm.create_conversation_completion(model, conversation)
 
     print(f"  Got response: {response.content}")
 
