@@ -14,10 +14,8 @@ def generate_response(llm, model, conversation, communication_context):
     :return: Generated response, for example {"role": "assistant", "content": "Hello, how are you?"}
     """
 
-    # Replace {communication_channel} placeholder with actual communication_context in system message
+    # Insert stacey's personality via a system message at the beginning of the conversation
     system_message = ace.l3_agent.system_message.replace("{communication_channel}", communication_context)
-
-    # Insert system message with replaced communication_context at the beginning of the conversation
     conversation.insert(0, {"role": "system", "content": system_message})
 
     # Generate response using gpt.create_chat_completion
