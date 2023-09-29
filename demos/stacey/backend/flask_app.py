@@ -37,9 +37,6 @@ def chat():
     model = data.get('model', 'gpt-3.5-turbo')
     conversation = data.get('conversation', [])
 
-    # Insert Stacey's personality at the beginning of the conversation
-    conversation.insert(0, {"role": "system", "content": config.system_message})
-
     try:
         response = generate_response(llm, model, conversation, "web")
         if response is None:
@@ -63,13 +60,7 @@ def chat_get():
     if not message:
         return jsonify({"error": "message parameter is required"}), 400
 
-    # For simplicity, creating a basic conversation with the user's message.
-    # Modify as needed to suit your use case.
-    conversation = [
-        {"role": "system", "content": config.system_message},
-        {"role": "user", "content": message}
-    ]
-
+    conversation = [{"role": "user", "content": message}]
     try:
         response = generate_response(llm, config.default_model, conversation, "web")
         return response.content
