@@ -14,10 +14,11 @@ class ApiClient:
         }
 
     def send_message(self, target, message):
-        if target not in self.endpoints:
-            raise ValueError(f"Invalid target: {target}. Valid targets are: {', '.join(self.endpoints.keys())}")
+        # if target not in self.endpoints:
+        #     raise ValueError(f"Invalid target: {target}. Valid targets are: {', '.join(self.endpoints.keys())}")
 
-        url = self.BASE_URL + self.endpoints[target]
+        # url = self.BASE_URL + self.endpoints[target]
+        url = self.BASE_URL + target
         print(f"\nSending message to {url}: {message}")
         response = requests.post(url, json={'message': message})
         print(f"\nResponse: {response}")

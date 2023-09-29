@@ -1,5 +1,5 @@
 from agentforge.utils.storage_interface import StorageInterface
-from layers.L1Aspirational import L1Aspiration
+from layers.L1Aspirational import L1Aspirational
 from layers.L2Strategy import L2Strategy
 from layers.L3Agent import L3Agent
 from layers.L4Executive import L4Executive
@@ -23,7 +23,7 @@ class ACE:
 
         # Initializing layers
         self.layers = {
-            1: L1Aspiration(),
+            1: L1Aspirational(),
             2: L2Strategy(),
             3: L3Agent(),
             4: L4Executive(),

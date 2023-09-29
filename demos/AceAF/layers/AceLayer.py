@@ -69,7 +69,7 @@ class AceLayer:
                 event.clear()
 
         print(f"{self.layer_name} - Listening to {event_name}!!!")
-        self.sendui.send_message("api1", f"{self.layer_name} - Listening to {event_name}!!!")
+        self.sendui.send_message(self.layer_name, f"{self.layer_name} - Listening to {event_name}!!!")
 
         thread = threading.Thread(target=event_loop)
         thread.daemon = True
