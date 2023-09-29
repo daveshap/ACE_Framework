@@ -3,7 +3,7 @@ from threading import Event
 from . import LAYER_REGISTRY
 from agentforge.utils.storage_interface import StorageInterface
 import threading
-
+from agentforge.config import Config
 
 # def get_layer_by_number(layer_number):
 #     return LAYER_REGISTRY.get(layer_number, None)
@@ -18,6 +18,7 @@ class AceLayer:
         self.south_layer = self.layer_number + 1
 
         self.storage = StorageInterface().storage_utils
+        self.config = Config()
 
         self.events = []
         self.north_bus_update_event = threading.Event()
