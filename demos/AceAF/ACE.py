@@ -6,7 +6,7 @@ from layers.L4Executive import L4Executive
 from layers.L5Cognitive import L5Cognitive
 from layers.L6Prosecution import L6Prosecution
 from layers.Interface import Interface
-
+from guiutils.sendtoui import ApiClient
 import time
 import keyboard
 
@@ -53,7 +53,8 @@ class ACE:
                 print("Escape key detected! Exiting...")
                 break
 
-        return self.layer_outputs
+        ApiClient().send_message('api1',self.layer_outputs)
+
 
     def init_layer(self, layer_number):
         try:

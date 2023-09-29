@@ -1,58 +1,107 @@
+# kivy_flask_app.py
+
 from kivy.app import App
-from kivy.uix.tabbedpanel import TabbedPanel
-from kivy.uix.tabbedpanel import TabbedPanelItem
-from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.clock import Clock
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
+from kivy.uix.button import Button
+from flask import Flask, request, jsonify
+import threading
+import requests
 
-from ACE import ACE
-
-
-class LayerOutput(BoxLayout):
-    def __init__(self, layer_number, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = "vertical"
-        self.layer_number = layer_number
-        self.label = Label(text=f"Initializing Layer {self.layer_number}...")
-        self.add_widget(self.label)
-
-    def update_text(self, text):
-        self.label.text = text
+app = Flask(__name__)
 
 
-class ACEApp(App):
+@app.route('/api1', methods=['POST'])
+def api1():
+    data = request.json
+    message = data.get('message', '')
+    kivy_app.update_label_api1(message)
+    return jsonify({"status": "received"})
 
-    def __init__(self, ace, **kwargs):
-        super().__init__(**kwargs)
-        self.ace = ace
 
+@app.route('/api2', methods=['POST'])
+def api2():
+    data = request.json
+    message = data.get('message', '')
+    kivy_app.update_label_api2(message)
+    return jsonify({"status": "received"})
+
+
+@app.route('/api3', methods=['POST'])
+def api3():
+    data = request.json
+    message = data.get('message', '')
+    kivy_app.update_label_api3(message)
+    return jsonify({"status": "received"})
+
+
+def run_flask_app():
+    app.run(port=5000)
+
+
+class KivyApp(App):
     def build(self):
+        self.main_layout = BoxLayout(orientation='vertical')
         self.tab_panel = TabbedPanel()
-        self.layer_outputs = {}
 
-        for layer_number in sorted(self.ace.layers.keys()):
-            layer_output = LayerOutput(layer_number)
-            tab = TabbedPanelItem(text=f"Layer {layer_number}")
-            tab.add_widget(layer_output)
-            self.tab_panel.add_widget(tab)
+        self.tab_default = TabbedPanelItem(text='Default')
+        self.tab1 = TabbedPanelItem(text='API 1')
+        self.tab2 = TabbedPanelItem(text='API 2')
+        self.tab3 = TabbedPanelItem(text='API 3')
 
-            # Store reference to LayerOutput for updating the UI
-            self.layer_outputs[layer_number] = layer_output
+        self.label_default = Label(text='This is the default tab.')
+        self.label_api1 = Label(text='Waiting for message on API 1...')
+        self.label_api2 = Label(text='Waiting for message on API 2...')
+        self.label_api3 = Label(text='Waiting for message on API 3...')
 
-        # Schedule ACE's run method to execute after the UI is set up
-        Clock.schedule_once(self.start_ace, 1)
+        self.tab_default.add_widget(self.label_default)
+        self.tab1.add_widget(self.label_api1)
+        self.tab2.add_widget(self.label_api2)
+        self.tab3.add_widget(self.label_api3)
 
-        return self.tab_panel
+        self.tab_panel.add_widget(self.tab_default)
+        self.tab_panel.add_widget(self.tab1)
+        self.tab_panel.add_widget(self.tab2)
+        self.tab_panel.add_widget(self.tab3)
 
-    def start_ace(self, *args):
-        layer_outputs = self.ace.run()  # get layer outputs from ACE
+        self.main_layout.add_widget(self.tab_panel)
 
-        # Update the GUI using the layer_outputs.
-        # For example, if you had a dictionary of TextInputs or Labels in self.layer_outputs_gui_elements:
-        for layer_number, output in layer_outputs.items():
-            self.layer_outputs_gui_elements[layer_number].text = output
+        # Chatbox and Send button
+        self.chatbox = TextInput(hint_text='Enter a message...')
+        self.send_button = Button(text='Send')
+        self.send_button.bind(on_press=self.send_message)
+
+        self.bottom_layout = BoxLayout(size_hint_y=None, height=44)
+        self.bottom_layout.add_widget(self.chatbox)
+        self.bottom_layout.add_widget(self.send_button)
+
+        self.main_layout.add_widget(self.bottom_layout)
+
+        return self.main_layout
+
+    def update_label_api1(self, message):
+        self.label_api1.text = message
+
+    def update_label_api2(self, message):
+        self.label_api2.text = message
+
+    def update_label_api3(self, message):
+        self.label_api3.text = message
+
+    def send_message(self, instance):
+        message = self.chatbox.text
+        if message:
+            response = requests.post('http://127.0.0.1:1337/bot', json={'message': message})
+            # Clear the chatbox after sending
+            self.chatbox.text = ''
 
 
 if __name__ == '__main__':
-    ace = ACE()
-    ACEApp(ace).run()
+    # Run Flask API in a separate thread
+    threading.Thread(target=run_flask_app).start()
+
+    # Run Kivy App
+    kivy_app = KivyApp()
+    kivy_app.run()
