@@ -1,7 +1,7 @@
 # response_generator.py
 import pprint
 
-import config
+import ace.l3_agent
 
 
 def generate_response(llm, model, conversation, communication_context):
@@ -15,7 +15,7 @@ def generate_response(llm, model, conversation, communication_context):
     """
 
     # Replace {communication_channel} placeholder with actual communication_context in system message
-    system_message = config.system_message.replace("{communication_channel}", communication_context)
+    system_message = ace.l3_agent.system_message.replace("{communication_channel}", communication_context)
 
     # Insert system message with replaced communication_context at the beginning of the conversation
     conversation.insert(0, {"role": "system", "content": system_message})

@@ -6,6 +6,7 @@ import discord
 from discord import Embed
 from dotenv import load_dotenv
 
+import ace.l3_agent
 import config
 from llm.gpt import GPT
 from response_generator import generate_response
@@ -36,7 +37,7 @@ async def on_message(message):
         print(pprint.pformat(message.author))
 
         # Initialize conversation with the system message
-        conversation = [{"role": "system", "content": config.system_message}]
+        conversation = [{"role": "system", "content": ace.l3_agent.system_message}]
 
         # Fetch message history and append to conversation
         messages = []
