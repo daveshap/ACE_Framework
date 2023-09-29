@@ -18,7 +18,6 @@ class AceLayer:
         self.south_layer = self.layer_number + 1
 
         self.storage = StorageInterface().storage_utils
-        self.threads = []
 
         self.events = []
         self.north_bus_update_event = threading.Event()
@@ -31,20 +30,14 @@ class AceLayer:
         LAYER_REGISTRY[self.layer_number] = self
 
     def stand_by(self):
-        # Threads for each event
+        # Clear old threads
+        self.events.clear()
+
+        # Create new threads for each event
         self.events.append(self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
         self.events.append(self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
         self.events.append(self.create_event_thread('Input', self.input_update_event, self.handle_input_update))
         self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
-
-    def start(self):
-        # Create a new thread for the first layer
-        uid = 'unique ID'
-        thread = threading.Thread(target=self.run)
-        thread.daemon = True
-        thread.uid = uid
-        thread.start()
-        self.threads.append(thread)
 
     def run(self):
         print(f"\n\n{self.layer_name} Ran!!!\n\n")
@@ -111,18 +104,18 @@ class AceLayer:
 
     def handle_north_bus_update(self):
         # Load Data From North Bus and process
-        self.start()
+        self.run()
 
     def handle_south_bus_update(self):
         # Load Data From South Bus and process
-        self.start()
+        self.run()
 
     def handle_input_update(self):
         # Load Relevant Data From Input and process
-        self.start()
+        self.run()
 
     def handle_user_update(self):
         # Load Relevant Data From Input and process
-        self.start()
+        self.run()
 
 

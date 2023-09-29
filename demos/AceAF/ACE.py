@@ -10,6 +10,8 @@ from layers.Interface import Interface
 import time
 import keyboard
 
+import threading
+
 
 class ACE:
 
@@ -34,23 +36,15 @@ class ACE:
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
+        # Trigger L1
+        self.layers[1].input_update_event.set()
+
         # Main loop
         while True:
             # Check for 'ESC' key press
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
                 break
-
-            for layer_number, layer_instance in self.layers.items():
-                for thread_info in layer_instance.threads:
-                    # Check if the thread is not alive
-                    if not thread_info['thread'].is_alive():
-                        print(f"Thread with UID {thread_info['uid']} from {layer_instance.layer_name} has stopped!")
-                        # Reinitialize the layer
-                        layer_instance.stand_by()
-
-            # Sleep for some time (e.g., 1 second) before checking again
-            time.sleep(1)
 
 
 if __name__ == '__main__':
