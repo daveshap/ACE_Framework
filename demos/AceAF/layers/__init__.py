@@ -1,0 +1,1 @@
+LAYER_REGISTRY = {}

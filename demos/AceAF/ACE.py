@@ -6,23 +6,62 @@ from layers.L4Executive import L4Executive
 from layers.L5Cognitive import L5Cognitive
 from layers.L6Prosecution import L6Prosecution
 from layers.Interface import Interface
+from guiutils.sendtoui import ApiClient
+import time
+import keyboard
+
+import threading
 
 
 class ACE:
 
     def __init__(self):
         self.storage = StorageInterface().storage_utils
-        self.l1 = L1Aspiration()
-        self.l2 = L2Strategy()
-        self.l3 = L3Agent()
-        self.l4 = L4Executive()
-        self.l5 = L5Cognitive()
-        self.l6 = L6Prosecution()
         self.io = Interface()
+        self.layer_threads = {}
+        self.layer_outputs = {}
+
+        # Initializing layers
+        self.layers = {
+            1: L1Aspiration(),
+            2: L2Strategy(),
+            3: L3Agent(),
+            4: L4Executive(),
+            5: L5Cognitive(),
+            6: L6Prosecution()
+        }
+
+        self.layer_threads = {}  # To hold the threads
+
+        for layer_number, layer_instance in self.layers.items():
+            thread = threading.Thread(target=layer_instance.stand_by)
+            thread.daemon = True
+            thread.start()
+
+        print("\nAll Layers Initialized, ACE Running...\n")
 
     def run(self):
-        # Load Immutable Data for L1 (Constitution/Heuristics/Mission)
-        # Start Initializing The Layers and Running them
-        pass
+        # Trigger L1
+        self.layers[1].input_update_event.set()
+        for layer_number in self.layers:
+            self.layer_outputs[layer_number] = f"Output for layer {layer_number}"  # replace with real outputs
+
+        # Main loop
+        while True:
+            # Check for 'ESC' key press
+            if keyboard.is_pressed('esc'):
+                print("Escape key detected! Exiting...")
+                break
 
 
+
+
+    def init_layer(self, layer_number):
+        try:
+            self.layers[layer_number].stand_by()
+        except Exception as e:
+            print(f"Error in layer {layer_number}: {e}")
+
+
+if __name__ == '__main__':
+    ACE().run()
