@@ -7,6 +7,7 @@ from discord import Embed
 from dotenv import load_dotenv
 
 import config
+from llm.gpt import GPT
 from response_generator import generate_response
 from tools.image_tool import split_message_by_images
 
@@ -17,10 +18,13 @@ intents.message_content = True
 
 client = discord.Client(intents=intents)
 
+llm = GPT(os.getenv("OPENAI_API_KEY"))
+
 
 @client.event
 async def on_ready():
     print(f'We have logged in to discord as {client.user}')
+
 
 @client.event
 async def on_message(message):
@@ -55,7 +59,7 @@ async def on_message(message):
 
         try:
             communication_context = f"discord server '{message.guild.name}', channel #{message.channel.name}"
-            response = generate_response(config.default_model, conversation, communication_context)
+            response = generate_response(llm, config.default_model, conversation, communication_context)
             if response is None:
                 print("GPT decided to not respond to this, so I won't write anything on discord.")
                 return

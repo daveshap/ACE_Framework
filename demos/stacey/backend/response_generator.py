@@ -1,14 +1,12 @@
 # response_generator.py
 import pprint
 
-from llm import gpt
 import config
 
-# This is a wrapper around GPT, to start providing some behavior around the responses.
 
-
-def generate_response(model, conversation, communication_context):
+def generate_response(llm, model, conversation, communication_context):
     """
+    This is a wrapper around the llm, to start providing some behavior around the responses.
     Generates response considering the communication_context.
     :param model: Model name to use for OpenAI GPT.
     :param conversation: Conversation messages array.
@@ -25,7 +23,7 @@ def generate_response(model, conversation, communication_context):
     # Generate response using gpt.create_chat_completion
     print(f"  Sending conversation to {model} in context {communication_context}:\n{pprint.pformat(conversation)}")
 
-    response = gpt.create_chat_completion(model, conversation)
+    response = llm.create_chat_completion(model, conversation)
 
     print(f"  Got response: {response.content}")
 

@@ -1,9 +1,12 @@
 # flask_app.py
+import os
+
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 import config
+from llm.gpt import GPT
 from response_generator import generate_response
 from tools.image_tool import replace_image_prompt_with_image_url_formatted_as_markdown
 
@@ -11,6 +14,8 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+llm = GPT(os.getenv("OPENAI_API_KEY"))
 
 
 @app.route('/')
@@ -36,7 +41,7 @@ def chat():
     conversation.insert(0, {"role": "system", "content": config.system_message})
 
     try:
-        response = generate_response(model, conversation, "web")
+        response = generate_response(llm, model, conversation, "web")
         if response is None:
             # Handle no response scenario as per your needs, maybe just return with a 204 status.
             print("GPT decided to not respond to this")
@@ -66,7 +71,7 @@ def chat_get():
     ]
 
     try:
-        response = generate_response(config.default_model, conversation, "web")
+        response = generate_response(llm, config.default_model, conversation, "web")
         return response.content
     except Exception as e:
         return jsonify({"error": str(e)}), 400
