@@ -4,6 +4,7 @@ from . import LAYER_REGISTRY
 from agentforge.utils.storage_interface import StorageInterface
 import threading
 from agentforge.config import Config
+from demos.AceAF.guiutils.sendtoui import ApiClient
 
 # def get_layer_by_number(layer_number):
 #     return LAYER_REGISTRY.get(layer_number, None)
@@ -25,6 +26,7 @@ class AceLayer:
         self.south_bus_update_event = threading.Event()
         self.input_update_event = threading.Event()
         self.user_update_event = threading.Event()
+        self.sendui = ApiClient()
 
         self.result = None
 
@@ -42,6 +44,7 @@ class AceLayer:
 
     def run(self):
         print(f"\n\n{self.layer_name} Ran!!!\n\n")
+        self.sendui.send_message("api1", "Hello")
         # Load Data From North Bus
         # Load Data From South Bus
         # Load Relevant Data From Input
@@ -66,6 +69,7 @@ class AceLayer:
                 event.clear()
 
         print(f"{self.layer_name} - Listening to {event_name}!!!")
+        self.sendui.send_message("api1", "Hello")
 
         thread = threading.Thread(target=event_loop)
         thread.daemon = True

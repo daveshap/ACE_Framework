@@ -53,7 +53,7 @@ class ACE:
                 print("Escape key detected! Exiting...")
                 break
 
-        ApiClient().send_message('api1',self.layer_outputs)
+
 
 
     def init_layer(self, layer_number):

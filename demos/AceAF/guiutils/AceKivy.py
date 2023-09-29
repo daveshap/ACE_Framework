@@ -9,6 +9,7 @@ from kivy.uix.button import Button
 from flask import Flask, request, jsonify
 import threading
 import requests
+from kivy.lang import Builder
 
 app = Flask(__name__)
 
@@ -70,7 +71,7 @@ class KivyApp(App):
 
         # Chatbox and Send button
         self.chatbox = TextInput(hint_text='Enter a message...')
-        self.send_button = Button(text='Send')
+        self.send_button = Button(text='Send', size_hint_x=None, width=125)
         self.send_button.bind(on_press=self.send_message)
 
         self.bottom_layout = BoxLayout(size_hint_y=None, height=44)
@@ -99,6 +100,7 @@ class KivyApp(App):
 
 
 if __name__ == '__main__':
+    Builder.load_file('kivy_theme.kv')
     # Run Flask API in a separate thread
     threading.Thread(target=run_flask_app).start()
 
