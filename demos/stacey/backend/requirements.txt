@@ -3,3 +3,4 @@ python-dotenv
 openai
 flask-cors
 discord
+Pypubsub

@@ -1,9 +1,14 @@
 import multiprocessing
 import os
 
-import flask_app
-import discord_bot
 from dotenv import load_dotenv
+
+import config
+import discord_bot
+import flask_app
+from ace.ace_system import AceSystem
+from llm.gpt import GPT
+
 load_dotenv()
 
 if __name__ == '__main__':
@@ -19,3 +24,8 @@ if __name__ == '__main__':
 
     flask_process.join()
     discord_process.join()
+
+    llm = GPT(os.getenv("OPENAI_API_KEY"))
+    ace_system = AceSystem(llm, config.default_model)
+    ace_system.start()
+
