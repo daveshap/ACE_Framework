@@ -8,3 +8,5 @@ demos/AceAF/logs/
 demos/AceAF/layers/__pycache__/
 
 demos/AceAF/__pycache__/
+
+demos/AceAF/guiutils/__pycache__/
