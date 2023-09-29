@@ -1,7 +1,7 @@
 # tools/image_tool.py
 import concurrent.futures
 import re
-import gpt
+from llm import gpt
 
 PATTERN = r"IMAGE\[([^\]]+)]"  # Regular expression pattern to find all occurrences of IMAGE[<prompt>]
 

@@ -1,7 +1,7 @@
 # response_generator.py
 import pprint
 
-import gpt
+from llm import gpt
 import config
 
 # This is a wrapper around GPT, to start providing some behavior around the responses.
