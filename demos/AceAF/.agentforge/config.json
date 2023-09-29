@@ -2,6 +2,7 @@
   "Persona" : {
     "selected" : "persona"
   },
+  "Constitution": "This is where the constitution of the agent is defined.",
   "Objective": "Create a batch file that can update a pip library as a test build, separate from the main distribution.",
   "Storage": {
     "Tasks": [

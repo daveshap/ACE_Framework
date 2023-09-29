@@ -1,0 +1,40 @@
+# kivy_theme.kv
+
+#:set GREEN_COLOR (0, 1, 0, 1)
+#:set BG_COLOR (0, 0.2, 0, 1)
+
+<BoxLayout>:
+    canvas.before:
+        Color:
+            rgba: BG_COLOR
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<Label>:
+    color: GREEN_COLOR
+    font_size: 20
+
+<TextInput>:
+    background_color: BG_COLOR
+    foreground_color: GREEN_COLOR
+    cursor_color: GREEN_COLOR
+    font_size: 20
+    padding_x: 10
+    padding_y: 10
+
+<Button>:
+    background_normal: ''
+    background_color: GREEN_COLOR
+    color: BG_COLOR
+    font_size: 20
+    size_hint_y: None
+    height: 44
+
+<TabbedPanel>:
+    background_color: BG_COLOR
+    tab_width: self.size[0] / 4
+
+<TabbedPanelItem>:
+    background_color: BG_COLOR
+    color: GREEN_COLOR
