@@ -33,7 +33,7 @@ class ACE:
     def run(self):
         # Sequentially set layers on stand_by in their own threads
         for layer_number in sorted(self.layers.keys()):
-            thread = threading.Thread(target=self.run_layer, args=(layer_number,))
+            thread = threading.Thread(target=self.init_layer, args=(layer_number,))
             thread.start()
             self.layer_threads[layer_number] = thread
 
@@ -49,7 +49,7 @@ class ACE:
                 print("Escape key detected! Exiting...")
                 break
 
-    def run_layer(self, layer_number):
+    def init_layer(self, layer_number):
         try:
             self.layers[layer_number].stand_by()
         except Exception as e:
