@@ -1,25 +1,25 @@
 # llm/gpt.py
+from typing import List, TypedDict
+
 import openai
+
+
+class GptMessage(TypedDict):
+    role: str
+    content: str
 
 
 class GPT:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def create_chat_completion(self, model, system_message, user_message):
-        """
-        :return: response string
-        """
+    def create_chat_completion(self, model, system_message, user_message) -> str:
         return self.create_conversation_completion(model, [
             {"role": "system", "content": system_message},
             {"role": "user", "content": user_message}
-        ]).content
+        ])["content"]
 
-    def create_conversation_completion(self, model, conversation):
-        """
-        :param conversation: an array of role/content pairs
-        :return: a single role/content pair
-        """
+    def create_conversation_completion(self, model, conversation: List[GptMessage]) -> GptMessage:
         openai.api_key = self.api_key
         chat_completion = openai.ChatCompletion.create(
             model=model,
@@ -28,7 +28,7 @@ class GPT:
         response = chat_completion.choices[0].message
         return response
 
-    def create_image(self, prompt, size='256x256'):
+    def create_image(self, prompt, size='256x256') -> str:
         """
         :return: a short-lived image URL
         """
