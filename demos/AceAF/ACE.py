@@ -18,6 +18,7 @@ class ACE:
     def __init__(self):
         self.storage = StorageInterface().storage_utils
         self.io = Interface()
+        self.layer_threads = {}
 
         # Initializing layers
         self.layers = {
@@ -30,9 +31,11 @@ class ACE:
         }
 
     def run(self):
-        # Sequentially set layers on stand_by
+        # Sequentially set layers on stand_by in their own threads
         for layer_number in sorted(self.layers.keys()):
-            self.layers[layer_number].stand_by()
+            thread = threading.Thread(target=self.run_layer, args=(layer_number,))
+            thread.start()
+            self.layer_threads[layer_number] = thread
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
@@ -45,6 +48,12 @@ class ACE:
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
                 break
+
+    def run_layer(self, layer_number):
+        try:
+            self.layers[layer_number].stand_by()
+        except Exception as e:
+            print(f"Error in layer {layer_number}: {e}")
 
 
 if __name__ == '__main__':
