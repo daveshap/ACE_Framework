@@ -3,7 +3,10 @@ from agentforge.utils.storage_interface import StorageInterface
 import threading
 from agentforge.config import Config
 from .Interface import Interface
+import time
 
+starttime = time.time()
+print(starttime)
 
 class AceLayer:
 
@@ -40,6 +43,10 @@ class AceLayer:
     def run(self):
         # self.interface.output_message(self.layer_name, "Hello")
         self.interface.output_message(self.layer_number, "Hello")
+        self.update_north_bus(message="Hello North Bus")
+        self.update_south_bus(message="Hello South Bus")
+        self.load_data_from_north_bus(timestamp=starttime)
+        self.load_data_from_south_bus(timestamp=starttime)
 
         # Load Data From North Bus
         # Load Data From South Bus
@@ -72,24 +79,34 @@ class AceLayer:
         thread.start()
         return thread
 
-    def update_south_bus(self):
-        params = {}
+    def update_north_bus(self, **kwargs):
+        params = {"collection_name": "NorthBus", "metadata": {"Message": kwargs['message']}}
         self.storage.save_memory(params)
-        pass
 
-    def load_data_from_north_layer(self):  # South Bus
-        if self.north_layer == 0:  # Layer 1 has no Layer Above, i.e. Layer 0
-            pass
+    def update_south_bus(self, **kwargs):
+        params = {"collection_name": "SouthBus", "metadata": {"Message": kwargs['message']}}
+        self.storage.save_memory(params)
 
-        # Query the North Bus Collection for message from the Layer Above
-        pass
+    def load_data_from_north_bus(self,**kwargs):  # North Bus
+        params = {
+            "collection_name": "NorthBus",
+            "filter": {
+                "timestamp": {"$gte": kwargs['timestamp']}
+            }
+        }
+        northbusdata = self.storage.query_memory(params)
+        return northbusdata
 
-    def load_data_from_south_bus(self):  # North Bus
-        if self.north_layer == 7:  # Layer 6 has no Layer Below, i.e. Layer 7
-            pass
+    def load_data_from_south_bus(self,**kwargs):  # South Bus
 
-        # Query the South Bus Collection for message from the Layer Below
-        pass
+        params = {
+            "collection_name": "SouthBus",
+            "filter": {
+                "timestamp": {"$gte": kwargs['timestamp']}
+            }
+        }
+        southbusdata = self.storage.query_memory(params)
+        return southbusdata
 
     def load_relevant_data_from_input(self):
         # Load Any Telemetry
