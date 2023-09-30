@@ -1,8 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import {io} from "socket.io-client";
-import {Spinner} from "@chakra-ui/react";
+import {Box, HStack, Spinner, Text, VStack} from "@chakra-ui/react";
 
-function LayerStatus() {
+interface LayerProps {
+    layerId: number;
+    displayName: string;
+    backgroundColor: string;
+}
+
+export const LayerStatus: React.FC<LayerProps> = ({ layerId, displayName, backgroundColor }) => {
     const [status, setStatus] = useState('IDLE');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -14,19 +20,27 @@ function LayerStatus() {
     const socket = io(backendUrl);
 
     useEffect(() => {
-        socket.on('status', (data) => {
+        socket.on(`layer-${layerId}-status`, (data) => {
             setStatus(data.status);
         });
 
         return () => {
-            socket.off('status');
+            socket.off(`${layerId}-status`);
         };
     }, []);
 
     return (
-        status !== 'IDLE' && (
-            <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="xl" />
-        )
+        <Box width={300} bg={backgroundColor} p={4} justifyContent="space-between">
+            <VStack>
+                <Text fontWeight={"bold"}>{displayName}</Text>
+                <HStack >
+                    <Text fontSize={"sm"}>{status}</Text>
+                    {status !== 'IDLE' && (
+                        <Spinner thickness="4px" speed="0.65s" emptyColor="gray.200" color="blue.500" size="md" />
+                    )}
+                </HStack>
+            </VStack>
+        </Box>
     );
 }
 

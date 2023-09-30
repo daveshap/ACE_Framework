@@ -39,9 +39,10 @@ class FlaskApp:
         background_task(ace_system.northbound_bus)
         background_task(ace_system.southbound_bus)
 
+        # hardcoded to 1 layer for now.
         def status_listener(status):
             print(f"flask_app detected status change: {status}")
-            self.socketio.emit('status', {'status': status.name})
+            self.socketio.emit('layer-1-status', {'status': status.name})
 
         ace_system.l1_aspirational_layer.add_status_listener(status_listener)
 

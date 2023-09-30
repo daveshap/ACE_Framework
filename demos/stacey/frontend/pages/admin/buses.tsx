@@ -16,7 +16,12 @@ const BusesPage = () => {
             <Bus busName="northbound" />
             <VStack>
                 <Image src="/images/stacey-160.png" alt="Stacey" borderRadius="full"  mb={8} />
-                <LayerStatus />
+                <LayerStatus layerId={1} displayName={"Layer 1: Aspirational"} backgroundColor={"red.100"} />
+                <LayerStatus layerId={2} displayName={"Layer 2: Global Strategy"} backgroundColor={"orange.100"} />
+                <LayerStatus layerId={3} displayName={"Layer 3: Agent Model"} backgroundColor={"yellow.100"} />
+                <LayerStatus layerId={4} displayName={"Layer 4: Executive Function"} backgroundColor={"green.100"} />
+                <LayerStatus layerId={5} displayName={"Layer 5: Cognitive Control"} backgroundColor={"teal.100"} />
+                <LayerStatus layerId={6} displayName={"Layer 6: Task Prosecution"} backgroundColor={"blue.100"} />
             </VStack>
             <Bus busName="southbound" />
         </HStack>
