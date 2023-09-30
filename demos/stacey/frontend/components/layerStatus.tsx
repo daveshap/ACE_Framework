@@ -32,7 +32,7 @@ export const LayerStatus: React.FC<LayerProps> = ({ layerId, displayName, backgr
     return (
         <Box width={300} bg={backgroundColor} p={4} justifyContent="space-between">
             <VStack>
-                <Text fontWeight={"bold"}>{displayName}</Text>
+                <Text fontSize={"lg"} fontWeight={"bold"}>{displayName}</Text>
                 <HStack >
                     <Text fontSize={"sm"}>{status}</Text>
                     {status !== 'IDLE' && (

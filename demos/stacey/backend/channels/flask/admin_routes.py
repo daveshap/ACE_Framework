@@ -51,3 +51,29 @@ def publish_message():
     except Exception as e:
         print(e)
         return jsonify({"error": "An error occurred: " + str(e)}), 500
+
+
+@admin_bp.route('/clear_messages', methods=['POST'])
+def clear_messages():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        bus_name = data.get('bus')
+        if not bus_name:
+            return jsonify({"error": "'bus' is a required field"}), 400
+
+        ace_system = current_app.ace_system
+        if bus_name == 'northbound':
+            bus = ace_system.northbound_bus
+        elif bus_name == 'southbound':
+            bus = ace_system.southbound_bus
+        else:
+            return jsonify({"error": "Invalid bus name. Choose 'northbound' or 'southbound'."}), 400
+
+        bus.clear_messages()
+        return jsonify({"success": True, "message": "Messages cleared successfully"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "An error occurred: " + str(e)}), 500

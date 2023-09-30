@@ -1,6 +1,6 @@
 // pages/component/Bus.tsx
 import React, {useEffect, useState} from 'react';
-import {Alert, Box, Text, VStack} from '@chakra-ui/react';
+import {Alert, Box, Button, Text, VStack} from '@chakra-ui/react';
 import {PublishMessageForm} from "@/components/publish";
 import io from 'socket.io-client';
 import BusMessage from "@/components/busMessage";
@@ -47,20 +47,41 @@ export const Bus: React.FC<BusProps> = ({ busName }) => {
             .catch(error => console.error('Error fetching the logs:', error));
     }, []);
 
+    const clearMessages = () => {
+        fetch(backendUrl + '/clear_messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ bus: busName }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    setLogs([]); // Clear the logs state on successful response
+                    console.log(data.message);
+                } else {
+                    console.error(data.error);
+                }
+            })
+            .catch(error => console.error('Error clearing the messages:', error));
+    };
+
     const arrowIcon = busName === "northbound" ? <ArrowUpIcon boxSize={6} /> : <ArrowDownIcon boxSize={6} />
     const background = busName === "northbound" ? "pink.100" : "purple.100"
 
     return (
         <Box p={4} background={background} rounded={10}>
             <VStack spacing={4} w={500}>
-                <Text fontSize="xl" mb={2}>{arrowIcon} {`${busName} bus`} {arrowIcon}</Text>
+                <Text fontSize="xl" mb={2}>🚌{arrowIcon} {`${busName} bus`} {arrowIcon}🚌</Text>
                 <VStack align="start" spacing={1}>
                     {logs.map((log, index) => (
                         <BusMessage key={index} sender={log.sender} message={log.message} />
                     ))}
                 </VStack>
                 <PublishMessageForm busType={busName}/>
-                <Text fontSize="xl" mb={2}>{arrowIcon} {`${busName} bus`} {arrowIcon}</Text>
+                <Text fontSize="xl" mb={2}>🚌{arrowIcon} {`${busName} bus`} {arrowIcon}🚌</Text>
+                <Button size={"sm"} onClick={clearMessages} colorScheme="red">Clear Messages</Button>
             </VStack>
         </Box>
     );

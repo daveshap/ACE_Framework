@@ -12,6 +12,10 @@ class Bus:
         with self.lock:
             return list(self.message_log)
 
+    def clear_messages(self):
+        with self.lock:
+            self.message_log.clear()
+
     def publish(self, sender: str, message: str):
         print(f"{threading.current_thread().name} Bus {self.name} was asked to publish message from {sender}: {message}")
         with self.lock:
