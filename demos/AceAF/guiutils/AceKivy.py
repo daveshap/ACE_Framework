@@ -56,7 +56,14 @@ class KivyApp(App):
         for i, title in enumerate(tab_titles):
             self.history[i] = "Listening to Messages...\n"
             view = ScrollView()
-            label = Label(text=self.history[i], size_hint_y=None)
+            label = Label(
+                text=self.history[i],
+                size_hint_y=1,
+                width=650,
+                text_size=(650, 400),
+                halign='left',
+                valign='top')
+
             label.bind(texture_size=label.setter('size'))
             view.add_widget(label)
 
