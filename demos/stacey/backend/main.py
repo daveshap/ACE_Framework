@@ -1,31 +1,33 @@
-import multiprocessing
 import os
+import threading
 
 from dotenv import load_dotenv
 
 import config
-import discord_bot
-import flask_app
 from ace.ace_system import AceSystem
+from discord_bot import DiscordBot
+from flask_app import FlaskApp
 from llm.gpt import GPT
 
-load_dotenv()
-
 if __name__ == '__main__':
-    if os.getenv("OPENAI_API_KEY") is None:
-        print("OPENAI_API_KEY is not set. Please set that in backend/.env")
-        exit(1)
+    load_dotenv()
+    openai_api_key = os.getenv('OPENAI_API_KEY')
+    llm = GPT(openai_api_key)
+    ace = AceSystem(llm, config.default_model)
+    ace.start()
 
-    flask_process = multiprocessing.Process(target=flask_app.run)
-    discord_process = multiprocessing.Process(target=discord_bot.run)
+    flask_app = FlaskApp(ace, llm.create_image)
 
-    flask_process.start()
-    discord_process.start()
+    discord_bot_token = os.getenv('DISCORD_BOT_TOKEN')
+    discord_bot = DiscordBot(discord_bot_token, "stacey", ace, llm.create_image)
 
-    flask_process.join()
-    discord_process.join()
+    flask_thread = threading.Thread(target=flask_app.run, daemon=True)
+    discord_thread = threading.Thread(target=discord_bot.run, daemon=True)
 
-    llm = GPT(os.getenv("OPENAI_API_KEY"))
-    ace_system = AceSystem(llm, config.default_model)
-    ace_system.start()
+    flask_thread.start()
+    discord_thread.start()
+
+    flask_thread.join()
+    discord_thread.join()
+
 
