@@ -1,10 +1,14 @@
-// pages/admin/publishMessage.tsx
-import {Button, FormControl, FormLabel, Input, Radio, RadioGroup, Stack} from '@chakra-ui/react';
-import {useState} from "react";
+// pages/component/publish.tsx
+import {Button, FormControl, Textarea} from '@chakra-ui/react';
+import React, {useState} from "react";
+import {TriangleDownIcon, TriangleUpIcon} from '@chakra-ui/icons'
 
-export const PublishMessageForm = () => {
+interface PublishMessageFormProps {
+    busType: string;
+}
+
+export const PublishMessageForm: React.FC<PublishMessageFormProps> = ({ busType }) => {
     const [message, setMessage] = useState('');
-    const [bus, setBus] = useState('northbound');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
 
     const handleSubmit = () => {
@@ -16,7 +20,7 @@ export const PublishMessageForm = () => {
             body: JSON.stringify({
                 sender: 'admin web',
                 message: message,
-                bus: bus,
+                bus: busType,
             }),
         })
             .then(response => response.json())
@@ -29,19 +33,15 @@ export const PublishMessageForm = () => {
 
     return (
         <FormControl as="form" onSubmit={handleSubmit}>
-            <FormLabel>Message to Publish</FormLabel>
-            <Input value={message} onChange={e => setMessage(e.target.value)} placeholder="Type your message" />
-
-            <FormLabel>Bus</FormLabel>
-            <RadioGroup value={bus} onChange={setBus}>
-                <Stack direction="row">
-                    <Radio value="northbound">Northbound</Radio>
-                    <Radio value="southbound">Southbound</Radio>
-                </Stack>
-            </RadioGroup>
-
-            <Button mt={4} colorScheme="teal" type="button" onClick={handleSubmit}>
-                Publish Message
+            <Textarea value={message} onChange={e => setMessage(e.target.value)} placeholder={`publish ${busType} message`} />
+            <Button
+                mt={4}
+                colorScheme="teal"
+                type="button"
+                onClick={handleSubmit}
+                size="sm" // Smaller size button
+            >
+                {busType === 'northbound' ? <TriangleUpIcon boxSize={4}/> : <TriangleDownIcon boxSize={4}/> }
             </Button>
         </FormControl>
     );

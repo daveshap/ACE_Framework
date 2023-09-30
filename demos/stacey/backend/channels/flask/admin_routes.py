@@ -4,14 +4,17 @@ from flask import Blueprint, jsonify, current_app, request
 admin_bp = Blueprint('admin', __name__)
 
 
-@admin_bp.route('/bus_logs', methods=['GET'])
-def get_bus_logs():
+@admin_bp.route('/bus', methods=['GET'])
+def view_bus():
     ace_system = current_app.ace_system
+    bus_name = request.args.get('name')
 
-    return jsonify({
-        "northbound": ace_system.northbound_bus.message_log,
-        "southbound": ace_system.southbound_bus.message_log
-    })
+    if bus_name == 'northbound':
+        return jsonify(ace_system.northbound_bus.message_log)
+    elif bus_name == 'southbound':
+        return jsonify(ace_system.southbound_bus.message_log)
+    else:
+        return jsonify({"error": "Invalid bus name. Choose 'northbound' or 'southbound'."}), 400
 
 
 @admin_bp.route('/publish_message', methods=['POST'])
