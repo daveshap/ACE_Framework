@@ -1,15 +1,10 @@
-import os
-
-from dotenv import load_dotenv
-
 import config
 from ace.ace_system import AceSystem
 from llm.gpt import GPT
-
-load_dotenv()
+from util import get_environment_variable
 
 if __name__ == "__main__":
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = get_environment_variable("OPENAI_API_KEY")
     if not api_key:
         raise ValueError("OPENAI_API_KEY is not set.")
 

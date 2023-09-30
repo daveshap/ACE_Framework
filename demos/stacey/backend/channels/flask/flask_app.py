@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from channels.flask.admin_routes import admin_bp
 from channels.flask.chat_routes import chat_bp
+from util import get_environment_variable
 
 
 class FlaskApp:
@@ -35,13 +36,12 @@ class FlaskApp:
 
 def main():
     from llm.gpt import GPT
-    import os
     from dotenv import load_dotenv
     from ace.ace_system import AceSystem
     import config
 
     load_dotenv()
-    openai_api_key = os.getenv('OPENAI_API_KEY')
+    openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
     ace = AceSystem(llm, config.default_model)
     flask_app = FlaskApp(ace, llm.create_image)

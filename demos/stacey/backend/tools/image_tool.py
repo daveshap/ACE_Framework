@@ -1,11 +1,11 @@
 # tools/image_tool.py
 import concurrent.futures
-import os
 import re
 
 from dotenv import load_dotenv
 
 from llm.gpt import GPT
+from util import get_environment_variable
 
 PATTERN = r"IMAGE\[([^\]]+)]"  # Regular expression pattern to find all occurrences of IMAGE[<prompt>]
 
@@ -82,5 +82,5 @@ def split_message_by_images(image_generator_function, message):
 if __name__ == '__main__':
     load_dotenv()
     test_message = "This is a test IMAGE[A painting of a cat sitting on a chair] and another IMAGE[A drawing of a sun]."
-    gpt = GPT(os.getenv("OPENAI_API_KEY"))
+    gpt = GPT(get_environment_variable("OPENAI_API_KEY"))
     print(replace_image_prompt_with_image_url_formatted_as_markdown(gpt.create_image, test_message))
