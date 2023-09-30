@@ -11,7 +11,7 @@ const IndexPage = () => {
                 <NextLink href="/chat" passHref>
                     Chat with Stacey
                 </NextLink>
-                <NextLink href="/brain" passHref>
+                <NextLink href="/admin" passHref>
                     Look inside Stacey's brain
                 </NextLink>
             </VStack>
