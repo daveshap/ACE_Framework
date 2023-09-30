@@ -59,6 +59,13 @@ class FlaskApp:
                 print("Traceback:", traceback_str)
                 return jsonify({"error": str(e)}), 400
 
+        @self.app.route('/bus_logs', methods=['GET'])
+        def get_bus_logs():
+            return jsonify({
+                "northbound": self.ace_system.northbound_bus.message_log,
+                "southbound": self.ace_system.southbound_bus.message_log
+            })
+
     def get_bot_response(self, conversation, communication_context):
         return self.ace_system.l3_agent.generate_response(conversation, communication_context)
 
