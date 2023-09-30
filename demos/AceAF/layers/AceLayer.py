@@ -5,8 +5,6 @@ from agentforge.config import Config
 from .Interface import Interface
 import time
 
-starttime = time.time()
-print(starttime)
 
 class AceLayer:
 
@@ -19,6 +17,8 @@ class AceLayer:
         self.storage = StorageInterface().storage_utils
         self.config = Config()
         self.interface = Interface()
+
+        self.bus = {'NorthBus': None, 'SouthBus': None}
 
         self.events = []
         self.north_bus_update_event = threading.Event()
@@ -35,21 +35,21 @@ class AceLayer:
         self.events.clear()
 
         # Create new threads for each event
-        self.events.append(self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
-        self.events.append(self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
+        self.events.append(
+            self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
+        self.events.append(
+            self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
         self.events.append(self.create_event_thread('Input', self.input_update_event, self.handle_input_update))
         self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
 
     def run(self):
-        # self.interface.output_message(self.layer_name, "Hello")
         self.interface.output_message(self.layer_number, "Hello")
-        self.update_north_bus(message="Hello North Bus")
-        self.update_south_bus(message="Hello South Bus")
-        self.load_data_from_north_bus(timestamp=starttime)
-        self.load_data_from_south_bus(timestamp=starttime)
+        # self.update_bus(bus="NorthBus", message="Hello North Bus")
+        self.load_data_from_bus(bus="NorthBus")
+        self.load_data_from_bus(bus="SouthBus")
 
-        # Load Data From North Bus
-        # Load Data From South Bus
+        self.process_data_from_buses()
+
         # Load Relevant Data From Input
         # Load Relevant Data From Chat
         # Load Relevant Data From Memory
@@ -71,7 +71,6 @@ class AceLayer:
                 callback()
                 event.clear()
 
-        # self.interface.output_message(self.layer_name, f"{self.layer_name} - Listening to {event_name}!!!")
         self.interface.output_message(self.layer_number, f"{self.layer_name} - Listening to {event_name}!!!")
 
         thread = threading.Thread(target=event_loop)
@@ -79,46 +78,33 @@ class AceLayer:
         thread.start()
         return thread
 
-    def update_north_bus(self, **kwargs):
-        params = {"collection_name": "NorthBus", "metadata": {"Message": kwargs['message']}}
+    def update_bus(self, **kwargs):
+        params = {
+            'collection_name': kwargs['bus'],
+            'ids': [self.layer_number.__str__()],
+            'data': [kwargs['message']]
+        }
         self.storage.save_memory(params)
 
-    def update_south_bus(self, **kwargs):
-        params = {"collection_name": "SouthBus", "metadata": {"Message": kwargs['message']}}
-        self.storage.save_memory(params)
-
-    def load_data_from_north_bus(self,**kwargs):  # North Bus
+    def load_data_from_bus(self, **kwargs):  # North Bus
+        bus_name = kwargs['bus']
         params = {
-            "collection_name": "NorthBus",
-            "filter": {
-                "timestamp": {"$gte": kwargs['timestamp']}
-            }
+            "collection_name": bus_name,
+            # "filter": {
+            #     "timestamp": {"$gte": kwargs['timestamp']}
+            # }
         }
-        northbusdata = self.storage.query_memory(params)
-        return northbusdata
-
-    def load_data_from_south_bus(self,**kwargs):  # South Bus
-
-        params = {
-            "collection_name": "SouthBus",
-            "filter": {
-                "timestamp": {"$gte": kwargs['timestamp']}
-            }
-        }
-        southbusdata = self.storage.query_memory(params)
-        return southbusdata
-
-    def load_relevant_data_from_input(self):
-        # Load Any Telemetry
-        pass
-
-    def load_relevant_data_from_chat(self):
-        # Load Chat History
-        pass
+        self.bus[bus_name] = self.storage.load_collection(params)
+        # self.interface.output_message(self.layer_number, f"{self.bus[bus_name]}")
 
     def load_relevant_data_from_memory(self):
         # Load Relevant Memories
         pass
+
+    def process_data_from_buses(self):
+        for bus, data in self.bus.items():
+            self.interface.output_message(self.layer_number, f"\nBus:{bus}\nData:{data}\n")
+            # this may be overriden by each layer, maybe we add a function here specifically for overriding
 
     def handle_north_bus_update(self):
         # Load Data From North Bus and process
@@ -135,5 +121,3 @@ class AceLayer:
     def handle_user_update(self):
         # Load Relevant Data From Input and process
         self.run()
-
-
