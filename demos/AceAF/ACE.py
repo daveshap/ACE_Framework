@@ -8,7 +8,7 @@ from layers.L6Prosecution import L6Prosecution
 from layers.Interface import Interface
 import keyboard
 import threading
-
+import time
 
 class ACE:
 
@@ -40,6 +40,7 @@ class ACE:
 
     def run(self):
         # Trigger L1
+        time.sleep(3)
         self.layers[1].input_update_event.set()
 
         # Main loop

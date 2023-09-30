@@ -26,7 +26,7 @@ class AceLayer:
         self.input_update_event = threading.Event()
         self.user_update_event = threading.Event()
 
-        self.result = None
+        self.result = "Just a testo"
 
         LAYER_REGISTRY[self.layer_number] = self
 
@@ -50,6 +50,10 @@ class AceLayer:
 
         self.process_data_from_buses()
 
+        self.load_relevant_data_from_memory()
+        self.run_agents()
+
+        self.update_bus(bus="SouthBus", message=self.result)
         # Load Relevant Data From Input
         # Load Relevant Data From Chat
         # Load Relevant Data From Memory
@@ -61,7 +65,7 @@ class AceLayer:
         # Remove Thread from self.threads
 
     def run_agents(self):
-        # Call individual Agents
+        # Call individual Agents From Each Layer
         pass
 
     def create_event_thread(self, event_name, event, callback):
@@ -84,7 +88,12 @@ class AceLayer:
             'ids': [self.layer_number.__str__()],
             'data': [kwargs['message']]
         }
+
+        self.interface.output_message(self.layer_number, f"Saved To Bus:{kwargs['bus']}\nData:{kwargs['message']}\n")
         self.storage.save_memory(params)
+
+        if kwargs['bus'] == 'SouthBus':
+            LAYER_REGISTRY[self.south_layer].input_update_event.set()
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
@@ -95,7 +104,7 @@ class AceLayer:
             # }
         }
         self.bus[bus_name] = self.storage.load_collection(params)
-        # self.interface.output_message(self.layer_number, f"{self.bus[bus_name]}")
+        self.interface.output_message(self.layer_number, f"Loaded Data:{self.bus[bus_name]}\n")
 
     def load_relevant_data_from_memory(self):
         # Load Relevant Memories
