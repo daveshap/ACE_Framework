@@ -10,9 +10,9 @@ def view_bus():
     bus_name = request.args.get('name')
 
     if bus_name == 'northbound':
-        return jsonify(ace_system.northbound_bus.message_log)
+        return jsonify(ace_system.northbound_bus.messages())
     elif bus_name == 'southbound':
-        return jsonify(ace_system.southbound_bus.message_log)
+        return jsonify(ace_system.southbound_bus.messages())
     else:
         return jsonify({"error": "Invalid bus name. Choose 'northbound' or 'southbound'."}), 400
 

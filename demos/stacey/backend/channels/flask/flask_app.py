@@ -1,7 +1,7 @@
 # channels/flask/flask_app.py
-
 from flask import Flask
 from flask_cors import CORS
+from flask_socketio import SocketIO
 
 from channels.flask.admin_routes import admin_bp
 from channels.flask.chat_routes import chat_bp
@@ -13,6 +13,7 @@ class FlaskApp:
         self.app = Flask(__name__)
         self.app.ace_system = ace_system
         self.app.image_generator_function = image_generator_function
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*")
 
         CORS(self.app)
 
@@ -26,6 +27,18 @@ class FlaskApp:
 
         self.setup_routes()
 
+        self.setup_background_tasks(ace_system)
+
+    def setup_background_tasks(self, ace_system):
+        def background_task(bus):
+            @bus.subscribe
+            def listener(sender, message):
+                print(f"flask_app detected message on bus from {sender}: {message}")
+                self.socketio.emit(bus.name, {'sender': sender, 'message': message})
+
+        background_task(ace_system.northbound_bus)
+        background_task(ace_system.southbound_bus)
+
     def setup_routes(self):
         @self.app.route('/')
         def root():
@@ -33,7 +46,13 @@ class FlaskApp:
                    '<a href="chat?message=hi">/chat?message=hi</a>'
 
     def run(self):
-        self.app.run(port=5000, debug=False)
+        self.app.ace_system.start()
+        self.socketio.run(
+            self.app,
+            port=5000,
+            debug=False,
+            allow_unsafe_werkzeug=True
+        )
 
 
 def main():
