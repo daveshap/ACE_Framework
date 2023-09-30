@@ -39,6 +39,12 @@ class FlaskApp:
         background_task(ace_system.northbound_bus)
         background_task(ace_system.southbound_bus)
 
+        def status_listener(status):
+            print(f"flask_app detected status change: {status}")
+            self.socketio.emit('status', {'status': status.name})
+
+        ace_system.l1_aspirational_layer.add_status_listener(status_listener)
+
     def setup_routes(self):
         @self.app.route('/')
         def root():

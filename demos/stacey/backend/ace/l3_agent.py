@@ -1,7 +1,9 @@
 import pprint
+from typing import Callable
 from typing import List
 
 from ace.bus import Bus
+from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
 
 self_identity = """
@@ -69,28 +71,37 @@ class L3AgentLayer:
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
+        self.status: LayerStatus = LayerStatus.IDLE
+        self.status_listeners = set()
 
     def generate_response(self, conversation: List[GptMessage], communication_channel):
-        """
-        Placing the response generation logic here for now, until we figure out where it belongs.
-        :return response string, or None if no response
-        """
-        system_message = f"""
-            {self_identity}
-            {knowledge}
-            {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
-            {personality}
-            {behaviour}
-        """
-
-        conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
-        print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
-        print(f"{pprint.pformat(conversation_with_system_message)}")
-        response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
-        response_content = response['content']
-        print(f"  Got response: {response_content}")
+        try:
+            self.set_status(LayerStatus.INFERRING)
+            system_message = f"""
+                {self_identity}
+                {knowledge}
+                {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
+                {personality}
+                {behaviour}
+            """
+            conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
+            print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
+            print(f"{pprint.pformat(conversation_with_system_message)}")
+            response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
+            response_content = response['content']
+            print(f"  Got response: {response_content}")
+        finally:
+            self.set_status(LayerStatus.IDLE)
         return response if response_content.strip() else None
 
-    @staticmethod
-    def log(message):
-        print("L3 Agent Layer: " + message)
+    def set_status(self, status: LayerStatus):
+        print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
+        self.status = status
+        for listener in self.status_listeners:
+            listener(self.status)
+
+    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
+        self.status_listeners.add(listener)
+
+    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
+        self.status_listeners.discard(listener)

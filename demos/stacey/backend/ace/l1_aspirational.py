@@ -1,6 +1,9 @@
 # ace/l1_aspirational.py
+from typing import Callable
+
 from llm.gpt import GPT  # Hardcode to GPT for now
 from .bus import Bus
+from .layer_status import LayerStatus
 
 constitution = """
 # MISSION
@@ -56,6 +59,8 @@ class L1AspirationalLayer:
         self.northbound_bus = northbound_bus
         self.constitution = constitution
         self.personal_mission = personal_mission
+        self.status: LayerStatus = LayerStatus.IDLE
+        self.status_listeners = set()
 
     def on_northbound_message(self, sender, message):
         """
@@ -83,11 +88,16 @@ class L1AspirationalLayer:
             {interaction_schema}
         """
 
-        response = self.llm.create_chat_completion(
-            model=self.model,
-            system_message=system_message,
-            user_message=message
-        )
+        try:
+            self.set_status(LayerStatus.INFERRING)
+            response = self.llm.create_chat_completion(
+                model=self.model,
+                system_message=system_message,
+                user_message=message
+            )
+        finally:
+            self.set_status(LayerStatus.IDLE)
+
         if response:
             self.send_southbound_message(response)
 
@@ -107,3 +117,15 @@ class L1AspirationalLayer:
     @staticmethod
     def log(message):
         print("L1 Aspirational Layer: " + message)
+
+    def set_status(self, status: LayerStatus):
+        self.log(f"Status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
+        self.status = status
+        for listener in self.status_listeners:
+            listener(self.status)
+
+    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
+        self.status_listeners.add(listener)
+
+    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
+        self.status_listeners.discard(listener)
