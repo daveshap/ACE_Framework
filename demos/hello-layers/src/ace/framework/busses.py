@@ -1,8 +1,8 @@
 import logging
 
-from amqp.exchange import make_exchange
-from ace.resource import Resource
-from settings import Settings
+from ace.settings import Settings
+from ace.amqp.exchange import make_exchange
+from ace.framework.resource import Resource
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

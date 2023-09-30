@@ -3,9 +3,9 @@ import logging
 import json
 import pika
 from abc import abstractmethod
-from settings import Settings
 
-from ace.resource import Resource
+from ace.settings import Settings
+from ace.framework.resource import Resource
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

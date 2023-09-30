@@ -1,22 +1,23 @@
 import pika
 import time
 
-from settings import settings
+from ace.settings import Settings
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_connection(max_retries=5,
+def get_connection(settings: Settings,
+                   max_retries=5,
                    delay_factor=2,
-                   host=settings.amqp_host_name,
-                   username=settings.amqp_username,
-                   password=settings.amqp_password,
                    heartbeat=600,
                    blocked_connection_timeout=300,
                    ):
 
+    host = settings.amqp_host_name,
+    username = settings.amqp_username,
+    password = settings.amqp_password,
     connection = None
     retries = 0
 

@@ -1,4 +1,4 @@
-from resource.layer import Layer, LayerSettings
+from ace.framework.layer import Layer, LayerSettings
 
 # TODO: Add
 PRIMARY_DIRECTIVE = ""

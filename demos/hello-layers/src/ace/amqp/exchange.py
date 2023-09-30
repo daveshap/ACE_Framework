@@ -1,4 +1,4 @@
-from settings import Settings
+from ace.settings import Settings
 import pika
 
 

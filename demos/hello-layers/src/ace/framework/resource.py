@@ -1,9 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from settings import Settings
 
-from amqp.connection import get_connection
-from resource.api_endpoint import ApiEndpoint
+from ace.settings import Settings
+from ace.api_endpoint import ApiEndpoint
+from ace.amqp.connection import get_connection
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class Resource(ABC):
 
     def connect_busses(self):
         logger.debug(f"{self.labeled_name} connecting to busses...")
-        self.connection = get_connection()
+        self.connection = get_connection(self.settings)
         self.channel = self.connection.channel()
         logger.info(f"{self.labeled_name} busses connection established...")
 

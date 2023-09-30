@@ -1,15 +1,15 @@
-from resource.layer import Layer, LayerSettings
+from ace.framework.layer import Layer, LayerSettings
 
 # TODO: Add
 PRIMARY_DIRECTIVE = ""
 
 
-class Layer3(Layer):
+class Layer4(Layer):
 
     @property
     def settings(self):
         return LayerSettings(
-            name="layer_3",
-            label="Agent Model",
+            name="layer_4",
+            label="Executive Function",
             primary_directive=PRIMARY_DIRECTIVE
         )
