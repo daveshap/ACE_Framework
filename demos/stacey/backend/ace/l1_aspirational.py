@@ -102,7 +102,7 @@ class L1AspirationalLayer:
         of the Aspirational Layer's reasoning.
         """
         self.log("Sending south:\n" + message)
-        self.southbound_bus.publish("L1 Aspirational: ", message)
+        self.southbound_bus.publish("L1 Aspirational", message)
 
     @staticmethod
     def log(message):

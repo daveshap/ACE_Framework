@@ -13,11 +13,17 @@ class Bus:
             return list(self.message_log)
 
     def publish(self, sender: str, message: str):
+        print(f"{threading.current_thread().name} Bus {self.name} was asked to publish message from {sender}: {message}")
         with self.lock:
-            self.message_log.append((sender, message))
+            self.message_log.append({
+                "sender": sender,
+                "message": message
+            })
+            print(f"I have {len(self.subscribers)} subscribers")
+
             for subscriber in self.subscribers:
+                print(f"Publishing to {subscriber}")
                 subscriber(sender, message)
-            print(f"{threading.current_thread().name} Bus {self.name} received message from {sender}: {message}")
 
     def subscribe(self, listener):
         with self.lock:

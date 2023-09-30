@@ -46,7 +46,6 @@ class FlaskApp:
                    '<a href="chat?message=hi">/chat?message=hi</a>'
 
     def run(self):
-        self.app.ace_system.start()
         self.socketio.run(
             self.app,
             port=5000,
@@ -65,6 +64,7 @@ def main():
     openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
     ace = AceSystem(llm, config.default_model)
+    ace.start()
     flask_app = FlaskApp(ace, llm.create_image)
     flask_app.run()
 

@@ -5,7 +5,7 @@ import Buses from "@/pages/admin/buses";
 
 const IndexPage = () => {
     return (
-        <VStack>
+        <VStack w={"full"}>
             <Heading>Stacey's brain</Heading>
             <Buses></Buses>
         </VStack>

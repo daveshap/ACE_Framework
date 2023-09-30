@@ -14,7 +14,6 @@ if __name__ == '__main__':
     openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
     ace = AceSystem(llm, config.default_model)
-    ace.start()
 
     flask_app = FlaskApp(ace, llm.create_image)
 
@@ -27,7 +26,7 @@ if __name__ == '__main__':
     flask_thread.start()
     discord_thread.start()
 
+    ace.start()
     flask_thread.join()
     discord_thread.join()
-
 

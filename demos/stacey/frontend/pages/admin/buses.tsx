@@ -1,6 +1,6 @@
 // pages/admin/Bus.tsx
 import React from 'react';
-import {Alert, HStack} from '@chakra-ui/react';
+import {Alert, HStack, Image} from '@chakra-ui/react';
 import {Bus} from "@/components/bus";
 
 const BusesPage = () => {
@@ -11,8 +11,9 @@ const BusesPage = () => {
     }
 
     return (
-        <HStack spacing={8}>
+        <HStack spacing={8} align="start">
             <Bus busName="northbound" />
+            <Image src="/images/stacey-160.png" alt="Stacey" borderRadius="full"  mb={8} />
             <Bus busName="southbound" />
         </HStack>
     );
