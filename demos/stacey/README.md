@@ -4,6 +4,7 @@
 This a work-in-progress demo prototype for the ace framework.
 
 Currently this is a simple GPT chatbot that you can talk to through the web or discord.
+It also has a simple admin UI for seeing the framework in action.
 
 ## Backend
 - `cd backend`
@@ -12,8 +13,8 @@ Currently this is a simple GPT chatbot that you can talk to through the web or d
 - `python main.py`
 
 That runs both the web server and the discord bot. You can also run just one or the other.
-- `python flask_app.py`
-- `python discord_bot.py`
+- `python channels/flask/flask_app.py`
+- `python channels/discord/discord_bot.py`
 
 Surf to http://localhost:5000/chat?message=hi to test the backend & openai connection.
 
@@ -23,7 +24,7 @@ Surf to http://localhost:5000/chat?message=hi to test the backend & openai conne
 - `npm install`
 - `npm run dev`
 
-Surf to http://localhost:3000 and start chatting.
+Surf to http://localhost:3000 and start interacting with the bot.
 
 ## Discord
 
