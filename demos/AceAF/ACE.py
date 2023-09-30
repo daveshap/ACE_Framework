@@ -6,10 +6,7 @@ from layers.L4Executive import L4Executive
 from layers.L5Cognitive import L5Cognitive
 from layers.L6Prosecution import L6Prosecution
 from layers.Interface import Interface
-from guiutils.sendtoui import ApiClient
-import time
 import keyboard
-
 import threading
 
 
@@ -17,7 +14,8 @@ class ACE:
 
     def __init__(self):
         self.storage = StorageInterface().storage_utils
-        self.io = Interface()
+        self.interface = Interface()
+
         self.layer_threads = {}
         self.layer_outputs = {}
 
