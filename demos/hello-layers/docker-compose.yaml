@@ -88,7 +88,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: aspirational_layer
+      ACE_RESOURCE_NAME: layer_1
     command: *default_command
     networks: *default_networks
     healthcheck: *healthcheck
@@ -98,7 +98,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: global_strategy_layer
+      ACE_RESOURCE_NAME: layer_2
     command: *default_command
     depends_on:
       - aspirational_layer
@@ -110,7 +110,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: agent_model_layer
+      ACE_RESOURCE_NAME: layer_3
     command: *default_command
     depends_on:
       - global_strategy_layer
@@ -122,7 +122,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: executive_function_layer
+      ACE_RESOURCE_NAME: layer_4
     command: *default_command
     depends_on:
       - agent_model_layer
@@ -134,7 +134,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: cognitive_control_layer
+      ACE_RESOURCE_NAME: layer_5
     command: *default_command
     depends_on:
       - executive_function_layer
@@ -146,7 +146,7 @@ services:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: task_prosecution_layer
+      ACE_RESOURCE_NAME: layer_6
     command: *default_command
     depends_on:
       - cognitive_control_layer
@@ -157,7 +157,7 @@ services:
     build:
       <<: *default_build
     environment:
-      ACE_RESOURCE_NAME: interlayer_communication_buses
+      ACE_RESOURCE_NAME: busses
     command: *default_command
     depends_on:
       - rabbitmq
