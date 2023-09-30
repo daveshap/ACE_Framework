@@ -1,8 +1,7 @@
-// Import required components from Chakra UI
+// pages/admin/publishMessage.tsx
 import {Button, FormControl, FormLabel, Input, Radio, RadioGroup, Stack} from '@chakra-ui/react';
 import {useState} from "react";
 
-// Define the PublishMessageForm component
 export const PublishMessageForm = () => {
     const [message, setMessage] = useState('');
     const [bus, setBus] = useState('northbound');

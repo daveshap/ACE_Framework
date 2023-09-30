@@ -1,9 +1,9 @@
-// pages/busLogs.tsx
+// pages/admin/bus.tsx
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Text, VStack} from '@chakra-ui/react';
-import {PublishMessageForm} from "@/pages/admin/publishMessage";
+import {PublishMessageForm} from "@/components/publish";
 
-const BusLogsPage = () => {
+const BusPage = () => {
     const [logs, setLogs] = useState({ northbound: [], southbound: [] });
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -45,4 +45,4 @@ const BusLogsPage = () => {
     );
 };
 
-export default BusLogsPage;
+export default BusPage;

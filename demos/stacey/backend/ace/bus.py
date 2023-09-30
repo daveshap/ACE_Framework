@@ -1,7 +1,6 @@
 # ace/bus.py
 from pubsub import pub
 
-
 class Bus:
     def __init__(self, name):
         self.name = name
