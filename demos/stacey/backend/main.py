@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 import config
 from ace.ace_system import AceSystem
-from discord_bot import DiscordBot
-from flask_app import FlaskApp
+from channels.discord_bot import DiscordBot
+from channels.flask_app import FlaskApp
 from llm.gpt import GPT
 
 if __name__ == '__main__':
