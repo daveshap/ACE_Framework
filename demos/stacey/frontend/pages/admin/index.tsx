@@ -1,7 +1,7 @@
 // pages/watch/index.tsx
 import {Heading, VStack} from '@chakra-ui/react';
 import React from "react";
-import BusLogs from "@/pages/brain/busLogs";
+import BusLogs from "@/pages/admin/busLogs";
 
 const IndexPage = () => {
     return (

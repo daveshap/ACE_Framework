@@ -57,7 +57,7 @@ class L1AspirationalLayer:
         self.constitution = constitution
         self.personal_mission = personal_mission
 
-    def on_northbound_message(self, message):
+    def on_northbound_message(self, sender, message):
         """
         The Aspirational Layer receives inputs from the northbound bus,
         allowing it to monitor information from all lower layers.

@@ -17,4 +17,4 @@ if __name__ == "__main__":
         if user_input.lower() == 'exit':
             print("Exiting AceTest...")
             break
-        ace_system.northbound_bus.publish(10, user_input)
+        ace_system.northbound_bus.publish("ace_test.py", user_input)

@@ -7,9 +7,9 @@ class Bus:
         self.name = name
         self.message_log = []
 
-    def publish(self, layer, message):
-        self.message_log.append((layer, message))
-        pub.sendMessage(self.name, message=message)
+    def publish(self, sender, message):
+        self.message_log.append((sender, message))
+        pub.sendMessage(self.name, sender=sender, message=message)
 
     def subscribe(self, listener):
         pub.subscribe(listener, self.name)

@@ -1,6 +1,7 @@
 // pages/busLogs.tsx
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Text, VStack} from '@chakra-ui/react';
+import {PublishMessageForm} from "@/pages/admin/publishMessage";
 
 const BusLogsPage = () => {
     const [logs, setLogs] = useState({ northbound: [], southbound: [] });
@@ -21,6 +22,7 @@ const BusLogsPage = () => {
     return (
         <Box p={4}>
             <VStack spacing={4}>
+                <PublishMessageForm />
                 <Box>
                     <Text fontSize="xl" mb={2}>Northbound Bus Logs:</Text>
                     <VStack align="start" spacing={1}>

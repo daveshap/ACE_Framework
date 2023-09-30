@@ -1,4 +1,4 @@
-# discord_bot.py
+# channels/discord/discord_bot.py
 import pprint
 import traceback
 
