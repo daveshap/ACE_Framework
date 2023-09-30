@@ -7,11 +7,12 @@ class ApiClient:
     BASE_URL = 'http://127.0.0.1:5000/'
 
     def __init__(self):
-        self.endpoints = {
-            'api1': 'api1',
-            'api2': 'api2',
-            'api3': 'api3'
-        }
+        pass
+        # self.endpoints = {
+        #     'api1': 'api1',
+        #     'api2': 'api2',
+        #     'api3': 'api3'
+        # }
 
     def send_message(self, target, message):
         # if target not in self.endpoints:

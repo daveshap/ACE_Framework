@@ -1,5 +1,3 @@
-# kivy_flask_app.py
-
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
@@ -14,59 +12,25 @@ from kivy.uix.scrollview import ScrollView
 
 app = Flask(__name__)
 
+# Dynamic registration of Flask routes
+# LAYER_NAMES = ["L0Console", "L1Aspirational", "L2Strategy", "L3Agent", "L4Executive", "L5Cognitive", "L6Prosecution"]
 
 
-@app.route('/L1Asiprational', methods=['POST'])
-def api1():
+@app.route('/layer_update', methods=['POST'])
+def layer_update():
     data = request.json
+    layer_number = data.get('layer_number')
     message = data.get('message', '')
-    kivy_app.update_label_api1(message)
+
+    # Check if layer_name is valid, if not, send an error response
+    # if layer_name not in LAYER_NAMES:
+    #     return jsonify({"status": "error", "message": "Invalid layer name"})
+
+    # Convert layer_name to layer_number for update_label function
+    # layer_number = LAYER_NAMES.index(layer_number)
+    kivy_app.update_label(layer_number, message)
     return jsonify({"status": "received"})
 
-
-@app.route('/L2Strategy', methods=['POST'])
-def api2():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api2(message)
-    return jsonify({"status": "received"})
-
-
-@app.route('/L3Agent', methods=['POST'])
-def api3():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api3(message)
-    return jsonify({"status": "received"})
-
-@app.route('/L4Executive', methods=['POST'])
-def api4():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api4(message)
-    return jsonify({"status": "received"})
-
-@app.route('/L5Cognitive', methods=['POST'])
-def api5():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api5(message)
-    return jsonify({"status": "received"})
-
-@app.route('/L6Prosecution', methods=['POST'])
-def api6():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api6(message)
-    return jsonify({"status": "received"})
-
-# Main Channel
-@app.route('/console', methods=['POST'])
-def console():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_console(message)
-    return jsonify({"status": "received"})
 
 def run_flask_app():
     app.run(port=5000)
@@ -76,13 +40,13 @@ class KivyApp(App):
 
     def __init__(self, **kwargs):
         super(KivyApp, self).__init__(**kwargs)
-        self.history_api1 = ""
-        self.history_api2 = ""
-        self.history_api3 = ""
-        self.history_api4 = ""
-        self.history_api5 = ""
-        self.history_api6 = ""
-        self.history_console = ""
+        # Initialize a list with empty strings for each layer's history
+        # 7 items (0) for the console and (1-6) for layers 1 to 6
+        self.history = [""] * 7
+
+        # Initialize the ScrollViews and Labels for each layer
+        self.views = []
+        self.labels = []
 
     def build(self):
         self.main_layout = BoxLayout(orientation='vertical')
@@ -96,64 +60,74 @@ class KivyApp(App):
         self.tab5 = TabbedPanelItem(text='L5 Cognitive')
         self.tab6 = TabbedPanelItem(text='L6 Prosecution')
 
+        for i in range(7):  # 7 layers including the Console
+            self.history[i] = "Listening to Messages...\n"
+            view = ScrollView()
+            label = Label(text=self.history[i], size_hint_y=None)
+            label.bind(texture_size=label.setter('size'))
+            view.add_widget(label)
+
+            self.views.append(view)
+            self.labels.append(label)
+
         # Message histories
-        self.history_console = "Waiting for message on console...\n"
-        self.history_api1 = "Waiting for message on API 1...\n"
-        self.history_api2 = "Waiting for message on API 2...\n"
-        self.history_api3 = "Waiting for message on API 3...\n"
-        self.history_api4 = "Waiting for message on API 4...\n"
-        self.history_api5 = "Waiting for message on API 5...\n"
-        self.history_api6 = "Waiting for message on API 6...\n"
-
-        # API 1 ScrollView and Label
-        self.scrollview_api1 = ScrollView()
-        self.label_api1 = Label(text=self.history_api1, size_hint_y=None)
-        self.label_api1.bind(texture_size=self.label_api1.setter('size'))
-        self.scrollview_api1.add_widget(self.label_api1)
-
-        # API 2 ScrollView and Label
-        self.scrollview_api2 = ScrollView()
-        self.label_api2 = Label(text=self.history_api2, size_hint_y=None)
-        self.label_api2.bind(texture_size=self.label_api2.setter('size'))
-        self.scrollview_api2.add_widget(self.label_api2)
-
-        # API 3 ScrollView and Label
-        self.scrollview_api3 = ScrollView()
-        self.label_api3 = Label(text=self.history_api3, size_hint_y=None)
-        self.label_api3.bind(texture_size=self.label_api3.setter('size'))
-        self.scrollview_api3.add_widget(self.label_api3)
-
-        # API 4 ScrollView and Label
-        self.scrollview_api4 = ScrollView()
-        self.label_api4 = Label(text=self.history_api4, size_hint_y=None)
-        self.label_api4.bind(texture_size=self.label_api4.setter('size'))
-        self.scrollview_api4.add_widget(self.label_api4)
-
-        # API 5 ScrollView and Label
-        self.scrollview_api5 = ScrollView()
-        self.label_api5 = Label(text=self.history_api5, size_hint_y=None)
-        self.label_api5.bind(texture_size=self.label_api5.setter('size'))
-        self.scrollview_api5.add_widget(self.label_api5)
-
-        # API 6 ScrollView and Label
-        self.scrollview_api6 = ScrollView()
-        self.label_api6 = Label(text=self.history_api6, size_hint_y=None)
-        self.label_api6.bind(texture_size=self.label_api6.setter('size'))
-        self.scrollview_api6.add_widget(self.label_api6)
+        # self.layer_history[0] = "Waiting for message on console...\n"
+        # self.layer_history[1] = "Waiting for message on API 1...\n"
+        # self.layer_history[2] = "Waiting for message on API 2...\n"
+        # self.layer_history[3] = "Waiting for message on API 3...\n"
+        # self.layer_history[4] = "Waiting for message on API 4...\n"
+        # self.layer_history[5] = "Waiting for message on API 5...\n"
+        # self.layer_history[6] = "Waiting for message on API 6...\n"
 
         # Console API ScrollView and Label
-        self.scrollview_console = ScrollView()
-        self.label_console = Label(text=self.history_console, size_hint_y=None)
-        self.label_console.bind(texture_size=self.label_console.setter('size'))
-        self.scrollview_console.add_widget(self.label_console)
+        # self.scrollview_api0 = ScrollView()
+        # self.label_api0 = Label(text=self.layer_history[0], size_hint_y=None)
+        # self.label_api0.bind(texture_size=self.label_api0.setter('size'))
+        # self.scrollview_api0.add_widget(self.label_api0)
+        #
+        # # API 1 ScrollView and Label
+        # self.scrollview_api1 = ScrollView()
+        # self.label_api1 = Label(text=self.layer_history[1], size_hint_y=None)
+        # self.label_api1.bind(texture_size=self.label_api1.setter('size'))
+        # self.scrollview_api1.add_widget(self.label_api1)
+        #
+        # # API 2 ScrollView and Label
+        # self.scrollview_api2 = ScrollView()
+        # self.label_api2 = Label(text=self.layer_history[2], size_hint_y=None)
+        # self.label_api2.bind(texture_size=self.label_api2.setter('size'))
+        # self.scrollview_api2.add_widget(self.label_api2)
+        #
+        # # API 3 ScrollView and Label
+        # self.scrollview_api3 = ScrollView()
+        # self.label_api3 = Label(text=self.layer_history[3], size_hint_y=None)
+        # self.label_api3.bind(texture_size=self.label_api3.setter('size'))
+        # self.scrollview_api3.add_widget(self.label_api3)
+        #
+        # # API 4 ScrollView and Label
+        # self.scrollview_api4 = ScrollView()
+        # self.label_api4 = Label(text=self.layer_history[4], size_hint_y=None)
+        # self.label_api4.bind(texture_size=self.label_api4.setter('size'))
+        # self.scrollview_api4.add_widget(self.label_api4)
+        #
+        # # API 5 ScrollView and Label
+        # self.scrollview_api5 = ScrollView()
+        # self.label_api5 = Label(text=self.layer_history[5], size_hint_y=None)
+        # self.label_api5.bind(texture_size=self.label_api5.setter('size'))
+        # self.scrollview_api5.add_widget(self.label_api5)
+        #
+        # # API 6 ScrollView and Label
+        # self.scrollview_api6 = ScrollView()
+        # self.label_api6 = Label(text=self.layer_history[6], size_hint_y=None)
+        # self.label_api6.bind(texture_size=self.label_api6.setter('size'))
+        # self.scrollview_api6.add_widget(self.label_api6)
 
-        self.tab1.add_widget(self.scrollview_console)
-        self.tab1.add_widget(self.scrollview_api1)
-        self.tab2.add_widget(self.scrollview_api2)
-        self.tab3.add_widget(self.scrollview_api3)
-        self.tab3.add_widget(self.scrollview_api4)
-        self.tab3.add_widget(self.scrollview_api5)
-        self.tab3.add_widget(self.scrollview_api6)
+        self.tab_console.add_widget(self.views[0])
+        self.tab1.add_widget(self.views[1])
+        self.tab2.add_widget(self.views[2])
+        self.tab3.add_widget(self.views[3])
+        self.tab4.add_widget(self.views[4])
+        self.tab5.add_widget(self.views[5])
+        self.tab6.add_widget(self.views[6])
 
         self.tab_panel.add_widget(self.tab_console)
         self.tab_panel.add_widget(self.tab1)
@@ -178,33 +152,24 @@ class KivyApp(App):
 
         return self.main_layout
 
-    def update_label_api1(self, message):
-        self.history_api1 += message + '\n'
-        self.label_api1.text = self.history_api1
+    def update_label(self, layer_number, message):
+        # Update the history for the given layer
+        # label_attr = f"label_api{layer_number}"
 
-    def update_label_api2(self, message):
-        self.history_api2 += message + '\n'
-        self.label_api2.text = self.history_api2
+        # Check if the label attribute exists
+        if self.labels[layer_number]:
+            self.history[layer_number] += message + '\n'
+            self.labels[layer_number].text = self.history[layer_number]
+        else:
+            # Handle case where the layer doesn't have a matching label
+            print(f"Error: Layer {layer_number} does not have a matching label attribute.")
 
-    def update_label_api3(self, message):
-        self.history_api3 += message + '\n'
-        self.label_api3.text = self.history_api3
-
-    def update_label_api4(self, message):
-        self.history_api4 += message + '\n'
-        self.label_api4.text = self.history_api4
-
-    def update_label_api5(self, message):
-        self.history_api5 += message + '\n'
-        self.label_api5.text = self.history_api5
-
-    def update_label_api6(self, message):
-        self.history_api6 += message + '\n'
-        self.label_api6.text = self.history_api6
-
-    def update_label_console(self, message):
-        self.history_console += message + '\n'
-        self.label_console.text = self.history_console
+        # if hasattr(self, self.labels[layer_number]):
+        #     self.history[layer_number] += message + '\n'
+        #     getattr(self, label_attr).text = self.history[layer_number]
+        # else:
+        #     # Handle case where the layer doesn't have a matching label
+        #     print(f"Error: Layer {layer_number} does not have a matching label attribute.")
 
     def send_message(self, instance):
         message = self.chatbox.text

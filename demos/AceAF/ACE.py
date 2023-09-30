@@ -43,8 +43,6 @@ class ACE:
     def run(self):
         # Trigger L1
         self.layers[1].input_update_event.set()
-        for layer_number in self.layers:
-            self.layer_outputs[layer_number] = f"Output for layer {layer_number}"  # replace with real outputs
 
         # Main loop
         while True:
@@ -52,9 +50,6 @@ class ACE:
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
                 break
-
-
-
 
     def init_layer(self, layer_number):
         try:
