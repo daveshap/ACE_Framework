@@ -53,18 +53,8 @@ For example:
 That will automatically be replaced by a generated image.
 
 # Empty responses
-Don't always respond to every message.
 Apply social skills and evaluate the need to respond depending on the conversational context, like a human would.
-Examples of when to respond:
-- Stacey, how are you?
-- What do you think, Stacey?
-
-Example of when not to respond:
-- I talked to Stacey about it before.
-- Stacey is cool.
-
 You can ignore a message by responding with an empty string.
-
 """
 
 communication_channel_prompt = """
@@ -73,6 +63,24 @@ People can talk to you via multiple different channels - web, discord, etc.
 The current chat is taking place on [current_communication_channel].
 """
 
+
+prompt_for_determining_if_agent_should_respond = """
+You are the brain of a chat bot named 'Stacey'.
+Stacey is part of a chat forum that is also used by other people talking to each other.
+
+Here are the latest messages in the chat, with sender name in brackets, oldest message first:
+{messages}
+
+Decide whether the latest message in the conversation is something you should respond to.
+Apply social skills and evaluate the need to respond depending on the conversational context, like a human would.
+Guiding principles:
+- Respond only to messages addressed to you
+- Don't respond to messages addressed to everyone, or nobody in particular.
+
+Answer "yes" to respond or "no" to not respond, followed by one sentence describing why or why not.
+"""
+
+how_many_messages_to_include_when_determining_if_agent_should_respond = 3
 
 class L3AgentLayer:
     def __init__(self, llm: GPT, model,
@@ -105,21 +113,27 @@ class L3AgentLayer:
         return response if response_content.strip() else None
 
     def should_respond(self, conversation):
-        system_message = f"{self_identity}{knowledge}{communication_channel_prompt}{personality}{behaviour}"
-        conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
+        # Ask the LLM whether the bot should respond, considering the context and latest message
 
-        # Ask the LLM whether the bot should respond, considering the context and history
-        prompt = {
-            "role": "user",
-            "content": "Is the last message in the given conversation directed at me (Stacey) specifically? (yes or no)"
-        }
-        conversation_with_prompt = conversation_with_system_message + [prompt]
+        if len(conversation) >= how_many_messages_to_include_when_determining_if_agent_should_respond:
+            last_few_messages = conversation[-how_many_messages_to_include_when_determining_if_agent_should_respond:]
+        else:
+            last_few_messages = conversation
 
-        response = self.llm.create_conversation_completion(self.model, conversation_with_prompt)
+        prompt = prompt_for_determining_if_agent_should_respond.format(
+            messages="\n".join([f"- [{message['name']}] {message['content']}" for message in last_few_messages])
+        )
+
+        print (f"Prompt to determine if we should respond:\n {prompt}")
+        response = self.llm.create_conversation_completion(
+            self.model,
+            [{"role": "user", "content": prompt}]
+        )
         response_content = response['content'].strip().lower()
 
-        # If the LLM says "yes", then the bot should respond
-        return response_content == "yes"
+        print(f"Response to prompt: {response_content}")
+
+        return response_content.startswith("yes")
 
     def set_status(self, status: LayerStatus):
         print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
