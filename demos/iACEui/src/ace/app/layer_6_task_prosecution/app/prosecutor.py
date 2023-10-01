@@ -4,12 +4,15 @@ import logging
 from settings import settings
 from base.amqp.exchange import create_exchange
 import time
+from primary_directive import primary_directive
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Layer6Prosecutor(BaseLayer):
-    pass
+    def get_primary_directive(self):
+        return primary_directive
 
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
 
