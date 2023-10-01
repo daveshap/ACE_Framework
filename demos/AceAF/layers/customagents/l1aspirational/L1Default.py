@@ -1,5 +1,5 @@
 from agentforge.agent import Agent
 
 
-class TestAgent(Agent):
+class L1Default(Agent):
     pass

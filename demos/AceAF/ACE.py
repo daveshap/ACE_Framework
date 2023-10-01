@@ -10,6 +10,7 @@ import keyboard
 import threading
 import time
 
+
 class ACE:
 
     def __init__(self):
@@ -38,7 +39,6 @@ class ACE:
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
-
     def run(self):
         # Trigger L1
         time.sleep(3)
@@ -46,8 +46,7 @@ class ACE:
 
         # Main loop
         while True:
-
-            #Thread Count
+            # Thread Count
             # threadlist = threading.active_count()
             # self.interface.output_message(0, f"\nAll Layers Initialized, ACE Running...\n{threadlist}")
 
@@ -55,7 +54,7 @@ class ACE:
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
                 break
-            time.sleep(15)
+            time.sleep(5)
 
     def init_layer(self, layer_number):
         try:
