@@ -4,6 +4,7 @@ import json
 import pika
 from abc import abstractmethod
 
+from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
 
@@ -28,8 +29,8 @@ class Layer(Resource):
         self.register_busses()
 
     def stop_resource(self):
-        super().stop_resource()
         self.deregister_busses()
+        super().stop_resource()
 
     def set_adjacent_layers(self):
         try:
@@ -45,54 +46,41 @@ class Layer(Resource):
 
     def register_busses(self):
         logger.debug("Registering busses...")
-        self.subscribe_busses()
+        self.subscribe_adjacent_layers()
+        self.subscribe_security_queue()
         logger.debug("Registered busses...")
 
     def deregister_busses(self):
         logger.debug("Deregistering busses...")
-        self.unsubscribe_busses()
+        self.unsubscribe_adjacent_layers()
+        self.unsubscribe_security_queue()
         logger.debug("Deregistered busses...")
 
-    def publish_message(self, exchange, message, delivery_mode=2):
-        self.channel.basic_publish(exchange=exchange,
-                                   routing_key="",
-                                   body=message,
-                                   properties=pika.BasicProperties(
-                                       delivery_mode=delivery_mode,
-                                   ))
-
-    def build_message(self, message=None, message_type='data'):
-        message = message or {}
-        message['type'] = message_type
-        return json.dumps(message).encode()
-
-    def build_queue_name(self, direction):
+    def build_queue_name(self, direction, layer):
         queue = None
-        if direction == 'northbound' and self.settings.northern_layer:
-            queue = f"northbound.{self.settings.northern_layer}"
-        elif direction == 'southbound' and self.settings.southern_layer:
-            queue = f"southbound.{self.settings.southern_layer}"
+        if layer and direction in constants.LAYER_ORIENTATIONS:
+            queue = f"{direction}.{layer}"
         return queue
 
-    def build_exchange_name(self, direction):
+    def build_exchange_name(self, direction, layer):
         exchange = None
-        queue = self.build_queue_name(direction)
+        queue = self.build_queue_name(direction, layer)
         if queue:
             exchange = f"exchange.{queue}"
         return exchange
 
-    def send_message(self, direction, message, delivery_mode=2):
-        exchange = self.build_exchange_name(direction)
+    def send_message(self, direction, layer, message, delivery_mode=2):
+        exchange = self.build_exchange_name(direction, layer)
         if exchange:
             self.publish_message(self, exchange, message)
 
-    def ping(self, direction):
+    def ping(self, direction, layer):
         message = self.build_message(message_type='ping')
-        self.send_message(self, direction, message)
+        self.send_message(self, direction, layer, message)
 
     def post(self):
-        self.ping('northbound')
-        self.ping('southbound')
+        self.ping('northbound', self.settings.northern_layer)
+        self.ping('southbound', self.settings.southern_layer)
 
     @abstractmethod
     def northbound_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
@@ -115,16 +103,41 @@ class Layer(Resource):
         # channel.basic_ack(delivery_tag=method.delivery_tag)
         pass
 
-    def subscribe_busses(self):
-        logger.debug(f"{self.labeled_name} subscribing to busses...")
-        self.channel.basic_consume(queue=self.build_queue_name('northbound'), on_message_callback=self.northbound_message_handler)
-        self.channel.basic_consume(queue=self.build_queue_name('southbound'), on_message_callback=self.southbound_message_handler)
-        logger.info(f"{self.labeled_name} Subscribed to {self.settings.northbound_subscribe_queue} and {self.settings.southbound_subscribe_queue}")
+    def security_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
+        message = body.decode()
+        logger.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
+        try:
+            data = json.loads(message)
+        except json.JSONDecodeError as e:
+            logger.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
+            return
+        if data['type'] == 'post':
+            self.post()
 
-    def unsubscribe_busses(self):
-        northbound_queue = self.build_queue_name('northbound')
-        southbound_queue = self.build_queue_name('southbound')
+    def subscribe_adjacent_layers(self):
+        logger.debug(f"{self.labeled_name} subscribing to adjacent layers...")
+        northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
+        southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
+        self.channel.basic_consume(queue=northbound_queue, on_message_callback=self.northbound_message_handler)
+        self.channel.basic_consume(queue=southbound_queue, on_message_callback=self.southbound_message_handler)
+        logger.info(f"{self.labeled_name} subscribed to {northbound_queue} and {southbound_queue}")
+
+    def subscribe_security_queue(self):
+        queue_name = f"security.{self.settings.name}"
+        logger.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.channel.basic_consume(queue=queue_name, on_message_callback=self.security_message_handler)
+        logger.info(f"{self.labeled_name} subscribed to {queue_name}")
+
+    def unsubscribe_adjacent_layers(self):
+        northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
+        southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
         logger.debug(f"{self.labeled_name} unsubscribing from busses...")
         self.channel.basic_cancel(northbound_queue)
         self.channel.basic_cancel(southbound_queue)
-        logger.info(f"{self.labeled_name} Unsubscribed from {northbound_queue} and {southbound_queue}")
+        logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
+
+    def unsubscribe_security_queue(self):
+        queue_name = f"security.{self.settings.name}"
+        logger.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+        self.channel.basic_cancel(queue_name)
+        logger.info(f"{self.labeled_name} unsubscribed from {queue_name}")

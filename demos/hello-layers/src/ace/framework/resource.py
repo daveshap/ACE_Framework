@@ -1,6 +1,9 @@
 import logging
+import json
+import pika
 from abc import ABC, abstractmethod
 
+from ace import constants
 from ace.settings import Settings
 from ace.api_endpoint import ApiEndpoint
 from ace.amqp.connection import get_connection
@@ -55,3 +58,27 @@ class Resource(ABC):
         self.channel.close()
         self.connection.close()
         logger.info(f"{self.labeled_name} busses connection closed...")
+
+    def build_message(self, message=None, message_type='data'):
+        message = message or {}
+        message['type'] = message_type
+        return json.dumps(message).encode()
+
+    def publish_message(self, exchange, message, delivery_mode=2):
+        self.channel.basic_publish(exchange=exchange,
+                                   routing_key="",
+                                   body=message,
+                                   properties=pika.BasicProperties(
+                                       delivery_mode=delivery_mode,
+                                   ))
+
+    def is_existant_layer_queue(self, orientation, idx):
+        return (orientation != 'northbound' and idx != 0) and (orientation != 'southbound' and idx != len(self.settings.layers) - 1)
+
+    def build_all_layer_queue_names(self):
+        queue_names = []
+        for orientation in constants.LAYER_ORIENTATIONS:
+            for idx, layer in enumerate(self.settings.layers):
+                if self.is_existant_layer_queue(orientation, idx):
+                    queue_names.append(self.build_queue_name(orientation, layer))
+        return queue_names
