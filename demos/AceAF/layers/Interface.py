@@ -2,7 +2,7 @@ from . import LAYER_REGISTRY
 import requests
 
 
-class Interface():
+class Interface:
     BASE_URL = 'http://127.0.0.1:5000/'
 
     def __init__(self, **kwargs):

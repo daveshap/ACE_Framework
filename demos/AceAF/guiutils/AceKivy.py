@@ -58,9 +58,9 @@ class KivyApp(App):
             view = ScrollView()
             label = Label(
                 text=self.history[i],
-                size_hint_y=1,
+                size_hint_y=None,
                 width=650,
-                text_size=(650, 400),
+                text_size=(650, None),
                 halign='left',
                 valign='top')
 
@@ -108,7 +108,7 @@ class KivyApp(App):
                 "message": self.chat.text
             }
 
-            requests.post('http://127.0.0.1:1337/bot', json=data)
+            self.result = requests.post('http://127.0.0.1:5001/bot', json=data)
             # Clear the chat box after sending
             self.chat.text = ''
 
