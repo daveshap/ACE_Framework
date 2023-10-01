@@ -25,7 +25,7 @@ environment in which you are operating.
 """
 
 
-class L1GlobalStrategyLayer:
+class L2GlobalStrategyLayer:
     """
     The Global Strategy Layer serves a crucial function within the ACE framework - integrating real-world
     environmental context into the agent's strategic planning and decision-making processes. This grounding in
