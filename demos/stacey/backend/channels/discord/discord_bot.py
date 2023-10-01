@@ -4,12 +4,10 @@ import traceback
 
 import discord
 from discord import Embed
-from dotenv import load_dotenv
 
 import config
 from ace.ace_system import AceSystem
 from tools.image_tool import split_message_by_images
-from util import get_environment_variable
 
 
 class DiscordBot:
@@ -116,18 +114,3 @@ class DiscordBot:
 
     def run(self):
         self.client.run(self.bot_token)
-
-
-def main():
-    from llm.gpt import GPT
-    load_dotenv()
-    openai_api_key = get_environment_variable('OPENAI_API_KEY')
-    llm = GPT(openai_api_key)
-    discord_bot_token = get_environment_variable('DISCORD_BOT_TOKEN')
-    ace = AceSystem(llm, config.default_model)
-    discord_bot = DiscordBot(discord_bot_token, "stacey", ace, llm.create_image)
-    discord_bot.run()
-
-
-if __name__ == '__main__':
-    main()

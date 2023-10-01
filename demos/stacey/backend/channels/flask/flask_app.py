@@ -5,7 +5,6 @@ from flask_socketio import SocketIO
 
 from channels.flask.admin_routes import admin_bp
 from channels.flask.chat_routes import chat_bp
-from util import get_environment_variable
 
 
 class FlaskApp:
@@ -60,21 +59,3 @@ class FlaskApp:
             allow_unsafe_werkzeug=True
         )
 
-
-def main():
-    from llm.gpt import GPT
-    from dotenv import load_dotenv
-    from ace.ace_system import AceSystem
-    import config
-
-    load_dotenv()
-    openai_api_key = get_environment_variable('OPENAI_API_KEY')
-    llm = GPT(openai_api_key)
-    ace = AceSystem(llm, config.default_model)
-    ace.start()
-    flask_app = FlaskApp(ace, llm.create_image)
-    flask_app.run()
-
-
-if __name__ == '__main__':
-    main()
