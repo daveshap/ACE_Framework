@@ -2,7 +2,6 @@ import threading
 
 from dotenv import load_dotenv
 
-import config
 from ace.ace_system import AceSystem
 from channels.discord.discord_bot import DiscordBot
 from channels.flask.flask_app import FlaskApp
@@ -13,7 +12,7 @@ if __name__ == '__main__':
     load_dotenv()
     openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
-    ace = AceSystem(llm, config.default_model)
+    ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"))
 
     flask_app = FlaskApp(ace, llm.create_image)
 
