@@ -1,13 +1,9 @@
-from threading import Event
-
 from . import LAYER_REGISTRY
 from agentforge.utils.storage_interface import StorageInterface
 import threading
 from agentforge.config import Config
-from demos.AceAF.guiutils.sendtoui import ApiClient
-
-# def get_layer_by_number(layer_number):
-#     return LAYER_REGISTRY.get(layer_number, None)
+from .Interface import Interface
+import time
 
 
 class AceLayer:
@@ -20,15 +16,17 @@ class AceLayer:
 
         self.storage = StorageInterface().storage_utils
         self.config = Config()
+        self.interface = Interface()
+
+        self.bus = {'NorthBus': None, 'SouthBus': None}
 
         self.events = []
         self.north_bus_update_event = threading.Event()
         self.south_bus_update_event = threading.Event()
         self.input_update_event = threading.Event()
         self.user_update_event = threading.Event()
-        self.sendui = ApiClient()
 
-        self.result = None
+        self.result = "Just a testo"
 
         LAYER_REGISTRY[self.layer_number] = self
 
@@ -37,16 +35,25 @@ class AceLayer:
         self.events.clear()
 
         # Create new threads for each event
-        self.events.append(self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
-        self.events.append(self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
+        self.events.append(
+            self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
+        self.events.append(
+            self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
         self.events.append(self.create_event_thread('Input', self.input_update_event, self.handle_input_update))
         self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
 
     def run(self):
-        print(f"\n\n{self.layer_name} Ran!!!\n\n")
-        self.sendui.send_message("api1", "Hello")
-        # Load Data From North Bus
-        # Load Data From South Bus
+        self.interface.output_message(self.layer_number, "Hello")
+        # self.update_bus(bus="NorthBus", message="Hello North Bus")
+        self.load_data_from_bus(bus="NorthBus")
+        self.load_data_from_bus(bus="SouthBus")
+
+        self.process_data_from_buses()
+
+        self.load_relevant_data_from_memory()
+        self.run_agents()
+
+        self.update_bus(bus="SouthBus", message=self.result)
         # Load Relevant Data From Input
         # Load Relevant Data From Chat
         # Load Relevant Data From Memory
@@ -58,7 +65,7 @@ class AceLayer:
         # Remove Thread from self.threads
 
     def run_agents(self):
-        # Call individual Agents
+        # Call individual Agents From Each Layer
         pass
 
     def create_event_thread(self, event_name, event, callback):
@@ -68,44 +75,40 @@ class AceLayer:
                 callback()
                 event.clear()
 
-        print(f"{self.layer_name} - Listening to {event_name}!!!")
-        self.sendui.send_message("api1", f"{self.layer_name} - Listening to {event_name}!!!")
+        self.interface.output_message(self.layer_number, f"{self.layer_name} - Listening to {event_name}!!!")
 
         thread = threading.Thread(target=event_loop)
         thread.daemon = True
         thread.start()
         return thread
 
-    def update_south_bus(self):
-        params = {}
+    def update_bus(self, **kwargs):
+        params = {
+            'collection_name': kwargs['bus'],
+            'ids': [self.layer_number.__str__()],
+            'data': [kwargs['message']]
+        }
+
+        self.interface.output_message(self.layer_number, f"Saved To Bus:{kwargs['bus']}\nData:{kwargs['message']}\n")
         self.storage.save_memory(params)
-        pass
 
-    def load_data_from_north_layer(self):  # South Bus
-        if self.north_layer == 0:  # Layer 1 has no Layer Above, i.e. Layer 0
-            pass
+        if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
+            LAYER_REGISTRY[self.south_layer].input_update_event.set()
 
-        # Query the North Bus Collection for message from the Layer Above
-        pass
-
-    def load_data_from_south_bus(self):  # North Bus
-        if self.north_layer == 7:  # Layer 6 has no Layer Below, i.e. Layer 7
-            pass
-
-        # Query the South Bus Collection for message from the Layer Below
-        pass
-
-    def load_relevant_data_from_input(self):
-        # Load Any Telemetry
-        pass
-
-    def load_relevant_data_from_chat(self):
-        # Load Chat History
-        pass
+    def load_data_from_bus(self, **kwargs):  # North Bus
+        bus_name = kwargs['bus']
+        params = {"collection_name": bus_name}
+        self.bus[bus_name] = self.storage.load_collection(params)
+        self.interface.output_message(self.layer_number, f"Loaded Data:{self.bus[bus_name]}\n")
 
     def load_relevant_data_from_memory(self):
         # Load Relevant Memories
         pass
+
+    def process_data_from_buses(self):
+        for bus, data in self.bus.items():
+            self.interface.output_message(self.layer_number, f"\nBus:{bus}\nData:{data}\n")
+            # this may be overriden by each layer, maybe we add a function here specifically for overriding
 
     def handle_north_bus_update(self):
         # Load Data From North Bus and process
@@ -122,5 +125,3 @@ class AceLayer:
     def handle_user_update(self):
         # Load Relevant Data From Input and process
         self.run()
-
-

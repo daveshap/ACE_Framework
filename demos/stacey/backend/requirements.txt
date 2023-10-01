@@ -3,3 +3,5 @@ python-dotenv
 openai
 flask-cors
 discord
+flask_socketio
+
