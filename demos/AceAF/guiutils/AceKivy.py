@@ -58,9 +58,9 @@ class KivyApp(App):
             view = ScrollView()
             label = Label(
                 text=self.history[i],
-                size_hint_y=1,
+                size_hint_y=None,
                 width=650,
-                text_size=(650, 400),
+                text_size=(650, None),
                 halign='left',
                 valign='top')
 

@@ -1,5 +1,6 @@
 {
   "Prompts": {
-    "System": "Can you describe how overwatch has declined in popularity?"
+    "System": "{constitution}",
+    "Agent": "{strategylayer}"
   }
 }

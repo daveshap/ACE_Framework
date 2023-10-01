@@ -92,8 +92,8 @@ class AceLayer:
         self.interface.output_message(self.layer_number, f"Saved To Bus:{kwargs['bus']}\nData:{kwargs['message']}\n")
         self.storage.save_memory(params)
 
-        # if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
-        #     LAYER_REGISTRY[self.south_layer].input_update_event.set()
+        if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
+            LAYER_REGISTRY[self.south_layer].input_update_event.set()
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
