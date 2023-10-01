@@ -1,5 +1,5 @@
 from .AceLayer import AceLayer
-from ACE_Framework_AgentForge.demos.AceAF.layers.customagents.l2strategy.StrategyUpdateAgent import StrategyUpdateAgent
+from .customagents.l2strategy.StrategyUpdateAgent import StrategyUpdateAgent
 
 
 class L2Strategy(AceLayer):

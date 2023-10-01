@@ -9,13 +9,23 @@ from layers.Interface import Interface
 import keyboard
 import threading
 import time
-
+from flask import Flask, jsonify, request
+import uuid
 
 class ACE:
 
     def __init__(self):
         self.storage = StorageInterface().storage_utils
         self.interface = Interface()
+
+        # Initialize Flask app
+        self.flask_app = Flask(__name__)
+        self.init_flask_routes()
+
+        # Start Flask app in a separate thread
+        self.flask_thread = threading.Thread(target=self.run_flask_app)
+        self.flask_thread.daemon = True
+        self.flask_thread.start()
 
         self.layer_threads = {}
         self.layer_outputs = {}
@@ -39,6 +49,7 @@ class ACE:
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
+
     def run(self):
         # Trigger L1
         time.sleep(3)
@@ -46,7 +57,8 @@ class ACE:
 
         # Main loop
         while True:
-            # Thread Count
+
+            #Thread Count
             # threadlist = threading.active_count()
             # self.interface.output_message(0, f"\nAll Layers Initialized, ACE Running...\n{threadlist}")
 
@@ -54,13 +66,32 @@ class ACE:
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
                 break
-            time.sleep(5)
+            time.sleep(15)
 
     def init_layer(self, layer_number):
         try:
             self.layers[layer_number].stand_by()
         except Exception as e:
             print(f"Error in layer {layer_number}: {e}")
+
+    def init_flask_routes(self):
+        @self.flask_app.route('/bot', methods=['POST'])
+        def home():
+            data = request.json
+            message = data.get('message', '')
+            params = {
+                'collection_name': 'chat',
+                'ids': [uuid.uuid4().__str__()],
+                'data': [message]
+            }
+
+            self.storage.save_memory(params)
+            print(f"Received message: {message}")
+            self.interface.output_message(0, f"\nUser: {message}")
+            return jsonify({"received_message": message})
+
+    def run_flask_app(self):
+        self.flask_app.run(port=5001)
 
 
 if __name__ == '__main__':

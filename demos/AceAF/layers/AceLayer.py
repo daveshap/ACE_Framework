@@ -91,7 +91,6 @@ class AceLayer:
             'data': [kwargs['message']]
         }
 
-        # self.interface.output_message(self.layer_number, f"Saved To Bus:{kwargs['bus']}\nData:{kwargs['message']}\n")
         self.storage.save_memory(params)
 
         if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
