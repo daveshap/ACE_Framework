@@ -92,23 +92,24 @@ class AceLayer:
         self.interface.output_message(self.layer_number, f"Saved To Bus:{kwargs['bus']}\nData:{kwargs['message']}\n")
         self.storage.save_memory(params)
 
-        if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
-            LAYER_REGISTRY[self.south_layer].input_update_event.set()
+        # if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
+        #     LAYER_REGISTRY[self.south_layer].input_update_event.set()
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
         params = {"collection_name": bus_name}
         self.bus[bus_name] = self.storage.load_collection(params)
-        self.interface.output_message(self.layer_number, f"Loaded Data:{self.bus[bus_name]}\n")
+        # self.interface.output_message(self.layer_number, f"Loaded Data:{self.bus[bus_name]}\n")
 
     def load_relevant_data_from_memory(self):
         # Load Relevant Memories
         pass
 
     def process_data_from_buses(self):
-        for bus, data in self.bus.items():
-            self.interface.output_message(self.layer_number, f"\nBus:{bus}\nData:{data}\n")
+        # for bus, data in self.bus.items():
+        #     self.interface.output_message(self.layer_number, f"\nBus:{bus}\nData:{data}\n")
             # this may be overriden by each layer, maybe we add a function here specifically for overriding
+        pass
 
     def handle_north_bus_update(self):
         # Load Data From North Bus and process
