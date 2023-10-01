@@ -31,10 +31,11 @@ class DiscordBot:
             await self.process_message(message)
 
     async def process_message(self, message):
-        if self.is_message_from_me(message):
+        # Check if the message is from an allowed channel
+        if message.channel.name not in ["bot-testing", "team5-stacey"]:
             return
 
-        if not self.am_i_mentioned(message):
+        if self.is_message_from_me(message):
             return
 
         print(f"Got discord message from {message.author}: {message.content}")
@@ -43,9 +44,12 @@ class DiscordBot:
         conversation = await self.construct_conversation(message)
 
         try:
-            response = self.get_bot_response(conversation, message)
-            if response:
-                await self.send_response(response, message)
+            if self.ace_system.l3_agent.should_respond(conversation):
+                response = self.get_bot_response(conversation, message)
+                if response:
+                    await self.send_response(response, message)
+            else:
+                print("The agent layer decided to not respond to this, so I won't write anything on discord.")
         except Exception as e:
             print("Damn! Something went wrong!", e)
             traceback_str = traceback.format_exc()  # Get the string representation of the traceback

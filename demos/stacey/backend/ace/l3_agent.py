@@ -104,6 +104,23 @@ class L3AgentLayer:
             self.set_status(LayerStatus.IDLE)
         return response if response_content.strip() else None
 
+    def should_respond(self, conversation):
+        system_message = f"{self_identity}{knowledge}{communication_channel_prompt}{personality}{behaviour}"
+        conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
+
+        # Ask the LLM whether the bot should respond, considering the context and history
+        prompt = {
+            "role": "user",
+            "content": "Is the last message in the given conversation directed at me (Stacey) specifically? (yes or no)"
+        }
+        conversation_with_prompt = conversation_with_system_message + [prompt]
+
+        response = self.llm.create_conversation_completion(self.model, conversation_with_prompt)
+        response_content = response['content'].strip().lower()
+
+        # If the LLM says "yes", then the bot should respond
+        return response_content == "yes"
+
     def set_status(self, status: LayerStatus):
         print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
         self.status = status
