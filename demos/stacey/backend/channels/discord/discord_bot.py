@@ -32,7 +32,7 @@ class DiscordBot:
 
     async def process_message(self, message):
         # Check if the message is from an allowed channel
-        if message.channel.name not in ["bot-testing", "team5-stacey"]:
+        if message.channel.name not in ["bot-testing", "team5-stacey", "chat1"]:
             return
 
         if self.is_message_from_me(message):
