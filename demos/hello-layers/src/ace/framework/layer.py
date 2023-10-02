@@ -1,4 +1,3 @@
-from typing import Optional
 import logging
 import json
 import pika
@@ -138,16 +137,14 @@ class Layer(Resource):
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
         logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         if self.northern_layer:
-            self.channel.basic_consume(queue=northbound_queue, on_message_callback=self.northbound_message_handler)
+            self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
         if self.southern_layer:
-            self.channel.basic_consume(queue=southbound_queue, on_message_callback=self.southbound_message_handler)
-        logger.info(f"{self.labeled_name} subscribed to {northbound_queue} and {southbound_queue}")
+            self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
 
     def subscribe_security_queue(self):
         queue_name = f"security.{self.settings.name}"
         logger.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.channel.basic_consume(queue=queue_name, on_message_callback=self.security_message_handler)
-        logger.info(f"{self.labeled_name} subscribed to {queue_name}")
+        self.try_queue_subscribe(queue_name, self.security_message_handler)
 
     def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)

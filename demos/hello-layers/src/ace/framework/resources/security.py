@@ -62,7 +62,7 @@ class Security(Resource):
         logger.debug(f"{self.labeled_name} subscribing to all layers...")
         for queue_name in self.build_all_layer_queue_names():
             # TODO: Consider separate message handlers?
-            self.channel.basic_consume(queue=queue_name, on_message_callback=self.message_handler)
+            self.try_queue_subscribe(queue_name, self.message_handler)
         logger.info(f"{self.labeled_name} Subscribed to all layers")
 
     def unsubscribe_all_layers(self):

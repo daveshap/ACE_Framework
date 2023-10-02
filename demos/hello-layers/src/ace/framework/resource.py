@@ -1,4 +1,5 @@
 import logging
+import time
 import json
 import pika
 from abc import ABC, abstractmethod
@@ -10,6 +11,9 @@ from ace.amqp.connection import get_connection
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Set the logger for 'pika' separately.
+logging.getLogger('pika').setLevel(logging.INFO)
 
 
 class Resource(ABC):
@@ -88,7 +92,9 @@ class Resource(ABC):
                                    ))
 
     def is_existant_layer_queue(self, orientation, idx):
-        return (orientation != 'northbound' and idx != 0) and (orientation != 'southbound' and idx != len(self.settings.layers) - 1)
+        if (orientation == 'northbound' and idx == 0) or (orientation == 'southbound' and idx == len(self.settings.layers) - 1):
+            return False
+        return True
 
     def build_all_layer_queue_names(self):
         queue_names = []
@@ -97,3 +103,15 @@ class Resource(ABC):
                 if self.is_existant_layer_queue(orientation, idx):
                     queue_names.append(self.build_queue_name(orientation, layer))
         return queue_names
+
+    def try_queue_subscribe(self, queue_name, callback):
+        while True:
+            logger.debug(f"Trying to subscribe to queue: {queue_name}...")
+            try:
+                self.channel.queue_declare(queue=queue_name, passive=True)
+                self.channel.basic_consume(queue=queue_name, on_message_callback=callback)
+                logger.info(f"Subscribed to queue: {queue_name}")
+                return
+            except pika.exceptions.ChannelClosedByBroker:
+                logger.warning(f"Queue '{queue_name}' does not exist. Trying again in 5 seconds.")
+                time.sleep(5)
