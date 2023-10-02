@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Resource(ABC):
     def __init__(self):
-        self.api_endpoint = ApiEndpoint()
+        self.api_endpoint = ApiEndpoint(self.api_callbacks)
         self.connection = None
         self.channel = None
 
@@ -26,6 +26,21 @@ class Resource(ABC):
     @property
     def labeled_name(self):
         return f"{self.settings.name} ({self.settings.label})"
+
+    @property
+    def api_callbacks(self):
+        return {
+            'status': self.status
+        }
+
+    @abstractmethod
+    def status(self):
+        pass
+
+    def return_status(self, up, data=None):
+        data = data or {}
+        data['up'] = up
+        return data
 
     def start_resource(self):
         logger.info("Starting resource...")

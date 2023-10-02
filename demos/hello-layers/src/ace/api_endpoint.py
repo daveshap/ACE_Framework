@@ -8,26 +8,32 @@ logger = logging.getLogger(__name__)
 
 
 class StatusHandler(BaseHTTPRequestHandler):
+    CALLBACKS = {}
+
+    @classmethod
+    def set_callbacks(cls, callbacks):
+        cls.CALLBACKS = callbacks
+
     def __init__(self, *args, **kwargs):
         self.ROUTES = {
-            '/status': self._handle_status,
-            # Add more paths here...
+            '/status': self.CALLBACKS.get('status', self._handle_default),
         }
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
         try:
             handler = self.ROUTES.get(self.path, self._handle_default)
-            handler()
+            data = handler()
+            self._handle_callback_response(data)
         except Exception as e:
             logger.exception(f"Error handling request: {e}")
             self.respond(500, {"error": "Internal server error"})
 
-    def _handle_status(self):
-        self.respond(200, {"healthy": True})
+    def _handle_callback_response(self, data):
+        self.respond(200, data)
 
     def _handle_default(self):
-        self.respond(404, {"error": "Resource not found"})
+        self.respond(404, {"error": "Path not found"})
 
     def respond(self, status_code, content):
         self.send_response(status_code)
@@ -40,12 +46,14 @@ class StatusHandler(BaseHTTPRequestHandler):
 
 
 class ApiEndpoint:
-    def __init__(self, api_endpoint_port=3000):
+    def __init__(self, callbacks, api_endpoint_port=3000):
+        self.callbacks = callbacks
         self.api_endpoint_port = api_endpoint_port
         self.server = None
 
     def start_endpoint(self):
         logger.info("Starting API endpoint...")
+        StatusHandler.set_callbacks(self.callbacks)
         self.server = HTTPServer(('localhost', self.api_endpoint_port), StatusHandler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.start()

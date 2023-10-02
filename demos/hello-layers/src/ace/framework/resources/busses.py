@@ -21,6 +21,11 @@ class Busses(Resource):
             label="Busses",
         )
 
+    # TODO: Add valid status checks.
+    def status(self):
+        logger.debug(f"Checking {self.labeled_name} status")
+        return self.return_status(True)
+
     def start_resource(self):
         super().start_resource()
         self.create_security_queues()

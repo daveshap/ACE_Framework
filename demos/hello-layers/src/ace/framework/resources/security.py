@@ -21,6 +21,11 @@ class Security(Resource):
             label="Security",
         )
 
+    # TODO: Add valid status checks.
+    def status(self):
+        logger.debug(f"Checking {self.labeled_name} status")
+        return self.return_status(True)
+
     def start_resource(self):
         super().start_resource()
         self.subscribe_all_layers()
