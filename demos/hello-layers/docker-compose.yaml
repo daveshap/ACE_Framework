@@ -37,6 +37,11 @@ services:
       - "15672:15672"
       - "5672:5672"
     networks: *default_networks
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # db:
   #   image: postgres:15.1-bullseye
