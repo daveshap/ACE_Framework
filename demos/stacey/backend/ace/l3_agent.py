@@ -1,12 +1,13 @@
 import json
 import pprint
-from typing import Callable
+from typing import Callable, Optional
 from typing import List
 
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
 from tools.web_tool import get_compressed_web_content
+from util import parse_json
 
 self_identity = """
 # Self identity:
@@ -139,8 +140,8 @@ class L3AgentLayer:
         self.status_listeners = set()
 
     def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
+        self.set_status(LayerStatus.INFERRING)
         try:
-            self.set_status(LayerStatus.INFERRING)
             system_message = f"""
                 {self_identity}
                 {knowledge}
@@ -152,39 +153,42 @@ class L3AgentLayer:
             conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
             print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
             print(f"{pprint.pformat(conversation_with_system_message)}")
-            response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
-            conversation_with_system_message.append(response)
-            response_content = response['content']
-            print(f"  Got response: {response_content}")
 
-            try:
-                function_call = json.loads(response_content)
-                if function_call.get('action') == 'call_function' and function_call.get('function') == 'get_web_content':
-                    url = function_call['arguments']['url']
-                    print("Calling get_web_content for " + url)
-                    compressed_content = get_compressed_web_content(url)
-                    function_response_message = {
-                        "role": "user",
-                        "content": compressed_content
-                    }
-                    conversation_with_system_message.append(
-                        function_response_message
-                    )
+            final_response: Optional[GptMessage] = None
+            while final_response is None:
+                response: GptMessage = self.llm.create_conversation_completion(
+                    self.model, conversation_with_system_message
+                )
+                conversation_with_system_message.append(response)
+                response_content = response['content']
+                print(f"  Got response: {response_content}")
 
-                    # Sending the result of the function call back to the LLM for further processing
-                    print("Got web content. Sending it back to GPT")
-                    response = self.llm.create_conversation_completion(
-                        self.model,
-                        conversation_with_system_message
-                    )
-
-                    return response
-            except json.JSONDecodeError:
-                print("Not a JSON function call")
-                pass
+                # check if this is a function call
+                response_json = parse_json(response_content)
+                if response_json is not None and response_json.get('action') == 'call_function':
+                    if response_json.get('function') == 'get_web_content':
+                        url = response_json['arguments']['url']
+                        print("Calling get_web_content for " + url)
+                        compressed_web_content = get_compressed_web_content(url)
+                        function_response_message = {
+                            "role": "user",
+                            "content": compressed_web_content
+                        }
+                        print("Got compressed_web_content:\n" + compressed_web_content)
+                        print("Will send this back to GPT")
+                        conversation_with_system_message.append(
+                            function_response_message
+                        )
+                        # Loop back and send the function response back to GPT.
+                    else:
+                        print("Warning: GPT tried to trigger unknown function: " + response_json.get('function'))
+                        final_response = response
+                else:
+                    print("Got a json that isn't a function call. so I'll just return the response.")
+                    final_response = response
         finally:
             self.set_status(LayerStatus.IDLE)
-        return response if response_content.strip() else None
+        return final_response if final_response.content.strip() else None
 
     def should_respond(self, conversation):
         # Ask the LLM whether the bot should respond, considering the context and latest message
