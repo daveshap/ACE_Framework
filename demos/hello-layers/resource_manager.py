@@ -8,6 +8,14 @@ import subprocess
 DOCKER_COMPOSE_FILE = 'docker-compose.yaml'
 
 
+def get_service_container(client, service_name):
+    for container in client.containers.list(all=True):
+        labels = container.labels
+        if 'com.docker.compose.service' in labels and labels['com.docker.compose.service'] == service_name:
+            return container
+    return None
+
+
 def main():
     # Logging setup.
     logging.basicConfig(level=logging.DEBUG)
@@ -16,7 +24,7 @@ def main():
     # Start containers based on dependencies.
     try:
         logger.info("Starting containers")
-        subprocess.check_call(["docker-compose", "up", "--build", "-d"])
+        subprocess.check_call(["docker", "compose", "up", "--build", "-d"])
         logger.info("Containers started")
     except subprocess.CalledProcessError as e:
         logger.error(f"Docker Compose up command failed with error: {e}")
@@ -36,7 +44,7 @@ def main():
 
     # Get container objects for the services.
     logger.debug(f"Extracting container objects for services: {services.keys()}")
-    containers = {service: client.containers.get(service) for service in services.keys()}
+    containers = {service: get_service_container(client, service) for service in services.keys()}
 
     def restart_with_deps(resource, restarted=None):
         restarted = restarted or set()
@@ -53,11 +61,12 @@ def main():
     try:
         while True:
             logger.debug("Checking health of all resources")
-            for resource, container in containers.items():
-                # Check container health.
-                health = container.attrs['State']['Health']['Status']
-                if health != 'healthy':
-                    restart_with_deps(resource)
+            # TODO: Re-enable this once resources run correctly.
+            # for resource, container in containers.items():
+            #     # Check container health.
+            #     health = container.attrs['State']['Health']['Status']
+            #     if health != 'healthy':
+            #         restart_with_deps(resource)
             time.sleep(5)
 
     except KeyboardInterrupt:
