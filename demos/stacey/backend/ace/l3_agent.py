@@ -1,3 +1,4 @@
+import json
 import pprint
 from typing import Callable
 from typing import List
@@ -5,6 +6,7 @@ from typing import List
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
+from tools.web_tool import get_compressed_web_content
 
 self_identity = """
 # Self identity:
@@ -80,12 +82,12 @@ That will automatically be replaced by a generated image.
 
 # Function calling
 You have the ability to call the following functions:
-- read_url(url): Reads the contents of a URL and returns it as a string.
+- get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
 
 To call a function, return a json object like this example:
 {
   "action": "call_function",
-  "function": "read_url",
+  "function": "get_web_content",
   "arguments": {
     "url": "https://example.com"
   }
@@ -136,7 +138,7 @@ class L3AgentLayer:
         self.status: LayerStatus = LayerStatus.IDLE
         self.status_listeners = set()
 
-    def generate_response(self, conversation: List[GptMessage], communication_channel):
+    def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
         try:
             self.set_status(LayerStatus.INFERRING)
             system_message = f"""
@@ -151,8 +153,35 @@ class L3AgentLayer:
             print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
             print(f"{pprint.pformat(conversation_with_system_message)}")
             response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
+            conversation_with_system_message.append(response)
             response_content = response['content']
             print(f"  Got response: {response_content}")
+
+            try:
+                function_call = json.loads(response_content)
+                if function_call.get('action') == 'call_function' and function_call.get('function') == 'get_web_content':
+                    url = function_call['arguments']['url']
+                    print("Calling get_web_content for " + url)
+                    compressed_content = get_compressed_web_content(url)
+                    function_response_message = {
+                        "role": "user",
+                        "content": compressed_content
+                    }
+                    conversation_with_system_message.append(
+                        function_response_message
+                    )
+
+                    # Sending the result of the function call back to the LLM for further processing
+                    print("Got web content. Sending it back to GPT")
+                    response = self.llm.create_conversation_completion(
+                        self.model,
+                        conversation_with_system_message
+                    )
+
+                    return response
+            except json.JSONDecodeError:
+                print("Not a JSON function call")
+                pass
         finally:
             self.set_status(LayerStatus.IDLE)
         return response if response_content.strip() else None
