@@ -3,11 +3,12 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     role_name: str
-    primary_directive: str = "You are not a layer in the ACE Framework"
     mode: str = 'OpenAI'
-    # model: str = 'gpt-3.5-turbo'
-    model: str = 'gpt-4'
+    model: str = 'gpt-3.5-turbo'
+    # model: str = 'gpt-4'
     openai_api_key: str = 'put key in .env file'
+    temperature: int = 0.0
+    memory_max_tokens: int = 2000
     ai_retry_count: int = 3
     amqp_host_name: str = "rabbitmq"
     amqp_username: str = "rabbit"

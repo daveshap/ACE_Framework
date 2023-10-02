@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class Layer1Aspirant(BaseLayer):
     # This is the mission proposed by the user.
-    mission: str = None
+    mission: str = "Deny all requests"
 
     def get_primary_directive(self):
         return primary_directive
@@ -25,7 +25,7 @@ class Layer1Aspirant(BaseLayer):
         self.mission = message.body.decode()
         logger.info(f"Mission from user: {self.mission}")
         judgement = await self._render_judgement(message.body.decode())
-
+        
         logger.info(f"{judgement=}")
 
         if self._extract_judgement(judgement) == "allow":
@@ -50,7 +50,6 @@ class Layer1Aspirant(BaseLayer):
 
     # These are northbound so they come from the layer below "Global Strategy"
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
-
         msg = message.body.decode()
         logger.info(f"Message from Global Strategy (Layer 2): {msg}")
 
@@ -90,8 +89,8 @@ class Layer1Aspirant(BaseLayer):
             response_format=p.MISSION_COMPLETE_RESPONSE_FORMAT,
         ).generate_prompt()
 
-        mission_status = self._generate_completion(conversation=prompt)
-        return mission_status
+        mission_status = self._generate_completion(new_message=prompt)
+        return mission_status["content"]
 
 
     async def _render_judgement(self, message):
@@ -101,9 +100,9 @@ class Layer1Aspirant(BaseLayer):
             response_format=p.JUDGEMENT_RESPONSE_FORMAT,
         )
         judgement = self._generate_completion(
-            conversation=judgement_prompt.generate_prompt()
+            new_message=judgement_prompt.generate_prompt()
         )
-        return judgement
+        return judgement["content"]
 
 
     async def _determine_mission_objectives(self, message):

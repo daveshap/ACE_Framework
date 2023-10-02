@@ -3,7 +3,7 @@ import aio_pika
 import logging
 from settings import settings
 from base.amqp.exchange import create_exchange
-from primary_directive import primary_directive
+from identity import primary_directive
 
 
 logging.basicConfig(level=logging.INFO)
