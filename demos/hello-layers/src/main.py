@@ -11,7 +11,7 @@ def loader(resource_name):
     try:
         resource_class_name = ''.join(word.title() for word in resource_name.split('_'))
         logger.debug(f"Converted resource_name to resource_class: {resource_class_name}")
-        module = importlib.import_module(f'ace.framework.resource.{resource_name}')
+        module = importlib.import_module(f'ace.framework.resources.{resource_name}')
         resource_class = getattr(module, resource_class_name)
         logger.debug(f"Imported {resource_class_name} from ace.framework.resource.{resource_name}")
         resource = resource_class()
