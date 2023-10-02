@@ -115,9 +115,9 @@ class Layer(Resource):
             self.post()
 
     def subscribe_adjacent_layers(self):
-        logger.debug(f"{self.labeled_name} subscribing to adjacent layers...")
         northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
+        logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         self.channel.basic_consume(queue=northbound_queue, on_message_callback=self.northbound_message_handler)
         self.channel.basic_consume(queue=southbound_queue, on_message_callback=self.southbound_message_handler)
         logger.info(f"{self.labeled_name} subscribed to {northbound_queue} and {southbound_queue}")
@@ -131,7 +131,7 @@ class Layer(Resource):
     def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
-        logger.debug(f"{self.labeled_name} unsubscribing from busses...")
+        logger.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
         self.channel.basic_cancel(northbound_queue)
         self.channel.basic_cancel(southbound_queue)
         logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")

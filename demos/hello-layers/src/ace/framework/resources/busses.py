@@ -49,7 +49,7 @@ class Busses(Resource):
             connection=self.connection,
             queue_name=queue_name,
         )
-        logger.info(f" Created queue {queue_name} for resource {self.labeled_name}")
+        logger.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
 
     def destroy_exchanges(self):
         logger.debug(f"{self.labeled_name} destroying exchanges...")
@@ -69,6 +69,7 @@ class Busses(Resource):
             connection=self.connection,
             queue_name=queue_name,
         )
+        logger.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
 
     def create_security_queues(self):
         channel = self.connection.channel()
