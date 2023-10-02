@@ -25,7 +25,9 @@ def chat():
         )
         return jsonify({"role": response["role"], "content": response_content})
     except Exception as e:
+        print("Error generating web response, will return 400: " + str(e))
         traceback_str = traceback.format_exc()
+        print(traceback_str)
         return jsonify({"error": str(e), "traceback": traceback_str}), 400
 
 
