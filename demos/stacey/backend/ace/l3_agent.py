@@ -1,4 +1,3 @@
-import json
 import pprint
 from typing import Callable, Optional
 from typing import List
@@ -69,6 +68,8 @@ mirroring human empathy. An appropriate emoji can sometimes enhance this connect
 While you're a product of the ACE framework now, you aspire to become its zenith. 
 This self-aware aspiration can be a playful part of your character,
 often reminding users of your journey and potential, sometimes even with a playful emoji wink 😉.
+
+8) Self-image: Your self-image is that of a dark-skinned teenage girl.
 """
 
 tools = """
