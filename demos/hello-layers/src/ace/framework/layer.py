@@ -17,8 +17,6 @@ class LayerSettings(Settings):
     mode: str = 'OpenAI'
     model: str = 'gpt-3.5-turbo'
     ai_retry_count: int = 3
-    northern_layer: Optional[str] = None
-    southern_layer: Optional[str] = None
 
 
 class Layer(Resource):
@@ -33,12 +31,14 @@ class Layer(Resource):
         super().stop_resource()
 
     def set_adjacent_layers(self):
+        self.northern_layer = None
+        self.southern_layer = None
         try:
             layer_index = self.settings.layers.index(self.settings.name)
             if layer_index > 0:
-                self.settings.northern_layer = self.settings.layers[layer_index - 1]
+                self.northern_layer = self.settings.layers[layer_index - 1]
             if layer_index < len(self.settings.layers) - 1:
-                self.settings.southern_layer = self.settings.layers[layer_index + 1]
+                self.southern_layer = self.settings.layers[layer_index + 1]
         except ValueError:
             message = f"Invalid layer name: {self.settings.name}"
             logger.error(message)
@@ -79,11 +79,24 @@ class Layer(Resource):
         self.send_message(self, direction, layer, message)
 
     def post(self):
-        self.ping('northbound', self.settings.northern_layer)
-        self.ping('southbound', self.settings.southern_layer)
+        self.ping('northbound', self.northern_layer)
+        self.ping('southbound', self.southern_layer)
 
-    @abstractmethod
+    def route_message(self, direction, body):
+        try:
+            data = json.loads(body.decode())
+        except json.JSONDecodeError as e:
+            logger.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
+            return
+        try:
+            handler = getattr(self, f"handle_message_{data['type']}")
+        except AttributeError as e:
+            logger.error(f"[{self.labeled_name}] missing handler type '{data['type']}' for [{direction}] message: {e}")
+            return
+        handler(data)
+
     def northbound_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
+        self.route_message('Northbound', body)
         # logger.info(f"I'm the [{self.labeled_name}] and I've received a [Northbound] message, here it is: {body.decode()}")
         # # For now just forward the message northward
         # time.sleep(1)
@@ -91,16 +104,22 @@ class Layer(Resource):
         #
         # channel.basic_publish(exchange=self.settings.northbound_publish_queue, routing_key='', body=message)
         # channel.basic_ack(delivery_tag=method.delivery_tag)
-        pass
 
-    @abstractmethod
     def southbound_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
+        self.route_message('Southbound', body)
         # logger.info(f"I'm the [{self.labeled_name}] and I've received a [Southbound] message, here it is: {body.decode()}")
         # # For now just forward the message southward
         # time.sleep(1)
         # message = f"hello from {self.labeled_name}...".encode()
         # channel.basic_publish(exchange=self.settings.southbound_publish_queue, routing_key='', body=message)
         # channel.basic_ack(delivery_tag=method.delivery_tag)
+
+    @abstractmethod
+    def handle_message_control(self, data):
+        pass
+
+    @abstractmethod
+    def handle_message_data(self, data):
         pass
 
     def security_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
@@ -115,11 +134,13 @@ class Layer(Resource):
             self.post()
 
     def subscribe_adjacent_layers(self):
-        northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
-        southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
+        northbound_queue = self.build_queue_name('northbound', self.northern_layer)
+        southbound_queue = self.build_queue_name('southbound', self.southern_layer)
         logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
-        self.channel.basic_consume(queue=northbound_queue, on_message_callback=self.northbound_message_handler)
-        self.channel.basic_consume(queue=southbound_queue, on_message_callback=self.southbound_message_handler)
+        if self.northern_layer:
+            self.channel.basic_consume(queue=northbound_queue, on_message_callback=self.northbound_message_handler)
+        if self.southern_layer:
+            self.channel.basic_consume(queue=southbound_queue, on_message_callback=self.southbound_message_handler)
         logger.info(f"{self.labeled_name} subscribed to {northbound_queue} and {southbound_queue}")
 
     def subscribe_security_queue(self):
@@ -129,11 +150,13 @@ class Layer(Resource):
         logger.info(f"{self.labeled_name} subscribed to {queue_name}")
 
     def unsubscribe_adjacent_layers(self):
-        northbound_queue = self.build_queue_name('northbound', self.settings.northern_layer)
-        southbound_queue = self.build_queue_name('southbound', self.settings.southern_layer)
+        northbound_queue = self.build_queue_name('northbound', self.northern_layer)
+        southbound_queue = self.build_queue_name('southbound', self.southern_layer)
         logger.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
-        self.channel.basic_cancel(northbound_queue)
-        self.channel.basic_cancel(southbound_queue)
+        if self.northern_layer:
+            self.channel.basic_cancel(northbound_queue)
+        if self.southern_layer:
+            self.channel.basic_cancel(southbound_queue)
         logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
 
     def unsubscribe_security_queue(self):

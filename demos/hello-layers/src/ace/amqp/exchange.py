@@ -6,20 +6,18 @@ def setup_exchange(settings: Settings, connection: pika.BlockingConnection, queu
     channel = connection.channel()
 
     exchange_name = f"exchange.{queue_name}"
-    exchange = channel.declare_exchange(exchange_name, exchange_type='fanout')
+    channel.exchange_declare(exchange_name, exchange_type='fanout')
 
-    queue = channel.declare_queue(queue_name, durable=True)
-    queue.bind(exchange)
+    channel.queue_declare(queue_name, durable=True)
+    channel.queue_bind(queue_name, exchange_name)
 
     if settings.system_integrity_queue:
-        system_integrity_queue = channel.declare_queue(settings.system_integrity_queue, durable=True)
-        system_integrity_queue.bind(exchange)
+        channel.queue_declare(settings.system_integrity_queue, durable=True)
+        channel.queue_bind(settings.system_integrity_queue, exchange_name)
 
     if settings.logging_queue:
-        logging_queue = channel.declare_queue(settings.logging_queue, durable=True)
-        logging_queue.bind(exchange)
-
-    return exchange
+        channel.queue_declare(settings.logging_queue, durable=True)
+        channel.queue_bind(settings.logging_queue, exchange_name)
 
 
 def teardown_exchange(settings: Settings, connection: pika.BlockingConnection, queue_name: str):

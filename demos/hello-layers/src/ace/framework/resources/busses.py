@@ -80,7 +80,7 @@ class Busses(Resource):
         channel = self.connection.channel()
         for layer in self.settings.layers:
             queue_name = f"security.{layer}"
-            channel.declare_queue(queue_name, durable=True)
+            channel.queue_declare(queue_name, durable=True)
 
     def destroy_security_queues(self):
         channel = self.connection.channel()

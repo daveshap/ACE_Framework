@@ -15,9 +15,9 @@ def get_connection(settings: Settings,
                    blocked_connection_timeout=300,
                    ):
 
-    host = settings.amqp_host_name,
-    username = settings.amqp_username,
-    password = settings.amqp_password,
+    host = settings.amqp_host_name
+    username = settings.amqp_username
+    password = settings.amqp_password
     connection = None
     retries = 0
 
@@ -30,7 +30,7 @@ def get_connection(settings: Settings,
                 credentials=pika.PlainCredentials(username, password),
             )
             connection = pika.BlockingConnection(connection_params)
-            logger.info(f"{settings.role_name} connection established...")
+            logger.info(f"{settings.name} connection established...")
             return connection
         except (pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPChannelError) as e:
             print(f"Connection attempt {retries + 1} failed with error: {e}")
