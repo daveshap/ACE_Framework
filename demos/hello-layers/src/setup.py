@@ -4,8 +4,8 @@ from os import path
 
 FILE_DIR = path.dirname(path.abspath(path.realpath(__file__)))
 
-with open(path.join(FILE_DIR, "README.md")) as f:
-    long_description = f.read()
+# with open(path.join(FILE_DIR, "README.md")) as f:
+#     long_description = f.read()
 
 with open(path.join(FILE_DIR, "requirements.txt")) as f:
     install_requirement = f.readlines()
@@ -19,8 +19,8 @@ setup(
     author="Chad Phillips",
     author_email="xxx@example.com",
     description="Hello Layers! ACE Demo",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
+    # long_description=long_description,
+    # long_description_content_type="text/markdown",
     url="https://github.com/daveshap/ACE_Framework",
     packages=find_packages(),
     package_data={
