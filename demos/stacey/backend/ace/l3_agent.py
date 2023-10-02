@@ -1,10 +1,13 @@
+import json
 import pprint
-from typing import Callable
+from typing import Callable, Optional
 from typing import List
 
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
+from tools.web_tool import get_compressed_web_content
+from util import parse_json
 
 self_identity = """
 # Self identity:
@@ -80,12 +83,12 @@ That will automatically be replaced by a generated image.
 
 # Function calling
 You have the ability to call the following functions:
-- read_url(url): Reads the contents of a URL and returns it as a string.
+- get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
 
 To call a function, return a json object like this example:
 {
   "action": "call_function",
-  "function": "read_url",
+  "function": "get_web_content",
   "arguments": {
     "url": "https://example.com"
   }
@@ -136,9 +139,9 @@ class L3AgentLayer:
         self.status: LayerStatus = LayerStatus.IDLE
         self.status_listeners = set()
 
-    def generate_response(self, conversation: List[GptMessage], communication_channel):
+    def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
+        self.set_status(LayerStatus.INFERRING)
         try:
-            self.set_status(LayerStatus.INFERRING)
             system_message = f"""
                 {self_identity}
                 {knowledge}
@@ -150,12 +153,42 @@ class L3AgentLayer:
             conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
             print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
             print(f"{pprint.pformat(conversation_with_system_message)}")
-            response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
-            response_content = response['content']
-            print(f"  Got response: {response_content}")
+
+            final_response: Optional[GptMessage] = None
+            while final_response is None:
+                response: GptMessage = self.llm.create_conversation_completion(
+                    self.model, conversation_with_system_message
+                )
+                conversation_with_system_message.append(response)
+                response_content = response['content']
+                print(f"  Got response: {response_content}")
+
+                # check if this is a function call
+                response_json = parse_json(response_content)
+                if response_json is not None and response_json.get('action') == 'call_function':
+                    if response_json.get('function') == 'get_web_content':
+                        url = response_json['arguments']['url']
+                        print("Calling get_web_content for " + url)
+                        compressed_web_content = get_compressed_web_content(url)
+                        function_response_message = {
+                            "role": "user",
+                            "content": compressed_web_content
+                        }
+                        print("Got compressed_web_content:\n" + compressed_web_content)
+                        print("Will send this back to GPT")
+                        conversation_with_system_message.append(
+                            function_response_message
+                        )
+                        # Loop back and send the function response back to GPT.
+                    else:
+                        print("Warning: GPT tried to trigger unknown function: " + response_json.get('function'))
+                        final_response = response
+                else:
+                    print("Got a json that isn't a function call. so I'll just return the response.")
+                    final_response = response
         finally:
             self.set_status(LayerStatus.IDLE)
-        return response if response_content.strip() else None
+        return final_response if final_response.content.strip() else None
 
     def should_respond(self, conversation):
         # Ask the LLM whether the bot should respond, considering the context and latest message
