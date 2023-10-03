@@ -16,7 +16,7 @@ const BusesPage = () => {
             <VStack w={"full"}>
                 <Heading color={"white"} >Stacey's brain</Heading>
                 <HStack spacing={8} align="start">
-                    <Bus busName="northbound" />
+                    <Bus busName="southbound" />
                     <VStack>
                         <Image src="/images/stacey-160.png" alt="Stacey" borderRadius="full"  mb={8} />
                         <LayerStatus layerId={1} displayName={"Layer 1: Aspirational 🌟"} backgroundColor={"red.100"} />
@@ -26,7 +26,7 @@ const BusesPage = () => {
                         <LayerStatus layerId={5} displayName={"Layer 5: Cognitive Control ⚙️"} backgroundColor={"teal.100"} />
                         <LayerStatus layerId={6} displayName={"Layer 6: Task Prosecution 🛠️"} backgroundColor={"blue.100"} />
                     </VStack>
-                    <Bus busName="southbound" />
+                    <Bus busName="northbound" />
                 </HStack>
             </VStack>
         </Box>
