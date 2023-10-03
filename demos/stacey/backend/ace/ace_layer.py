@@ -1,9 +1,10 @@
+from abc import ABC
 from typing import Callable
 
 from ace.layer_status import LayerStatus
 
 
-class AceLayer:
+class AceLayer(ABC):
     """Superclass for all layers"""
     def __init__(self, layer_id):
         self.layer_id = layer_id
