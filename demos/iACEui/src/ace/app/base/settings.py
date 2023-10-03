@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import PostgresDsn
 
 
 class Settings(BaseSettings):
@@ -20,6 +21,5 @@ class Settings(BaseSettings):
     southbound_publish_queue: str = "deadletter"
     response_queue: str = "user-response-queue"
 
-# class DatabaseSettings(BaseSettings):
-#     database_uri: PostgresDsn = "postgresql://postgres:password@db:5432/agency-db"
-#     environment = "local"
+class DatabaseSettings(BaseSettings):
+    database_uri: PostgresDsn = "postgresql://postgres:password@db:5432/ace-db"

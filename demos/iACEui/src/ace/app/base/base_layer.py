@@ -11,6 +11,8 @@ import openai
 from typing import List
 import re
 import tiktoken
+from typing import Literal
+import json
 
 
 logging.basicConfig(level=logging.INFO)
@@ -70,10 +72,14 @@ class BaseLayer(ABC):
         await self._publish(
             queue_name=self.settings.northbound_publish_queue,
             message=data_bus_message,
+            destination_bus="Data",
+            source_bus=source,
         )
         await self._publish(
             queue_name=self.settings.southbound_publish_queue,
             message=control_bus_message,
+            destination_bus="Control",
+            source_bus=source,
         )
 
     async def _connect(self):
@@ -155,20 +161,62 @@ class BaseLayer(ABC):
         num_tokens = len(encoding.encode(message["content"]))
         return num_tokens
 
-    async def _publish(self, queue_name, message):
+    # async def _publish(self, queue_name, message):
+    #     if self._determine_none(message) != 'none':
+    #         exchange = await create_exchange(
+    #             connection=self.connection,
+    #             queue_name=queue_name,
+    #         )
+    #         message_body = aio_pika.Message(
+    #             body=message.encode(),
+    #             delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+    #         )
+    #         await exchange.publish(
+    #             message_body,
+    #             routing_key=queue_name,
+    #         )
+    async def _publish(
+        self,
+        queue_name,
+        message, 
+        destination_bus: str = Literal["Data", "Soruce"],
+        source_bus: str = Literal["Data", "Soruce"],
+    ):
         if self._determine_none(message) != 'none':
+            # Assuming create_exchange is a custom function, maintain its signature.
             exchange = await create_exchange(
                 connection=self.connection,
                 queue_name=queue_name,
             )
-            message_body = aio_pika.Message(
-                body=message.encode(),
+        
+            # Prepare headers
+            headers = {
+                'source_bus': source_bus,
+                'destination_bus': destination_bus,
+                'publisher': self.settings.role_name,
+                'layer_memory': json.dumps(self.memory),
+                'model': self.settings.model,
+            }
+
+            # Message properties
+            properties = aio_pika.MessageProperties(
+                content_type='text/plain',
+                headers=headers,
                 delivery_mode=aio_pika.DeliveryMode.PERSISTENT
             )
+            
+            # Prepare the message with the properties
+            message_body = aio_pika.Message(
+                body=message.encode(),
+                properties=properties
+            )
+            
+            # Publish the message
             await exchange.publish(
                 message_body,
                 routing_key=queue_name,
             )
+
 
     def _determine_none(self, input_text):
         match = re.search(r'\[Message\]\n(none)', input_text)
