@@ -3,8 +3,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
-from channels.flask.admin_routes import admin_bp
-from channels.flask.chat_routes import chat_bp
+from channels.web.admin_routes import admin_bp
+from channels.web.chat_routes import chat_bp
 
 
 class FlaskApp:
