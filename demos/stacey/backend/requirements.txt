@@ -5,3 +5,4 @@ flask-cors
 discord
 flask_socketio
 beautifulsoup4
+requests
