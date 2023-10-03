@@ -74,6 +74,9 @@ class ACE:
         except Exception as e:
             print(f"Error in layer {layer_number}: {e}")
 
+    def do_chat(self, message):
+        print(f"Received message: {message}")
+
     def init_flask_routes(self):
         @self.flask_app.route('/bot', methods=['POST'])
         def home():
@@ -86,8 +89,8 @@ class ACE:
             }
 
             self.storage.save_memory(params)
-            print(f"Received message: {message}")
             self.interface.output_message(0, f"\nUser: {message}")
+            self.do_chat(message)
             return jsonify({"received_message": message})
 
     def run_flask_app(self):

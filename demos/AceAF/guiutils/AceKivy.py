@@ -13,7 +13,6 @@ import requests
 
 app = Flask(__name__)
 
-
 @app.route('/layer_update', methods=['POST'])
 def layer_update():
     data = request.json
@@ -23,10 +22,8 @@ def layer_update():
     kivy_app.update_label(layer_number, message)
     return jsonify({"status": "received"})
 
-
 def run_flask_app():
-    app.run(port=5000)
-
+    app.run(port=5000, use_reloader=False, threaded=True)
 
 class KivyApp(App):
 
@@ -115,8 +112,11 @@ class KivyApp(App):
 
 if __name__ == '__main__':
     Builder.load_file('kivy_theme.kv')
-    # Run Flask API in a separate thread
-    threading.Thread(target=run_flask_app).start()
+
+    # Start Flask server in a separate thread
+    flask_thread = threading.Thread(target=run_flask_app)
+    flask_thread.daemon = True  # This allows the Flask thread to exit when the main program exits
+    flask_thread.start()
 
     # Run Kivy App
     kivy_app = KivyApp()
