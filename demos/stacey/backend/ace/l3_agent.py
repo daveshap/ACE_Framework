@@ -1,7 +1,7 @@
 import pprint
 from datetime import datetime
-from typing import Callable, Optional
 from typing import List
+from typing import Optional
 
 from ace.ace_layer import AceLayer
 from ace.bus import Bus

@@ -1,4 +1,5 @@
 # l2_global_strategy.py
+from .ace_layer import AceLayer
 from .bus import Bus
 
 from ..llm.gpt import GPT  # Hardcode to GPT for now
@@ -25,7 +26,7 @@ environment in which you are operating.
 """
 
 
-class L2GlobalStrategyLayer(BaseLayer):
+class L2GlobalStrategyLayer(AceLayer):
     """
     The Global Strategy Layer serves a crucial function within the ACE framework - integrating real-world
     environmental context into the agent's strategic planning and decision-making processes. This grounding in
@@ -65,7 +66,7 @@ class L2GlobalStrategyLayer(BaseLayer):
 
     def send_southbound_message(self, message):
         self.log("Sending south: " + message)
-        self.southbound_bus.publish(2, message)
+        self.southbound_bus.publish(self.get_name(), message)
 
     @staticmethod
     def log(message):

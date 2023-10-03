@@ -1,5 +1,4 @@
 # ace/l1_aspirational.py
-from typing import Callable
 
 from llm.gpt import GPT  # Hardcode to GPT for now
 from .ace_layer import AceLayer
