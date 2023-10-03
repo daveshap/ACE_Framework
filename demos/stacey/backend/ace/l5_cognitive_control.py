@@ -1,10 +1,11 @@
 # l2_global_strategy.py
+from .ace_layer import AceLayer
 from .bus import Bus
 
 from ..llm.gpt import GPT  # Hardcode to GPT for now
 
 
-class L5CognitiveControlLayer:
+class L5CognitiveControlLayer(AceLayer):
     """
     The Cognitive Control Layer is responsible for dynamic task switching and selection based on environmental
     conditions and progress toward goals. It chooses appropriate tasks to execute based on project plans from the
@@ -13,6 +14,7 @@ class L5CognitiveControlLayer:
 
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__(5)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
@@ -27,8 +29,5 @@ class L5CognitiveControlLayer:
 
     def send_southbound_message(self, message):
         self.log("Sending south: " + message)
-        self.southbound_bus.publish(2, message)
+        self.southbound_bus.publish(self.get_name(), message)
 
-    @staticmethod
-    def log(message):
-        print("L2 Global Strategy Layer: " + message)

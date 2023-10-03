@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from ace.ace_system import AceSystem
 from channels.discord.discord_bot import DiscordBot
-from channels.flask.flask_app import FlaskApp
+from channels.web.flask_app import FlaskApp
 from llm.gpt import GPT
 from util import get_environment_variable
 

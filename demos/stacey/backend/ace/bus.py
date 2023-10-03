@@ -8,6 +8,9 @@ class Bus:
         self.message_log = []
         self.lock = threading.Lock()
 
+    def get_name(self):
+        return self.name
+
     def messages(self):
         with self.lock:
             return list(self.message_log)

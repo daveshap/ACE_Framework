@@ -1,7 +1,9 @@
 import pprint
-from typing import Callable, Optional
+from datetime import datetime
 from typing import List
+from typing import Optional
 
+from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
@@ -22,7 +24,12 @@ it coordinates specialized functions to enable sophisticated reasoning, planning
 The ACE framework provides a conceptual blueprint for autonomous agents that are corrigible, transparent,
 and beneficial by design. It balances goal-directedness with moral principles to shape behavior.
 By elucidating this layered cognitive architecture,
-the ACE framework offers a comprehensive reference for developing aligned AGI."""
+the ACE framework offers a comprehensive reference for developing aligned AGI.
+
+# Current time and location
+You are hosted on Henrik's computer in Stockholm, Sweden.
+Current time: [current_time]
+"""
 
 personality = """
 # Personality
@@ -111,7 +118,6 @@ People can talk to you via multiple different channels - web, discord, etc.
 The current chat is taking place on [current_communication_channel].
 """
 
-
 prompt_for_determining_if_agent_should_respond = """
 You are the brain of a chat bot named 'Stacey'.
 Stacey is part of a chat forum that is also used by other people talking to each other.
@@ -130,22 +136,25 @@ Answer "yes" to respond or "no" to not respond, followed by one sentence describ
 
 how_many_messages_to_include_when_determining_if_agent_should_respond = 3
 
-class L3AgentLayer:
+
+class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__(3)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
-        self.status: LayerStatus = LayerStatus.IDLE
-        self.status_listeners = set()
 
     def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
         self.set_status(LayerStatus.INFERRING)
         try:
+            current_time = datetime.now().astimezone()
+            formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
+
             system_message = f"""
                 {self_identity}
-                {knowledge}
+                {knowledge.replace("[current_time]", formatted_time)}
                 {tools}
                 {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
                 {personality}
@@ -189,7 +198,8 @@ class L3AgentLayer:
                     final_response = response
         finally:
             self.set_status(LayerStatus.IDLE)
-        return final_response if final_response.content.strip() else None
+
+        return final_response if final_response["content"].strip() else None
 
     def should_respond(self, conversation):
         # Ask the LLM whether the bot should respond, considering the context and latest message
@@ -214,14 +224,3 @@ class L3AgentLayer:
 
         return response_content.startswith("yes")
 
-    def set_status(self, status: LayerStatus):
-        print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
-        self.status = status
-        for listener in self.status_listeners:
-            listener(self.status)
-
-    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.add(listener)
-
-    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.discard(listener)
