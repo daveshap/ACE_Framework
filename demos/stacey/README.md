@@ -14,6 +14,7 @@ But it is helping us evolve and explore the framework, and she can already do so
 - Follow aspirations and guidance from the aspirational layer 
 - Dynamically decide when she should or shouldn't respond to messages.
 - She has a pretty colorful personality which can be customized
+- She knows what time it is and where she is hosted
 
 ## Next steps & test cases
 We are using a test-driven approach to this, working in tiny increments to build up each
