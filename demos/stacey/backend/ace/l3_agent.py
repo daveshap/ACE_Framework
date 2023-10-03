@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Callable, Optional
 from typing import List
 
+from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from llm.gpt import GPT, GptMessage
@@ -135,15 +136,15 @@ Answer "yes" to respond or "no" to not respond, followed by one sentence describ
 
 how_many_messages_to_include_when_determining_if_agent_should_respond = 3
 
-class L3AgentLayer:
+
+class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__()
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
-        self.status: LayerStatus = LayerStatus.IDLE
-        self.status_listeners = set()
 
     def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
         self.set_status(LayerStatus.INFERRING)
@@ -223,14 +224,3 @@ class L3AgentLayer:
 
         return response_content.startswith("yes")
 
-    def set_status(self, status: LayerStatus):
-        print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
-        self.status = status
-        for listener in self.status_listeners:
-            listener(self.status)
-
-    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.add(listener)
-
-    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.discard(listener)

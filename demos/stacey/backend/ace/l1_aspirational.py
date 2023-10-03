@@ -2,6 +2,7 @@
 from typing import Callable
 
 from llm.gpt import GPT  # Hardcode to GPT for now
+from .ace_layer import AceLayer
 from .bus import Bus
 from .layer_status import LayerStatus
 
@@ -45,7 +46,7 @@ just "steer the ship" by setting the moral, ethical, and purposeful tone for the
 """
 
 
-class L1AspirationalLayer:
+class L1AspirationalLayer(AceLayer):
     """
     The Aspirational Layer serves as the ethical compass for the autonomous agent,
     aligning its values and judgments to principles defined in its constitution.
@@ -53,14 +54,13 @@ class L1AspirationalLayer:
 
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__()
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
         self.constitution = constitution
         self.personal_mission = personal_mission
-        self.status: LayerStatus = LayerStatus.IDLE
-        self.status_listeners = set()
 
     def on_northbound_message(self, sender, message):
         """
@@ -114,18 +114,3 @@ class L1AspirationalLayer:
         self.log("Sending south:\n" + message)
         self.southbound_bus.publish("L1 Aspirational", message)
 
-    @staticmethod
-    def log(message):
-        print("L1 Aspirational Layer: " + message)
-
-    def set_status(self, status: LayerStatus):
-        self.log(f"Status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
-        self.status = status
-        for listener in self.status_listeners:
-            listener(self.status)
-
-    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.add(listener)
-
-    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.discard(listener)

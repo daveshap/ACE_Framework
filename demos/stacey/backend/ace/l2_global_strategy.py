@@ -25,7 +25,7 @@ environment in which you are operating.
 """
 
 
-class L2GlobalStrategyLayer:
+class L2GlobalStrategyLayer(BaseLayer):
     """
     The Global Strategy Layer serves a crucial function within the ACE framework - integrating real-world
     environmental context into the agent's strategic planning and decision-making processes. This grounding in
@@ -35,6 +35,7 @@ class L2GlobalStrategyLayer:
 
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__()
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
