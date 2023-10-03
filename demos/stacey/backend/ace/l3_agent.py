@@ -1,4 +1,5 @@
 import pprint
+from datetime import datetime
 from typing import Callable, Optional
 from typing import List
 
@@ -22,7 +23,12 @@ it coordinates specialized functions to enable sophisticated reasoning, planning
 The ACE framework provides a conceptual blueprint for autonomous agents that are corrigible, transparent,
 and beneficial by design. It balances goal-directedness with moral principles to shape behavior.
 By elucidating this layered cognitive architecture,
-the ACE framework offers a comprehensive reference for developing aligned AGI."""
+the ACE framework offers a comprehensive reference for developing aligned AGI.
+
+# Current time and location
+You are hosted on Henrik's computer in Stockholm, Sweden.
+Current time: [current_time]
+"""
 
 personality = """
 # Personality
@@ -111,7 +117,6 @@ People can talk to you via multiple different channels - web, discord, etc.
 The current chat is taking place on [current_communication_channel].
 """
 
-
 prompt_for_determining_if_agent_should_respond = """
 You are the brain of a chat bot named 'Stacey'.
 Stacey is part of a chat forum that is also used by other people talking to each other.
@@ -143,9 +148,12 @@ class L3AgentLayer:
     def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
         self.set_status(LayerStatus.INFERRING)
         try:
+            current_time = datetime.now().astimezone()
+            formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
+
             system_message = f"""
                 {self_identity}
-                {knowledge}
+                {knowledge.replace("[current_time]", formatted_time)}
                 {tools}
                 {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
                 {personality}
@@ -189,7 +197,8 @@ class L3AgentLayer:
                     final_response = response
         finally:
             self.set_status(LayerStatus.IDLE)
-        return final_response if final_response.content.strip() else None
+
+        return final_response if final_response["content"].strip() else None
 
     def should_respond(self, conversation):
         # Ask the LLM whether the bot should respond, considering the context and latest message
