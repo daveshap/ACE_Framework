@@ -95,9 +95,9 @@ class DefaultMessageHandlerPrompt(BaseModel):
 [Message]
 {{msg}}
 [Question]
-Given that you are the {{layer}}, formulate a message for the [{{destination}}]
+Given that you are the {{layer}}, formulate a message for the [{{destination}}] only if there is a compelling reason to do so.  Otherwise return just `none`.
 [Format]
-Concise natural language representing your role.  If there is no compelling reason to send a message to the [{{desitination}}] reply with:
+Concise natural language representing your role. If there is no compelling reason to send a message to the [{{desitination}}] reply with:
 
 `none`
 

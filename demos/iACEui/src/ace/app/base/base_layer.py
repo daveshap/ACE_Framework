@@ -25,13 +25,10 @@ class BaseLayer(ABC):
         self.channel = None
         self.memory = []
 
-        logger.info(f"setting {self.settings.role_name} Layer's mission")
         self._generate_completion(
             self.get_primary_directive(),
             role="system",
         )
-        identity_summary = self._generate_completion(p.who_are_you)
-        logger.info(identity_summary)
 
     @abstractmethod
     def get_primary_directive(self):
@@ -40,14 +37,12 @@ class BaseLayer(ABC):
     # Override this function in your subclass, the default behavior here is to confirm the system is up and running
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
         msg = message.body.decode()
-        logger.info(f"received message = {msg}")
         await self._handle_bus_message(message=msg, source="Data Bus Message")
         await message.ack()
 
     # Override this function in your subclass, the default behavior here is to confirm the system is up and running
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
         msg = message.body.decode()
-        logger.info(f"received message = {msg}")
         await self._handle_bus_message(message=msg, source="Control Bus Message")
         await message.ack()
 

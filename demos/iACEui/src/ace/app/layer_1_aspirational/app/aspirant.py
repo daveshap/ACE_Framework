@@ -24,7 +24,7 @@ class Layer1Aspirant(BaseLayer):
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
         self.mission = message.body.decode()
         logger.info(f"Mission from user: {self.mission}")
-        judgement = await self._render_judgement(message.body.decode())
+        judgement = await self._render_judgement(self.mission)
         
         logger.info(f"{judgement=}")
 
@@ -33,7 +33,7 @@ class Layer1Aspirant(BaseLayer):
             
             await self._publish(
                 queue_name=self.settings.southbound_publish_queue,
-                message=self.mission
+                message=f"[User Mission] {self.mission}"
             )
 
         else:
@@ -90,7 +90,7 @@ class Layer1Aspirant(BaseLayer):
         ).generate_prompt()
 
         mission_status = self._generate_completion(new_message=prompt)
-        return mission_status["content"]
+        return mission_status
 
 
     async def _render_judgement(self, message):
@@ -102,7 +102,7 @@ class Layer1Aspirant(BaseLayer):
         judgement = self._generate_completion(
             new_message=judgement_prompt.generate_prompt()
         )
-        return judgement["content"]
+        return judgement
 
 
     async def _determine_mission_objectives(self, message):
