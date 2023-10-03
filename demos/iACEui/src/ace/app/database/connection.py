@@ -3,7 +3,7 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import Session, sessionmaker
 from contextlib import contextmanager
 
-from settings import settings
+from .settings import settings
 
 engine = create_engine(
     settings.database_uri,

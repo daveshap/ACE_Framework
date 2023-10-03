@@ -15,10 +15,10 @@ class Settings(BaseSettings):
     amqp_username: str = "rabbit"
     amqp_password: str = "carrot"
     logging_queue: str = "logging-queue"
-    northbound_subscribe_queue: str = "deadletter"
-    southbound_subscribe_queue: str = "deadletter"
-    northbound_publish_queue: str = "deadletter"
-    southbound_publish_queue: str = "deadletter"
+    data_bus_sub_queue: str = "deadletter"
+    control_bus_sub_queue: str = "deadletter"
+    data_bus_pub_queue: str = "deadletter"
+    control_bus_pub_queue: str = "deadletter"
     response_queue: str = "user-response-queue"
 
 class DatabaseSettings(BaseSettings):

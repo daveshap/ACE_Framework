@@ -64,15 +64,15 @@ services:
 
   logger:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ./src/ace/app
+      dockerfile: logger.Dockerfile
     restart: always
     environment:
       - AMQP_HOST_NAME=rabbitmq
       - AMQP_USERNAME=rabbit
       - AMQP_PASSWORD=carrot
       - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
-    command: ["python", "logger.py"]
+    command: ["python", "app.py"]
     depends_on:
       - db
       - rabbitmq

@@ -3,9 +3,8 @@ from base.settings import Settings
 
 settings = Settings(
     role_name="Executive Layer",
-    northbound_subscribe_queue="northbound.layer_4_executive",
-    southbound_subscribe_queue="southbound.layer_4_executive",
-    southbound_publish_queue="southbound.layer_5_controller",
-    northbound_publish_queue="northbound.layer_3_agent",
-
+    control_bus_sub_queue="bus.control.L4",
+    data_bus_pub_queue="bus.data.L4",
+    control_bus_pub_queue="bus.control.L5",
+    data_bus_sub_queue="bus.data.L5",
 )

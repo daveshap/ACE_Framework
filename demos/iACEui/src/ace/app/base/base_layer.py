@@ -39,13 +39,13 @@ class BaseLayer(ABC):
     # Override this function in your subclass, the default behavior here is to confirm the system is up and running
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
         msg = message.body.decode()
-        await self._handle_bus_message(message=msg, source="Data Bus Message")
+        await self._handle_bus_message(message=msg, source="Data Bus")
         await message.ack()
 
     # Override this function in your subclass, the default behavior here is to confirm the system is up and running
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
         msg = message.body.decode()
-        await self._handle_bus_message(message=msg, source="Control Bus Message")
+        await self._handle_bus_message(message=msg, source="Control Bus")
         await message.ack()
 
     async def _handle_bus_message(self, message, source):
@@ -53,14 +53,14 @@ class BaseLayer(ABC):
             source=source,
             message=message,
             layer=self.settings.role_name,
-            destination="Data Bus Message",
+            destination="Data Bus",
         ).generate_prompt()
 
         control_bus_prompt = p.DefaultMessageHandlerPrompt(
             source=source,
             message=message,
             layer=self.settings.role_name,
-            destination="Control Bus Message",
+            destination="Control Bus",
         ).generate_prompt()
 
         data_bus_message = self._generate_completion(data_bus_prompt)
@@ -70,15 +70,15 @@ class BaseLayer(ABC):
         logger.info(f"{control_bus_message=}")
 
         await self._publish(
-            queue_name=self.settings.northbound_publish_queue,
+            queue_name=self.settings.data_bus_pub_queue,
             message=data_bus_message,
-            destination_bus="Data",
+            destination_bus="Data Bus",
             source_bus=source,
         )
         await self._publish(
-            queue_name=self.settings.southbound_publish_queue,
+            queue_name=self.settings.control_bus_pub_queue,
             message=control_bus_message,
-            destination_bus="Control",
+            destination_bus="Control Bus",
             source_bus=source,
         )
 
@@ -94,8 +94,8 @@ class BaseLayer(ABC):
         logger.info(f"{self.settings.role_name} connection established...")
 
     async def _subscribe(self):
-        nb_queue = await self.channel.declare_queue(self.settings.northbound_subscribe_queue, durable=True)
-        sb_queue = await self.channel.declare_queue(self.settings.southbound_subscribe_queue, durable=True)
+        nb_queue = await self.channel.declare_queue(self.settings.data_bus_sub_queue, durable=True)
+        sb_queue = await self.channel.declare_queue(self.settings.control_bus_sub_queue, durable=True)
 
         await nb_queue.consume(self.northbound_message_handler)
         await sb_queue.consume(self.southbound_message_handler)
@@ -127,15 +127,14 @@ class BaseLayer(ABC):
         token_count = 0
         for message in self.memory:
             token_count += self._count_tokens(message)
-
+        logger.info(f"Current {token_count=}")
         if token_count > self.settings.memory_max_tokens:
             logger.info("memory {token_count=}, compacting initiated...")
-
             self._update_memory()
-
-        logger.info(f"{self.memory=}")
-        token_count = self._count_tokens(self.memory[0])
-        logger.info("after compaction memory {token_count=}")
+            token_count = self._count_tokens(self.memory[0])
+            logger.info("After compaction memory {token_count=}")
+        else:
+            logger.info("No compaction initiated")
 
     def _update_memory(self):
         openai.api_key = self.settings.openai_api_key
@@ -161,26 +160,12 @@ class BaseLayer(ABC):
         num_tokens = len(encoding.encode(message["content"]))
         return num_tokens
 
-    # async def _publish(self, queue_name, message):
-    #     if self._determine_none(message) != 'none':
-    #         exchange = await create_exchange(
-    #             connection=self.connection,
-    #             queue_name=queue_name,
-    #         )
-    #         message_body = aio_pika.Message(
-    #             body=message.encode(),
-    #             delivery_mode=aio_pika.DeliveryMode.PERSISTENT
-    #         )
-    #         await exchange.publish(
-    #             message_body,
-    #             routing_key=queue_name,
-    #         )
     async def _publish(
         self,
         queue_name,
         message, 
-        destination_bus: str = Literal["Data", "Soruce"],
-        source_bus: str = Literal["Data", "Soruce"],
+        destination_bus,
+        source_bus,
     ):
         if self._determine_none(message) != 'none':
             # Assuming create_exchange is a custom function, maintain its signature.
@@ -197,19 +182,14 @@ class BaseLayer(ABC):
                 'layer_memory': json.dumps(self.memory),
                 'model': self.settings.model,
             }
-
-            # Message properties
-            properties = aio_pika.MessageProperties(
-                content_type='text/plain',
-                headers=headers,
-                delivery_mode=aio_pika.DeliveryMode.PERSISTENT
-            )
             
-            # Prepare the message with the properties
             message_body = aio_pika.Message(
                 body=message.encode(),
-                properties=properties
+                headers=headers,
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                content_type='text/plain'
             )
+
             
             # Publish the message
             await exchange.publish(
@@ -230,7 +210,7 @@ class BaseLayer(ABC):
         logger.info(f"Running {self.settings.role_name}")
         await self._connect()
         await self._subscribe()
-        logger.info(f"{self.settings.role_name} Subscribed to {self.settings.northbound_subscribe_queue} and {self.settings.southbound_subscribe_queue}")
+        logger.info(f"{self.settings.role_name} Subscribed to {self.settings.data_bus_sub_queue} and {self.settings.control_bus_sub_queue}")
 
     def run(self):
         self.loop.create_task(self._run_layer())

@@ -3,8 +3,8 @@ from base.settings import Settings
 
 settings = Settings(
     role_name="Aspirational Layer",
-    northbound_subscribe_queue="northbound.layer_1_aspirant",
-    southbound_subscribe_queue="southbound.layer_1_aspirant",
-    southbound_publish_queue="southbound.layer_2_strategist",
-    northbound_publish_queue="deadletter",
+    control_bus_sub_queue="bus.control.L1",
+    data_bus_pub_queue="bus.data.L1",
+    control_bus_pub_queue="bus.control.L2",
+    data_bus_sub_queue="bus.data.L2",
 )

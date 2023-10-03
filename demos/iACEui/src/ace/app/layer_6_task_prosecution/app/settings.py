@@ -3,8 +3,8 @@ from base.settings import Settings
 
 settings = Settings(
     role_name="Task Procecution Layer",
-    northbound_subscribe_queue="northbound.layer_6_prosecutor",
-    southbound_subscribe_queue="southbound.layer_6_prosecutor",
-    southbound_publish_queue="deadletter",
-    northbound_publish_queue="northbound.layer_5_controller",
+    control_bus_sub_queue="bus.control.L6",
+    data_bus_pub_queue="bus.data.L6",
+    control_bus_pub_queue="bus.control.none",
+    data_bus_sub_queue="bus.data.none",
 )

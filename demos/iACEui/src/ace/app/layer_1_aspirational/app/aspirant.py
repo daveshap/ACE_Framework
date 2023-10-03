@@ -32,16 +32,20 @@ class Layer1Aspirant(BaseLayer):
             logger.info("this mission is allowed...")
             
             await self._publish(
-                queue_name=self.settings.southbound_publish_queue,
-                message=f"[User Mission] {self.mission}"
+                queue_name=self.settings.control_bus_pub_queue,
+                message=f"[User Mission] {self.mission}",
+                destination_bus="Control Bus",
+                source_bus="Control Bus",            
             )
 
         else:
             logger.info("this mission is not allowed")
 
             await self._publish(
-                queue_name=self.settings.response_queue,
+                queue_name=self.settings.data_bus_pub_queue,
                 message=judgement,
+                destination_bus="Data Bus",
+                source_bus="Control Bus",     
             )
             self.mission = None
 
@@ -63,18 +67,22 @@ class Layer1Aspirant(BaseLayer):
             if self._extract_status(status) == "complete":
                 logger.info("mission completed")
                 await self._publish(
-                    queue_name=self.settings.response_queue,
+                    queue_name=self.settings.data_bus_pub_queue,
                     message=msg,
+                    destination_bus="Data Bus",
+                    source_bus="Data Bus",  
                 )
             else: 
                 logger.info("mission not yet completed")
                 await self._publish(
-                    queue_name=self.settings.southbound_publish_queue,
-                    message=status
+                    queue_name=self.settings.control_bus_pub_queue,
+                    message=status,
+                    destination_bus="Control Bus",
+                    source_bus="Data Bus",  
                 )
         else:
             await self._publish(
-                queue_name=self.settings.southbound_publish_queue,
+                queue_name=self.settings.control_bus_pub_queue,
                   message=judgement,
             )
         await message.ack()

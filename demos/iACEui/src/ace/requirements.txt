@@ -1,2 +1,0 @@
-pydantic-settings==2.0.3
-SQLAlchemy==2.0.21
