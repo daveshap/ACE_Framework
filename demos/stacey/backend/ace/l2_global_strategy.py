@@ -4,7 +4,7 @@ from .bus import Bus
 
 from ..llm.gpt import GPT  # Hardcode to GPT for now
 
-generate_beliefs_system_message =  """
+generate_beliefs_system_message = """
 # MISSION
 You are a component of an ACE (Autonomous Cognitive Entity). Your primary purpose is to try
 and make sense of external telemetry, internal telemetry, and your own internal records in
@@ -68,6 +68,3 @@ class L2GlobalStrategyLayer(AceLayer):
         self.log("Sending south: " + message)
         self.southbound_bus.publish(self.get_name(), message)
 
-    @staticmethod
-    def log(message):
-        print("L2 Global Strategy Layer: " + message)

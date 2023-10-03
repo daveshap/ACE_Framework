@@ -31,6 +31,3 @@ class L5CognitiveControlLayer(AceLayer):
         self.log("Sending south: " + message)
         self.southbound_bus.publish(self.get_name(), message)
 
-    @staticmethod
-    def log(message):
-        print("L2 Global Strategy Layer: " + message)
