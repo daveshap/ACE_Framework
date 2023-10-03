@@ -187,7 +187,7 @@ class BaseLayer(ABC):
                 body=message.encode(),
                 headers=headers,
                 delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                content_type='text/plain'
+                content_type='text/plain',
             )
 
             
