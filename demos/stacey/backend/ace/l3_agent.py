@@ -140,7 +140,7 @@ how_many_messages_to_include_when_determining_if_agent_should_respond = 3
 class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
-        super().__init__()
+        super().__init__(3)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus

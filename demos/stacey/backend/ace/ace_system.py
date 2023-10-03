@@ -23,5 +23,13 @@ class AceSystem:
             self.northbound_bus
         )
 
+        self.layers = [
+            self.l1_aspirational_layer,
+            self.l3_agent
+        ]
+
+    def get_layers(self):
+        return self.layers
+
     def start(self):
         self.northbound_bus.subscribe(self.l1_aspirational_layer.on_northbound_message)

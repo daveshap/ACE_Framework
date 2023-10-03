@@ -36,7 +36,7 @@ class L2GlobalStrategyLayer(AceLayer):
 
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
-        super().__init__()
+        super().__init__(2)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus

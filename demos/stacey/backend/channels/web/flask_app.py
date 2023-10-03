@@ -14,8 +14,7 @@ class FlaskApp:
         self.app.image_generator_function = image_generator_function
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
 
-        CORS(self.app)
-
+        CORS(self.app, resources={r"/*": {"origins": "*"}})
         # Register the blueprints
         self.app.register_blueprint(chat_bp)
         self.app.register_blueprint(admin_bp)
@@ -26,24 +25,32 @@ class FlaskApp:
 
         self.setup_routes()
 
-        self.setup_background_tasks(ace_system)
+        self.setup_listeners()
 
-    def setup_background_tasks(self, ace_system):
-        def background_task(bus):
-            @bus.subscribe
-            def listener(sender, message):
+    def setup_listeners(self):
+        for bus in [self.app.ace_system.northbound_bus, self.app.ace_system.southbound_bus]:
+            bus.subscribe(self.create_bus_listener(bus))
+
+        for layer in self.app.ace_system.get_layers():
+            layer.add_status_listener(self.create_layer_status_listener(layer))
+
+    def create_bus_listener(self, bus):
+        def listener(sender, message):
+            try:
                 print(f"flask_app detected message on bus from {sender}: {message}")
-                self.socketio.emit(bus.name, {'sender': sender, 'message': message})
+                self.socketio.emit(bus.get_name(), {'sender': sender, 'message': message})
+            except Exception as e:
+                print(f"Error in bus listener: {e}")
+        return listener
 
-        background_task(ace_system.northbound_bus)
-        background_task(ace_system.southbound_bus)
-
-        # hardcoded to 1 layer for now.
-        def status_listener(status):
-            print(f"flask_app detected status change: {status}")
-            self.socketio.emit('layer-1-status', {'status': status.name})
-
-        ace_system.l1_aspirational_layer.add_status_listener(status_listener)
+    def create_layer_status_listener(self, layer):
+        def listener(status):
+            try:
+                print(f"flask_app detected status change in layer {layer.get_id}: {status}")
+                self.socketio.emit(f'layer-{layer.get_id()}-status', {'status': status.name})
+            except Exception as e:
+                print(f"Error in layer status listener: {e}")
+        return listener
 
     def setup_routes(self):
         @self.app.route('/')
