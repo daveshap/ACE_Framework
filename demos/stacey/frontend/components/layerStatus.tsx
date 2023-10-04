@@ -1,6 +1,7 @@
-import React, {useEffect, useState} from 'react';
-import {io} from "socket.io-client";
+// components/layerStatus.tsx
+import React, {useContext, useEffect, useState} from 'react';
 import {Box, HStack, Spinner, Text, VStack} from "@chakra-ui/react";
+import {WebSocketContext, WebSocketEvent} from "@/context/WebSocketContext";
 
 interface LayerProps {
     layerId: number;
@@ -11,23 +12,18 @@ interface LayerProps {
 export const LayerStatus: React.FC<LayerProps> = ({ layerId, displayName, backgroundColor }) => {
     const [status, setStatus] = useState('IDLE');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const socketEvent : WebSocketEvent | null = useContext(WebSocketContext);
 
     if (!backendUrl) {
         console.error("NEXT_PUBLIC_BACKEND_URL is not set");
         return null;
     }
 
-    const socket = io(backendUrl);
-
     useEffect(() => {
-        socket.on(`layer-${layerId}-status`, (data) => {
-            setStatus(data.status);
-        });
-
-        return () => {
-            socket.off(`${layerId}-status`);
-        };
-    }, []);
+        if (socketEvent && socketEvent.eventType === 'layer-status' && socketEvent.data.layerId === layerId) {
+            setStatus(socketEvent.data.status);
+        }
+    }, [socketEvent, layerId]);
 
     return (
         <Box width={300} bg={backgroundColor} p={4} justifyContent="space-between">

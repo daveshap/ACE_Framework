@@ -19,17 +19,18 @@ function Chat() {
     const handleKeyPress = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            setMessages([...messages, { role: 'user', content: input }]);
+            const updatedMessages = [...messages, {role: 'user', name: 'web-user', content: input}];
+            setMessages(updatedMessages);
             setLoading(true);
             setInput('');
 
             try {
                 const response = await axios.post(backendUrl + "/chat", {
                     model: model,
-                    conversation: [...messages, { role: 'user', content: input }],
+                    conversation: updatedMessages,
                 });
 
-                setMessages([...messages, { role: 'user', content: input }, response.data]);
+                setMessages([...updatedMessages, response.data]);
             } catch (error) {
                 console.error('Error sending message:', error);
             } finally {

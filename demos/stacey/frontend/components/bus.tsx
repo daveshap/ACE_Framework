@@ -1,10 +1,10 @@
 // pages/component/Bus.tsx
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Alert, Box, Button, Text, VStack} from '@chakra-ui/react';
 import {PublishMessageForm} from "@/components/publish";
-import io from 'socket.io-client';
 import BusMessage from "@/components/busMessage";
 import {ArrowDownIcon, ArrowUpIcon} from "@chakra-ui/icons";
+import {WebSocketContext, WebSocketEvent} from "@/context/WebSocketContext";
 
 interface BusProps {
     busName: string;
@@ -18,22 +18,22 @@ interface MessageData {
 export const Bus: React.FC<BusProps> = ({ busName }) => {
     const [logs, setLogs] = useState<MessageData[]>([]);
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const socketEvent : WebSocketEvent | null = useContext(WebSocketContext);
+
     if (!backendUrl) {
         return <Alert status="error">I don't know where the backend is! Please set env variable NEXT_PUBLIC_BACKEND_URL</Alert>;
     }
 
     useEffect(() => {
-        const socket = io(backendUrl);
-        console.log('Connected to socket.io server')
-        socket.on(busName, (data: MessageData) => {
-            console.log('Received message:', data)
-            setLogs((prevLogs) => [...prevLogs, data]);
-        });
-
-        return () => {
-            socket.disconnect();
-        };
-    }, [busName, backendUrl]);
+        if (socketEvent && socketEvent.eventType === 'bus-message' && socketEvent.data.bus === busName) {
+            const messageData: MessageData = {
+                sender: socketEvent.data.sender,
+                message: socketEvent.data.message,
+            };
+            console.log('Received message:', messageData);
+            setLogs((prevLogs) => [...prevLogs, messageData]);
+        }
+    }, [socketEvent, busName]);
 
     useEffect(() => {
         if (!backendUrl) return;
@@ -45,7 +45,7 @@ export const Bus: React.FC<BusProps> = ({ busName }) => {
                 setLogs(data)
             })
             .catch(error => console.error('Error fetching the logs:', error));
-    }, []);
+    }, [backendUrl, busName]);
 
     const clearMessages = () => {
         fetch(backendUrl + '/clear_messages', {

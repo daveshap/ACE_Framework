@@ -1,18 +1,20 @@
 
-from typing import List, Any, Optional, Callable, Dict
+import json
 from collections import deque
 from threading import Timer
-import json
-import openai  # Assuming OpenAI's Python package is used for GPT-3.5
+from typing import List, Any, Optional, Callable, Dict
+
 
 class GPT:
     def __init__(self, api_key):
         self.api_key = api_key
 
+    # noinspection PyUnusedLocal
     def create_chat_completion(self, model, prompt, inputs) -> str:
         # Simulating GPT-3.5 chat completion
         # In real-world applications, you'll call the OpenAI API here
         return f"GPT-3.5 processed: {prompt} with inputs {inputs}"
+
 
 class LLMGate:
     def __init__(self,
