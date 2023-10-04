@@ -1,5 +1,5 @@
 import logging
-import pika
+import aio_pika
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
@@ -26,47 +26,40 @@ class Security(Resource):
         logger.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
-    def start_resource(self):
-        super().start_resource()
-        self.subscribe_all_layers()
+    async def post_connect(self):
+        await self.subscribe_security_queue()
+        await self.post_layers()
 
-    def stop_resource(self):
-        self.unsubscribe_all_layers()
-        super().stop_resource()
+    async def pre_disconnect(self):
+        await self.unsubscribe_security_queue()
 
-    def send_message(self, layer, message, delivery_mode=2):
-        queue_name = f"security.{layer}"
-        self.publish_message(self, queue_name, message)
+    async def publish_message(self, queue_name, message, delivery_mode=2):
+        message = aio_pika.Message(
+            body=message,
+            delivery_mode=delivery_mode
+        )
+        await self.channel.default_exchange.publish(message, routing_key=queue_name)
 
-    def publish_message(self, queue, message, delivery_mode=2):
-        self.channel.basic_publish(exchange='',
-                                   routing_key=queue,
-                                   body=message,
-                                   properties=pika.BasicProperties(
-                                       delivery_mode=delivery_mode,
-                                   ))
+    async def post_layers(self):
+        for queue_name in self.build_all_layer_queue_names():
+            await self.post_layer(queue_name)
 
-    def post(self):
-        for layer in self.settings.layers:
-            self.post_layer(layer)
-
-    def post_layer(self, layer):
-        self.logger.debug(f"[{self.labeled_name}] sending POST to layer: {layer}")
+    async def post_layer(self, queue_name):
+        logger.debug(f"[{self.labeled_name}] sending POST to layer queue: {queue_name}")
         message = self.build_message(message_type='ping')
-        self.send_message(self, layer, message)
+        await self.publish_message(queue_name, message)
 
-    def message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
-        logger.debug(f"[{self.labeled_name}] received a message: {body.decode()}")
+    async def message_handler(self, message: aio_pika.IncomingMessage):
+        logger.debug(f"[{self.labeled_name}] received a message: {message.body.decode()}")
 
-    def subscribe_all_layers(self):
-        logger.debug(f"{self.labeled_name} subscribing to all layers...")
-        for queue_name in self.build_all_layer_queue_names():
-            # TODO: Consider separate message handlers?
-            self.try_queue_subscribe(queue_name, self.message_handler)
-        logger.info(f"{self.labeled_name} Subscribed to all layers")
+    async def subscribe_security_queue(self):
+        logger.debug(f"{self.labeled_name} subscribing to security queue...")
+        queue_name = self.settings.system_integrity_queue
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
+        logger.info(f"{self.labeled_name} Subscribed to security queue")
 
-    def unsubscribe_all_layers(self):
-        logger.debug(f"{self.labeled_name} unsubscribing from all layers...")
-        for queue_name in self.build_all_layer_queue_names():
-            self.channel.basic_cancel(queue_name)
-        logger.info(f"{self.labeled_name} Unsubscribed from all layers")
+    async def unsubscribe_security_queue(self):
+        logger.debug(f"{self.labeled_name} unsubscribing from security queue...")
+        queue_name = self.settings.system_integrity_queue
+        await self.consumers[queue_name].cancel()
+        logger.info(f"{self.labeled_name} Unsubscribed from security queue")

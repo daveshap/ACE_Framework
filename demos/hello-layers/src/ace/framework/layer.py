@@ -1,6 +1,6 @@
 import logging
 import json
-import pika
+import aio_pika
 from abc import abstractmethod
 
 from ace import constants
@@ -20,14 +20,12 @@ class LayerSettings(Settings):
 
 class Layer(Resource):
 
-    def start_resource(self):
-        super().start_resource()
+    async def post_connect(self):
         self.set_adjacent_layers()
-        self.register_busses()
+        await self.register_busses()
 
-    def stop_resource(self):
-        self.deregister_busses()
-        super().stop_resource()
+    async def pre_disconnect(self):
+        await self.deregister_busses()
 
     def set_adjacent_layers(self):
         self.northern_layer = None
@@ -43,86 +41,76 @@ class Layer(Resource):
             logger.error(message)
             raise ValueError(message)
 
-    def register_busses(self):
+    async def register_busses(self):
         logger.debug("Registering busses...")
-        self.subscribe_adjacent_layers()
-        self.subscribe_security_queue()
+        await self.subscribe_adjacent_layers()
+        # TODO: Need this?
+        # await self.subscribe_security_queue()
         logger.debug("Registered busses...")
 
-    def deregister_busses(self):
+    async def deregister_busses(self):
         logger.debug("Deregistering busses...")
-        self.unsubscribe_adjacent_layers()
-        self.unsubscribe_security_queue()
+        await self.unsubscribe_adjacent_layers()
+        # TODO: Need this?
+        # await self.unsubscribe_security_queue()
         logger.debug("Deregistered busses...")
 
-    def build_queue_name(self, direction, layer):
-        queue = None
-        if layer and direction in constants.LAYER_ORIENTATIONS:
-            queue = f"{direction}.{layer}"
-        return queue
-
-    def build_exchange_name(self, direction, layer):
-        exchange = None
-        queue = self.build_queue_name(direction, layer)
-        if queue:
-            exchange = f"exchange.{queue}"
-        return exchange
-
-    def send_message(self, direction, layer, message, delivery_mode=2):
+    async def send_message(self, direction, layer, message, delivery_mode=2):
         exchange = self.build_exchange_name(direction, layer)
         if exchange:
-            self.publish_message(self, exchange, message)
+            await self.publish_message(exchange, message)
 
-    def ping(self, direction, layer):
+    def is_ping(self, data):
+        return data['type'] == 'ping'
+
+    def is_pong(self, data):
+        return data['type'] == 'pong'
+
+    async def ping(self, direction, layer):
         message = self.build_message(message_type='ping')
-        self.send_message(self, direction, layer, message)
+        await self.send_message(self, direction, layer, message)
 
-    def post(self):
-        self.ping('northbound', self.northern_layer)
-        self.ping('southbound', self.southern_layer)
+    async def handle_ping(self, direction, layer):
+        response_direction = None
+        layer = None
+        if direction == 'northbound':
+            response_direction = 'southbound'
+            layer = self.southern_layer
+        elif direction == 'southbound':
+            response_direction = 'northbound'
+            layer = self.northern_layer
+        if response_direction and layer:
+            message = self.build_message(message_type='pong')
+            await self.send_message(response_direction, layer, message)
 
-    def route_message(self, direction, body):
+    async def post(self):
+        if self.northern_layer:
+            await self.ping('northbound', self.northern_layer)
+        if self.southern_layer:
+            await self.ping('southbound', self.southern_layer)
+
+    async def route_message(self, direction, message):
         try:
-            data = json.loads(body.decode())
+            data = json.loads(message.body.decode())
         except json.JSONDecodeError as e:
             logger.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
             return
-        try:
-            handler = getattr(self, f"handle_message_{data['type']}")
-        except AttributeError as e:
-            logger.error(f"[{self.labeled_name}] missing handler type '{data['type']}' for [{direction}] message: {e}")
+        if self.is_pong(data):
+            logger.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
             return
-        handler(data)
+        elif self.is_ping(data):
+            logger.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
+            return await self.handle_ping(direction, data['resource'])
+        self.push_message_to_consumer_local_queue(data['type'], data, message)
 
-    def northbound_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
-        self.route_message('Northbound', body)
-        # logger.info(f"I'm the [{self.labeled_name}] and I've received a [Northbound] message, here it is: {body.decode()}")
-        # # For now just forward the message northward
-        # time.sleep(1)
-        # message = f"hello from {self.labeled_name}...".encode()
-        #
-        # channel.basic_publish(exchange=self.settings.northbound_publish_queue, routing_key='', body=message)
-        # channel.basic_ack(delivery_tag=method.delivery_tag)
+    async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
+        await self.route_message('northbound', message)
 
-    def southbound_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
-        self.route_message('Southbound', body)
-        # logger.info(f"I'm the [{self.labeled_name}] and I've received a [Southbound] message, here it is: {body.decode()}")
-        # # For now just forward the message southward
-        # time.sleep(1)
-        # message = f"hello from {self.labeled_name}...".encode()
-        # channel.basic_publish(exchange=self.settings.southbound_publish_queue, routing_key='', body=message)
-        # channel.basic_ack(delivery_tag=method.delivery_tag)
+    async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
+        await self.route_message('southbound', message)
 
-    @abstractmethod
-    def handle_message_control(self, data):
-        pass
-
-    @abstractmethod
-    def handle_message_data(self, data):
-        pass
-
-    def security_message_handler(self, channel: pika.channel.Channel, method: pika.spec.Basic.Deliver, properties: pika.spec.BasicProperties, body: bytes):
-        message = body.decode()
+    async def security_message_handler(self, message: aio_pika.IncomingMessage):
+        message = message.body.decode()
         logger.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
         try:
             data = json.loads(message)
@@ -130,34 +118,37 @@ class Layer(Resource):
             logger.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
             return
         if data['type'] == 'post':
-            self.post()
+            await self.post()
 
-    def subscribe_adjacent_layers(self):
+    async def subscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
         logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         if self.northern_layer:
-            self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
+            self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
         if self.southern_layer:
-            self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
+            self.consumers[southbound_queue] = await self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
 
-    def subscribe_security_queue(self):
+    # TODO: Need this?
+    async def subscribe_security_queue(self):
         queue_name = f"security.{self.settings.name}"
         logger.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.try_queue_subscribe(queue_name, self.security_message_handler)
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.security_message_handler)
 
-    def unsubscribe_adjacent_layers(self):
+    async def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
         logger.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
-        if self.northern_layer:
-            self.channel.basic_cancel(northbound_queue)
-        if self.southern_layer:
-            self.channel.basic_cancel(southbound_queue)
+        if self.northern_layer and northbound_queue in self.consumers:
+            await self.consumers[northbound_queue].cancel()
+        if self.southern_layer and southbound_queue in self.consumers:
+            await self.consumers[southbound_queue].cancel()
         logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
 
-    def unsubscribe_security_queue(self):
+    # TODO: Need this?
+    async def unsubscribe_security_queue(self):
         queue_name = f"security.{self.settings.name}"
         logger.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
-        self.channel.basic_cancel(queue_name)
+        if queue_name in self.consumers:
+            await self.consumers[queue_name].cancel()
         logger.info(f"{self.labeled_name} unsubscribed from {queue_name}")

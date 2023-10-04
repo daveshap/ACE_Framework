@@ -23,9 +23,3 @@ class Layer6(Layer):
     def status(self):
         logger.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
-
-    def handle_message_control(self, data):
-        pass
-
-    def handle_message_data(self, data):
-        pass

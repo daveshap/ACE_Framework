@@ -1,19 +1,20 @@
-import pika
-import time
+import asyncio
+import aio_pika
+import logging
 
 from ace.settings import Settings
-import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_connection(settings: Settings,
-                   max_retries=5,
-                   delay_factor=2,
-                   heartbeat=600,
-                   blocked_connection_timeout=300,
-                   ):
+async def get_connection_and_channel(settings: Settings,
+                                     loop=asyncio.get_event_loop(),
+                                     max_retries=5,
+                                     delay_factor=2,
+                                     heartbeat=600,
+                                     blocked_connection_timeout=300,
+                                     ):
 
     host = settings.amqp_host_name
     username = settings.amqp_username
@@ -23,18 +24,17 @@ def get_connection(settings: Settings,
 
     while retries < max_retries:
         try:
-            connection_params = pika.ConnectionParameters(
-                host=host,
+            connection = await aio_pika.connect_robust(
+                f"amqp://{username}:{password}@{host}",
                 heartbeat=heartbeat,
                 blocked_connection_timeout=blocked_connection_timeout,
-                credentials=pika.PlainCredentials(username, password),
             )
-            connection = pika.BlockingConnection(connection_params)
-            logger.info(f"{settings.name} connection established...")
-            return connection
-        except (pika.exceptions.AMQPConnectionError, pika.exceptions.AMQPChannelError) as e:
+            channel = await connection.channel()  # Create a new channel
+            logger.info(f"{settings.name} connection and channel established...")
+            return connection, channel
+        except (aio_pika.exceptions.AMQPConnectionError, aio_pika.exceptions.AMQPChannelError) as e:
             print(f"Connection attempt {retries + 1} failed with error: {e}")
             retries += 1
-            time.sleep(retries * delay_factor)  # Exponential backoff
+            await asyncio.sleep(retries * delay_factor)  # Exponential backoff
 
-    raise Exception(f"Failed to establish a connection after maximum retries: {max_retries}.")
+    raise Exception(f"Failed to establish a connection and channel after maximum retries: {max_retries}.")
