@@ -8,8 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.responses import HTMLResponse
 
-from actions.image_tool import replace_image_prompt_with_image_url_formatted_as_markdown
 from channels.web.web_communication_channel import WebCommunicationChannel
+from filters.image_filter import replace_image_prompt_with_image_url_formatted_as_markdown
 
 
 class ConnectionManager:
@@ -84,6 +84,7 @@ class FastApiApp:
             await self.connection_manager.connect(websocket)
             print("2")
 
+        # noinspection PyUnusedLocal
         @app.exception_handler(Exception)
         async def custom_exception_handler(request: Request, exc: Exception):
             """
@@ -187,7 +188,8 @@ class FastApiApp:
 
         @app.get("/", response_class=HTMLResponse)
         def root():
-            return '<html>Hi! Stacey here. Yes, the backend is up and running! <a href="chat?message=hi">/chat?message=hi</a></html>'
+            return ('<html>Hi! Stacey here. Yes, the backend is up and running! '
+                    '<a href="chat?message=hi">/chat?message=hi</a></html>')
 
     def setup_listeners(self):
         for bus in [self.ace.northbound_bus, self.ace.southbound_bus]:

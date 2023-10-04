@@ -1,8 +1,8 @@
 import discord
 from discord import Embed
 
-from actions.image_tool import split_message_by_images
 from channels.communication_channel import CommunicationChannel
+from filters.image_filter import split_message_by_images
 from llm.gpt import GptMessage
 
 
