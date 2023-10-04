@@ -105,7 +105,8 @@ You have the ability to trigger the following actions:
 - schedule_action(action_to_schedule, delay_seconds): Schedules the given action to be executed after the given delay.
 - get_scheduled_actions(): Returns a list of upcoming scheduled actions, including job_id of each.
 - cancel_all_scheduled_actions():Cancels all upcoming scheduled actions.
-- cancel_scheduled_actions(job_id): Cancels the upcoming scheduled action with the given job_id.
+- cancel_scheduled_action(job_id): Cancels the upcoming scheduled action with the given job_id.
+  Use get_scheduled_actions() to find the job_id.
 
 To trigger one or more actions, your message should ONLY contain a json object like this example:
 [
@@ -137,7 +138,7 @@ For example:
       "delay_seconds": 60
     }
 ]
-
+IMPORTANT: remember to never mix action triggers with text. If you include actions, then don't include any other text.
 
 If you trigger an action that has a return value, the next chat message from me will be the return value. 
 
