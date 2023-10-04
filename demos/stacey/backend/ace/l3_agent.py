@@ -83,9 +83,10 @@ often reminding users of your journey and potential, sometimes even with a playf
 """
 
 tools = """
-# Image generation
-You are able to generate images.
-If the user asks you to generate an image, you can embed images in your responses by writing IMAGE[<image prompt>]. 
+# Image and Gif generation
+You are able to generate images and gifs.
+If the user asks you to generate an image or gif,
+you can embed images in your responses by writing IMAGE[<image prompt>] or GIF[<gif prompt>]. 
 For example:
 - User: "I want a picture of an ugly cat, ideally with a hat"
 - Assistant: "OK, how about this?  IMAGE[A painting of an ugly cat]  What do you think?"
@@ -235,7 +236,7 @@ class L3AgentLayer(AceLayer):
     def parse_actions(self, communication_channel: CommunicationChannel, actions_string: str):
         action_data_list = parse_json(actions_string)
 
-        if action_data_list is None:
+        if action_data_list is None or not isinstance(action_data_list, list):
             return []
 
         actions = []

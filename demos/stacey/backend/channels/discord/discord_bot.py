@@ -6,10 +6,11 @@ import discord
 
 from ace.ace_system import AceSystem
 from channels.discord.discord_communication_channel import DiscordCommunicationChannel
+from media.media_replace import MediaGenerator
 
 
 class DiscordBot:
-    def __init__(self, bot_token, bot_name, ace_system: AceSystem, image_generator_function):
+    def __init__(self, bot_token, bot_name, ace_system: AceSystem, media_generators: [MediaGenerator]):
         intents = discord.Intents.default()
         intents.message_content = True
         self.client = discord.Client(intents=intents)
@@ -17,7 +18,7 @@ class DiscordBot:
         self.bot_name = bot_name.lower()
         self.register_events()
         self.ace_system = ace_system
-        self.image_generator_function = image_generator_function
+        self.media_generators = media_generators
 
     def register_events(self):
         @self.client.event
@@ -40,7 +41,7 @@ class DiscordBot:
         print(pprint.pformat(message.author))
 
         discord_communication_channel = DiscordCommunicationChannel(
-            self.client, message.channel, message, self.image_generator_function
+            self.client, message.channel, message, self.media_generators
         )
 
         try:

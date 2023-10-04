@@ -2,22 +2,23 @@ import discord
 from discord import Embed
 
 from channels.communication_channel import CommunicationChannel
-from filters.image_filter import split_message_by_images
 from llm.gpt import GptMessage
+from media.media_replace import MediaGenerator, split_message_by_media
 
 
 class DiscordCommunicationChannel(CommunicationChannel):
 
-    def __init__(self, discord_client, discord_channel, incoming_discord_message, image_generator_function):
+    def __init__(self, discord_client, discord_channel, incoming_discord_message, media_generators: [MediaGenerator]):
         self.discord_client = discord_client
         self.discord_channel = discord_channel
         self.incoming_discord_message = incoming_discord_message
-        self.image_generator_function = image_generator_function
+        self.media_generators = media_generators
         self.response = None
 
     async def send_message(self, text):
         print("DiscordCommunicationChannel.send_message: " + text)
-        segments = await split_message_by_images(self.image_generator_function, text)
+        segments = await split_message_by_media(self.media_generators, text)
+        print("Segments: " + str(segments))
         for segment in segments:
             if segment.startswith("http"):
                 embed = Embed()

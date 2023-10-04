@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.responses import HTMLResponse
 
 from channels.web.web_communication_channel import WebCommunicationChannel
-from filters.image_filter import replace_image_prompt_with_image_url_formatted_as_markdown
+from media.media_replace import replace_media_prompt_with_media_url_formatted_as_markdown, MediaGenerator
 
 
 class ConnectionManager:
@@ -47,10 +47,10 @@ class ConnectionManager:
 
 
 class FastApiApp:
-    def __init__(self, ace_system, image_generator_function):
+    def __init__(self, ace_system, media_generators: [MediaGenerator]):
         self.app = FastAPI()
         self.ace = ace_system
-        self.image_generator_function = image_generator_function
+        self.media_generators = media_generators
         self.connection_manager = ConnectionManager()
         self.app.add_exception_handler(Exception, self.custom_exception_handler)
 
@@ -106,8 +106,8 @@ class FastApiApp:
                     print("No response from process_incoming_user_message")
                     return {"role": "assistant", "name": "Stacey", "content": "(no response)"}
                 print("process_incoming_user_message completed. Response: " + communication_channel.response)
-                response_with_images = await replace_image_prompt_with_image_url_formatted_as_markdown(
-                    self.image_generator_function, communication_channel.response
+                response_with_images = await replace_media_prompt_with_media_url_formatted_as_markdown(
+                    self.media_generators, communication_channel.response
                 )
                 return {"role": "assistant", "name": "Stacey", "content": response_with_images}
             except Exception as e:
