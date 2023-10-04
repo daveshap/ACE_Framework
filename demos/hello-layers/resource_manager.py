@@ -1,9 +1,12 @@
 import docker
 import yaml
 import time
-import logging
 import signal
 import subprocess
+
+from ace.logger import Logger
+
+logger = Logger(__name__)
 
 DOCKER_COMPOSE_FILE = 'docker-compose.yaml'
 
@@ -17,10 +20,6 @@ def get_service_container(client, service_name):
 
 
 def main():
-    # Logging setup.
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger('manage_containers')
-
     # Start containers based on dependencies.
     try:
         logger.info("Starting containers")

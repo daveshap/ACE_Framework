@@ -1,10 +1,10 @@
 import os
 import time
 import importlib
-import logging
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+from ace.logger import Logger
+
+logger = Logger(__name__)
 
 
 def loader(resource_name):

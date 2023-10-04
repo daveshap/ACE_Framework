@@ -1,11 +1,7 @@
-import logging
 import aio_pika
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class SecuritySettings(Settings):
@@ -23,7 +19,7 @@ class Security(Resource):
 
     # TODO: Add valid status checks.
     def status(self):
-        logger.debug(f"Checking {self.labeled_name} status")
+        self.log.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
     async def post_connect(self):
@@ -45,22 +41,22 @@ class Security(Resource):
             await self.post_layer(queue_name)
 
     async def post_layer(self, queue_name):
-        logger.debug(f"[{self.labeled_name}] sending POST to layer queue: {queue_name}")
+        self.log.debug(f"[{self.labeled_name}] sending POST to layer queue: {queue_name}")
         message = self.build_message(message_type='ping')
         await self.publish_message(queue_name, message)
 
     async def message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
-            logger.debug(f"[{self.labeled_name}] received a message: {message.body.decode()}")
+            self.log.debug(f"[{self.labeled_name}] received a message: {message.body.decode()}")
 
     async def subscribe_security_queue(self):
-        logger.debug(f"{self.labeled_name} subscribing to security queue...")
+        self.log.debug(f"{self.labeled_name} subscribing to security queue...")
         queue_name = self.settings.system_integrity_queue
         self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
-        logger.info(f"{self.labeled_name} Subscribed to security queue")
+        self.log.info(f"{self.labeled_name} Subscribed to security queue")
 
     async def unsubscribe_security_queue(self):
-        logger.debug(f"{self.labeled_name} unsubscribing from security queue...")
+        self.log.debug(f"{self.labeled_name} unsubscribing from security queue...")
         queue_name = self.settings.system_integrity_queue
         await self.consumers[queue_name].cancel()
-        logger.info(f"{self.labeled_name} Unsubscribed from security queue")
+        self.log.info(f"{self.labeled_name} Unsubscribed from security queue")

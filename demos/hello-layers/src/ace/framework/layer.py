@@ -1,14 +1,9 @@
 import logging
 import json
 import aio_pika
-from abc import abstractmethod
 
-from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class LayerSettings(Settings):
@@ -38,22 +33,22 @@ class Layer(Resource):
                 self.southern_layer = self.settings.layers[layer_index + 1]
         except ValueError:
             message = f"Invalid layer name: {self.settings.name}"
-            logger.error(message)
+            self.log.error(message)
             raise ValueError(message)
 
     async def register_busses(self):
-        logger.debug("Registering busses...")
+        self.log.debug("Registering busses...")
         await self.subscribe_adjacent_layers()
         # TODO: Need this?
         # await self.subscribe_security_queue()
-        logger.debug("Registered busses...")
+        self.log.debug("Registered busses...")
 
     async def deregister_busses(self):
-        logger.debug("Deregistering busses...")
+        self.log.debug("Deregistering busses...")
         await self.unsubscribe_adjacent_layers()
         # TODO: Need this?
         # await self.unsubscribe_security_queue()
-        logger.debug("Deregistered busses...")
+        self.log.debug("Deregistered busses...")
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
         exchange = self.build_exchange_name(direction, layer)
@@ -93,13 +88,13 @@ class Layer(Resource):
         try:
             data = json.loads(message.body.decode())
         except json.JSONDecodeError as e:
-            logger.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
             return
         if self.is_pong(data):
-            logger.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
+            self.log.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
             return
         elif self.is_ping(data):
-            logger.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
+            self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
             return await self.handle_ping(direction, data['resource'])
         self.push_message_to_consumer_local_queue(data['type'], data, message)
 
@@ -113,11 +108,11 @@ class Layer(Resource):
 
     async def security_message_handler(self, message: aio_pika.IncomingMessage):
         message = message.body.decode()
-        logger.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
+        self.log.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
         try:
             data = json.loads(message)
         except json.JSONDecodeError as e:
-            logger.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
             return
         if data['type'] == 'post':
             await self.post()
@@ -125,7 +120,7 @@ class Layer(Resource):
     async def subscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
-        logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
+        self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         if self.northern_layer:
             self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
         if self.southern_layer:
@@ -134,23 +129,23 @@ class Layer(Resource):
     # TODO: Need this?
     async def subscribe_security_queue(self):
         queue_name = f"security.{self.settings.name}"
-        logger.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
         self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.security_message_handler)
 
     async def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
-        logger.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
+        self.log.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
         if self.northern_layer and northbound_queue in self.consumers:
             await self.consumers[northbound_queue].cancel()
         if self.southern_layer and southbound_queue in self.consumers:
             await self.consumers[southbound_queue].cancel()
-        logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
+        self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
 
     # TODO: Need this?
     async def unsubscribe_security_queue(self):
         queue_name = f"security.{self.settings.name}"
-        logger.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+        self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
         if queue_name in self.consumers:
             await self.consumers[queue_name].cancel()
-        logger.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+        self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")

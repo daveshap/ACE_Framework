@@ -4,8 +4,9 @@ import sys
 import logging
 import requests
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from ace.logger import Logger
+
+logger = Logger(__name__)
 
 HOST = 'http://localhost:3000'
 

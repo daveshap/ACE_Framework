@@ -1,11 +1,10 @@
 import asyncio
 import aio_pika
-import logging
 
 from ace.settings import Settings
+from ace.logger import Logger
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = Logger(__name__)
 
 
 async def get_connection_and_channel(settings: Settings,

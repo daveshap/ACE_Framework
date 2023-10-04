@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-import logging
 import json
 import asyncio
 import aio_pika
@@ -13,16 +12,12 @@ from ace.settings import Settings
 from ace.api_endpoint import ApiEndpoint
 from ace.amqp.connection import get_connection_and_channel
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Set the logger for pika, aiormq separately.
-for base_logger in ['aio_pika', 'aiormq']:
-    logging.getLogger(base_logger).setLevel(logging.INFO)
+from ace.logger import Logger
 
 
 class Resource(ABC):
     def __init__(self):
+        self.log = Logger(self.__class__.__name__)
         self.api_endpoint = ApiEndpoint(self.api_callbacks)
         self.bus_loop = asyncio.new_event_loop()
         self.executor = ThreadPoolExecutor(max_workers=1)
@@ -56,7 +51,7 @@ class Resource(ABC):
         return data
 
     def connect_busses(self):
-        logger.debug(f"{self.labeled_name} connecting to busses...")
+        self.log.debug(f"{self.labeled_name} connecting to busses...")
         Thread(target=self.connect_busses_in_thread).start()
 
     def connect_busses_in_thread(self):
@@ -66,17 +61,17 @@ class Resource(ABC):
         self.bus_loop.run_forever()
 
     async def get_busses_connection_and_channel(self):
-        logger.debug(f"{self.labeled_name} getting busses connection and channel...")
+        self.log.debug(f"{self.labeled_name} getting busses connection and channel...")
         self.connection, self.channel = await get_connection_and_channel(settings=self.settings, loop=self.bus_loop)
-        logger.info(f"{self.labeled_name} busses connection established...")
+        self.log.info(f"{self.labeled_name} busses connection established...")
 
     def disconnect_busses(self):
-        logger.debug(f"{self.labeled_name} disconnecting from busses...")
+        self.log.debug(f"{self.labeled_name} disconnecting from busses...")
         self.bus_loop.run_until_complete(self.pre_disconnect())
         self.bus_loop.run_until_complete(self.channel.close())
         self.bus_loop.run_until_complete(self.connection.close())
         self.bus_loop.call_soon_threadsafe(self.bus_loop.stop)
-        logger.info(f"{self.labeled_name} busses connection closed...")
+        self.log.info(f"{self.labeled_name} busses connection closed...")
 
     async def post_connect(self):
         pass
@@ -85,22 +80,22 @@ class Resource(ABC):
         pass
 
     def start_resource(self):
-        logger.info("Starting resource...")
+        self.log.info("Starting resource...")
         self.setup_service()
-        logger.info("Resource started")
+        self.log.info("Resource started")
 
     def stop_resource(self):
-        logger.info("Shutting down resource...")
+        self.log.info("Shutting down resource...")
         self.shutdown_service()
-        logger.info("Resource shut down")
+        self.log.info("Resource shut down")
 
     def setup_service(self):
-        logger.debug("Setting up service...")
+        self.log.debug("Setting up service...")
         self.api_endpoint.start_endpoint()
         self.connect_busses()
 
     def shutdown_service(self):
-        logger.debug("Shutting down service...")
+        self.log.debug("Shutting down service...")
         self.disconnect_busses()
         self.api_endpoint.stop_endpoint()
 
@@ -164,28 +159,28 @@ class Resource(ABC):
 
     async def try_queue_subscribe(self, queue_name, callback):
         while True:
-            logger.debug(f"Trying to subscribe to queue: {queue_name}...")
+            self.log.debug(f"Trying to subscribe to queue: {queue_name}...")
             try:
                 if self.channel.is_closed:
-                    logger.info("Previous channel was closed, creating new channel...")
+                    self.log.info("Previous channel was closed, creating new channel...")
                     self.channel = await self.connection.channel()
                 queue = await self.channel.get_queue(queue_name)
                 await queue.consume(callback)
-                logger.info(f"Subscribed to queue: {queue_name}")
+                self.log.info(f"Subscribed to queue: {queue_name}")
                 return
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
-                logger.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
+                self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
 
     async def try_get_exchange(self, exchange_name):
         while True:
-            logger.debug(f"Trying to get exchange: {exchange_name}...")
+            self.log.debug(f"Trying to get exchange: {exchange_name}...")
             try:
                 if self.channel.is_closed:
-                    logger.info("Previous channel was closed, creating new channel...")
+                    self.log.info("Previous channel was closed, creating new channel...")
                     self.channel = await self.connection.channel()
                 exchange = await self.channel.get_exchange(exchange_name)
                 return exchange
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
-                logger.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
+                self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
