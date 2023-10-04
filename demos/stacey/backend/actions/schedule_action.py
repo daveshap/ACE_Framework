@@ -27,5 +27,6 @@ class ScheduleAction(Action):
             args=(),
             trigger='date',
             run_date=run_date,
-            id=action_id
+            id=action_id,
+            name=str(self.action_to_schedule)
         )

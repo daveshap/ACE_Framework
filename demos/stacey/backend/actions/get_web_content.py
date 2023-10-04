@@ -14,6 +14,9 @@ class GetWebContent(Action):
         print("GetWebContent: Returning web content: " + web_content[:100] + "...")
         return web_content
 
+    def __str__(self):
+        return "get_web_content for url: " + self.url
+
 
 async def get_compressed_web_content(url) -> str:
     async with httpx.AsyncClient() as client:

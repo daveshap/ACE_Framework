@@ -10,5 +10,8 @@ class RespondToUser(Action):
     async def execute(self):
         await self.communication_channel.send_message(self.response_text)
 
+    def __str__(self):
+        return "respond_to_user with text: " + self.response_text
+
 
 
