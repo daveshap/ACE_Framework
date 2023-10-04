@@ -1,6 +1,7 @@
 # llm/gpt.py
 from typing import List, TypedDict
 
+import litellm
 import openai
 
 
@@ -20,8 +21,8 @@ class GPT:
         ])["content"]
 
     def create_conversation_completion(self, model, conversation: List[GptMessage]) -> GptMessage:
-        openai.api_key = self.api_key
-        chat_completion = openai.ChatCompletion.create(
+        litellm.api_key = self.api_key
+        chat_completion = litellm.completion(
             model=model,
             messages=conversation
         )
