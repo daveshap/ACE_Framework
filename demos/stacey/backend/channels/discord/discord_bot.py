@@ -3,11 +3,8 @@ import pprint
 import traceback
 
 import discord
-from discord import Embed
 
-import config
 from ace.ace_system import AceSystem
-from actions.image_tool import split_message_by_images
 from channels.discord.discord_communication_channel import DiscordCommunicationChannel
 
 
@@ -56,63 +53,6 @@ class DiscordBot:
 
     def is_message_from_me(self, message):
         return message.author == self.client.user
-
-    def am_i_mentioned(self, message):
-        return self.bot_name.lower() in message.content.lower()
-
-    async def construct_conversation(self, message):
-        conversation = []
-        messages = await self.get_previous_discord_messages_in_channel(message)
-        for msg in messages:
-            conversation.append(self.construct_message(msg))
-        conversation.append(self.construct_message(message))  # appending the user's latest message
-        return conversation
-
-    async def get_previous_discord_messages_in_channel(self, current_message):
-        """
-            returns oldest message first
-        """
-        messages = []
-        async for historic_message in current_message.channel.history(limit=config.discord_message_history_count + 1):
-            if historic_message.id != current_message.id:  # skip the triggering message
-                messages.append(historic_message)
-        return messages[::-1]  # reverse the list
-
-    def construct_message(self, message):
-        if message.author == self.client.user:
-            role = 'assistant'
-        else:
-            role = 'user'
-        name = self.get_user_display_name(message)
-        return {"role": role, "name": name, "content": message.content}
-
-    def get_bot_response(self, conversation, message):
-        communication_context = f"discord server '{message.guild.name}', channel #{message.channel.name}"
-
-        response = self.ace_system.l3_agent.generate_response(conversation, communication_context)
-        if response is None:
-            print("The agent layer decided to not respond to this, so I won't write anything on discord.")
-        return response
-
-    async def send_response(self, response, message):
-        response_content = response['content']
-        segments = split_message_by_images(self.image_generator_function, response_content)
-        for segment in segments:
-            if segment.startswith("http"):
-                embed = Embed()
-                embed.set_image(url=segment)
-                await message.channel.send(embed=embed)
-            else:
-                await message.channel.send(segment)
-
-    @staticmethod
-    def get_user_display_name(msg):
-        if isinstance(msg.author, discord.Member):
-            if msg.author.nick:
-                return msg.author.nick
-        if hasattr(msg.author, 'global_name') and getattr(msg.author, 'global_name'):
-            return getattr(msg.author, 'global_name')
-        return msg.author.name
 
     def run(self):
         self.client.run(self.bot_token)
