@@ -55,6 +55,5 @@ class DiscordBot:
     def is_message_from_me(self, message):
         return message.author == self.client.user
 
-    def run(self):
-        """ NOTE: this is a blocking call """
-        self.client.run(self.bot_token)
+    async def start(self):
+        return await self.client.start(self.bot_token)
