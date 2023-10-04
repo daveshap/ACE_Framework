@@ -40,7 +40,7 @@ class Busses(Resource):
     async def create_exchange(self, queue_name):
         await setup_exchange(
             settings=self.settings,
-            channel=self.channel,
+            channel=self.publisher_channel,
             queue_name=queue_name,
         )
         self.log.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
@@ -54,7 +54,7 @@ class Busses(Resource):
     async def destroy_exchange(self, queue_name):
         await teardown_exchange(
             settings=self.settings,
-            channel=self.channel,
+            channel=self.publisher_channel,
             queue_name=queue_name,
         )
         self.log.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
@@ -63,10 +63,10 @@ class Busses(Resource):
     async def create_security_queues(self):
         for layer in self.settings.layers:
             queue_name = f"security.{layer}"
-            await self.channel.declare_queue(queue_name, durable=True)
+            await self.consumer_channel.declare_queue(queue_name, durable=True)
 
     # TODO: Need this?
     async def destroy_security_queues(self):
         for layer in self.settings.layers:
             queue_name = f"security.{layer}"
-            await self.channel.queue_delete(queue_name)
+            await self.consumer_channel.queue_delete(queue_name)

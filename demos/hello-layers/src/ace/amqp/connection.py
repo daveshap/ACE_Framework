@@ -7,13 +7,13 @@ from ace.logger import Logger
 logger = Logger(__name__)
 
 
-async def get_connection_and_channel(settings: Settings,
-                                     loop=asyncio.get_event_loop(),
-                                     max_retries=5,
-                                     delay_factor=2,
-                                     heartbeat=600,
-                                     blocked_connection_timeout=300,
-                                     ):
+async def get_connection(settings: Settings,
+                         loop=asyncio.get_event_loop(),
+                         max_retries=5,
+                         delay_factor=2,
+                         heartbeat=600,
+                         blocked_connection_timeout=300,
+                         ):
 
     host = settings.amqp_host_name
     username = settings.amqp_username
@@ -28,9 +28,8 @@ async def get_connection_and_channel(settings: Settings,
                 heartbeat=heartbeat,
                 blocked_connection_timeout=blocked_connection_timeout,
             )
-            channel = await connection.channel()  # Create a new channel
-            logger.info(f"{settings.name} connection and channel established...")
-            return connection, channel
+            logger.info(f"{settings.name} connection established...")
+            return connection
         except (aio_pika.exceptions.AMQPConnectionError, aio_pika.exceptions.AMQPChannelError) as e:
             print(f"Connection attempt {retries + 1} failed with error: {e}")
             retries += 1

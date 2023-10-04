@@ -10,7 +10,7 @@ from queue import Queue
 from ace import constants
 from ace.settings import Settings
 from ace.api_endpoint import ApiEndpoint
-from ace.amqp.connection import get_connection_and_channel
+from ace.amqp.connection import get_connection
 
 from ace.logger import Logger
 
@@ -22,7 +22,8 @@ class Resource(ABC):
         self.bus_loop = asyncio.new_event_loop()
         self.executor = ThreadPoolExecutor(max_workers=1)
         self.connection = None
-        self.channel = None
+        self.consumer_channel = None
+        self.publisher_channel = None
         self.consumers = {}
         self.consumer_local_queues = {}
 
@@ -62,13 +63,16 @@ class Resource(ABC):
 
     async def get_busses_connection_and_channel(self):
         self.log.debug(f"{self.labeled_name} getting busses connection and channel...")
-        self.connection, self.channel = await get_connection_and_channel(settings=self.settings, loop=self.bus_loop)
+        self.connection = await get_connection(settings=self.settings, loop=self.bus_loop)
+        self.consumer_channel = await self.connection.channel()
+        self.publisher_channel = await self.connection.channel()
         self.log.info(f"{self.labeled_name} busses connection established...")
 
     def disconnect_busses(self):
         self.log.debug(f"{self.labeled_name} disconnecting from busses...")
         self.bus_loop.run_until_complete(self.pre_disconnect())
-        self.bus_loop.run_until_complete(self.channel.close())
+        self.bus_loop.run_until_complete(self.publisher_channel.close())
+        self.bus_loop.run_until_complete(self.consumer_channel.close())
         self.bus_loop.run_until_complete(self.connection.close())
         self.bus_loop.call_soon_threadsafe(self.bus_loop.stop)
         self.log.info(f"{self.labeled_name} busses connection closed...")
@@ -161,10 +165,10 @@ class Resource(ABC):
         while True:
             self.log.debug(f"Trying to subscribe to queue: {queue_name}...")
             try:
-                if self.channel.is_closed:
+                if self.consumer_channel.is_closed:
                     self.log.info("Previous channel was closed, creating new channel...")
-                    self.channel = await self.connection.channel()
-                queue = await self.channel.get_queue(queue_name)
+                    self.consumer_channel = await self.connection.channel()
+                queue = await self.consumer_channel.get_queue(queue_name)
                 await queue.consume(callback)
                 self.log.info(f"Subscribed to queue: {queue_name}")
                 return
@@ -176,10 +180,10 @@ class Resource(ABC):
         while True:
             self.log.debug(f"Trying to get exchange: {exchange_name}...")
             try:
-                if self.channel.is_closed:
+                if self.publisher_channel.is_closed:
                     self.log.info("Previous channel was closed, creating new channel...")
-                    self.channel = await self.connection.channel()
-                exchange = await self.channel.get_exchange(exchange_name)
+                    self.publisher_channel = await self.connection.channel()
+                exchange = await self.publisher_channel.get_exchange(exchange_name)
                 return exchange
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")

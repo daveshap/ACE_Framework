@@ -34,7 +34,7 @@ class Security(Resource):
             body=message,
             delivery_mode=delivery_mode
         )
-        await self.channel.default_exchange.publish(message, routing_key=queue_name)
+        await self.publisher_channel.default_exchange.publish(message, routing_key=queue_name)
 
     async def post_layers(self):
         for queue_name in self.build_all_layer_queue_names():
