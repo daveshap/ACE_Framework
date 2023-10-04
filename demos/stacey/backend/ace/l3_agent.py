@@ -2,11 +2,16 @@ import asyncio
 from datetime import datetime
 from typing import Optional
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
 from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
 from actions.action import Action
+from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
+from actions.cancel_scheduled_action import CancelScheduledAction
 from actions.get_web_content import GetWebContent
+from actions.list_scheduled_actions import GetScheduledActions
 from actions.respond_to_user import RespondToUser
 from actions.schedule_action import ScheduleAction
 from channels.communication_channel import CommunicationChannel
@@ -98,6 +103,9 @@ You have the ability to trigger the following actions:
 - get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
 - respond_to_user(text): Responds to the user with the given text
 - schedule_action(action_to_schedule, delay_seconds): Schedules the given action to be executed after the given delay.
+- get_scheduled_actions(): Returns a list of upcoming scheduled actions, including job_id of each.
+- cancel_all_scheduled_actions():Cancels all upcoming scheduled actions.
+- cancel_scheduled_actions(job_id): Cancels the upcoming scheduled action with the given job_id.
 
 To trigger one or more actions, your message should ONLY contain a json object like this example:
 [
@@ -109,8 +117,9 @@ To trigger one or more actions, your message should ONLY contain a json object l
 
 This is an array, so you can trigger multiple actions in one message.
 
-Don't mix text responses with actions. Either respond with text, or an array of actions.
+If your response includes actions, then don't include any other text.
 Don't make up new actions, only use the ones I've defined above.
+
 If you trigger a schedule_action, also include a respond_to_user action to confirm that the action has been scheduled.
 For example:
 [
@@ -175,6 +184,8 @@ class L3AgentLayer(AceLayer):
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
+        self.scheduler = AsyncIOScheduler()
+        self.scheduler.start()
 
     async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
         # Check if I need to act
@@ -256,6 +267,12 @@ class L3AgentLayer(AceLayer):
             return RespondToUser(communication_channel, action_data["text"])
         elif action_name == "schedule_action":
             return self.create_schedule_action(communication_channel, action_data)
+        elif action_name == "get_scheduled_actions":
+            return GetScheduledActions(self.scheduler)
+        elif action_name == "cancel_all_scheduled_actions":
+            return CancelAllScheduledActions(self.scheduler)
+        elif action_name == "cancel_scheduled_action":
+            return CancelScheduledAction(self.scheduler, action_data["job_id"])
         else:
             print(f"Warning: Unknown action: {action_name}")
             return None
@@ -273,7 +290,7 @@ class L3AgentLayer(AceLayer):
             print(f"Warning: Invalid schedule_action data: {action_data}")
             return None
 
-        return ScheduleAction(communication_channel, action_to_schedule, delay_seconds)
+        return ScheduleAction(self.scheduler, communication_channel, action_to_schedule, delay_seconds)
 
     def create_system_message(self, communication_channel: CommunicationChannel):
         current_time = datetime.now().astimezone()
