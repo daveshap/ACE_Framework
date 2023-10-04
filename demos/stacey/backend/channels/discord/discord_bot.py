@@ -7,7 +7,8 @@ from discord import Embed
 
 import config
 from ace.ace_system import AceSystem
-from tools.image_tool import split_message_by_images
+from actions.image_tool import split_message_by_images
+from channels.discord.discord_communication_channel import DiscordCommunicationChannel
 
 
 class DiscordBot:
@@ -41,15 +42,12 @@ class DiscordBot:
         print(f"Got discord message from {message.author}: {message.content}")
         print(pprint.pformat(message.author))
 
-        conversation = await self.construct_conversation(message)
+        discord_communication_channel = DiscordCommunicationChannel(
+            self.client, message.channel, message, self.image_generator_function
+        )
 
         try:
-            if self.ace_system.l3_agent.should_respond(conversation):
-                response = self.get_bot_response(conversation, message)
-                if response:
-                    await self.send_response(response, message)
-            else:
-                print("The agent layer decided to not respond to this, so I won't write anything on discord.")
+            await self.ace_system.l3_agent.process_incoming_user_message(discord_communication_channel)
         except Exception as e:
             print("Damn! Something went wrong!", e)
             traceback_str = traceback.format_exc()  # Get the string representation of the traceback

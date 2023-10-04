@@ -61,16 +61,16 @@ class L1AspirationalLayer(AceLayer):
         self.constitution = constitution
         self.personal_mission = personal_mission
 
-    def on_northbound_message(self, sender, message):
+    async def on_northbound_message(self, sender, message):
         """
         The Aspirational Layer receives inputs from the northbound bus,
         allowing it to monitor information from all lower layers.
         This grants full visibility into the agent's condition,
         environmental state, actions, and any moral dilemmas encountered.
         """
-        self.process_input(message)
+        await self.process_input(message)
 
-    def process_input(self, message):
+    async def process_input(self, message: str):
         """
         With a continuous stream of inputs from the entire system,
         the Aspirational Layer processes and interprets this information to:
@@ -88,19 +88,19 @@ class L1AspirationalLayer(AceLayer):
         """
 
         try:
-            self.set_status(LayerStatus.INFERRING)
-            response = self.llm.create_chat_completion(
+            await self.set_status(LayerStatus.INFERRING)
+            response = await self.llm.create_chat_completion(
                 model=self.model,
                 system_message=system_message,
                 user_message=message
             )
         finally:
-            self.set_status(LayerStatus.IDLE)
+            await self.set_status(LayerStatus.IDLE)
 
         if response:
-            self.send_southbound_message(response)
+            await self.send_southbound_message(response)
 
-    def send_southbound_message(self, message):
+    async def send_southbound_message(self, message):
         """
         The Aspirational Layer publishes its moral judgments, mission objectives, and ethical decisions
         onto the southbound bus. This allows all layers to incorporate the Aspirational Layer's wisdom
@@ -111,5 +111,5 @@ class L1AspirationalLayer(AceLayer):
         of the Aspirational Layer's reasoning.
         """
         self.log("Sending south:\n" + message)
-        self.southbound_bus.publish("L1 Aspirational", message)
+        await self.southbound_bus.publish("L1 Aspirational", message)
 

@@ -23,11 +23,11 @@ class AceLayer(ABC):
     def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
         self.status_listeners.discard(listener)
 
-    def set_status(self, status: LayerStatus):
+    async def set_status(self, status: LayerStatus):
         print(f"{self.get_name()} status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
         self.status = status
         for listener in self.status_listeners:
-            listener(self.status)
+            await listener(self.status)
 
     def log(self, message):
         print(f"{self.get_name()}: {message}")

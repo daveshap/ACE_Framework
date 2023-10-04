@@ -1,13 +1,15 @@
-import pprint
+import asyncio
 from datetime import datetime
-from typing import List
 from typing import Optional
 
 from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
+from actions.action import Action
+from actions.get_web_content import GetWebContent
+from actions.respond_to_user import RespondToUser
+from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
-from tools.web_tool import get_compressed_web_content
 from util import parse_json
 
 self_identity = """
@@ -89,20 +91,26 @@ For example:
 
 That will automatically be replaced by a generated image.
 
-# Function calling
-You have the ability to call the following functions:
+# Actions
+You have the ability to trigger the following actions:
 - get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
+- send_discord_message(server, channel, message): Sends a message to the given discord server and channel
+- send_web_message(web_session_id, message): Sends a message to the web UI with the given session ID
+- respond_to_user(text): Responds to the user with the given text
 
-To call a function, return a json object like this example:
-{
-  "action": "call_function",
-  "function": "get_web_content",
-  "arguments": {
-    "url": "https://example.com"
-  }
-}
+To trigger one or more actions, your message should ONLY contain a json object like this example:
+[
+    {
+      "action": "get_web_content",
+      "url": "https://example.com"
+    }
+]
 
-If you ask to call a function, the next chat message will be output of the function. 
+This is an array, so you can trigger multiple actions in one message.
+
+Don't mix text responses with actions. Either respond with text, or an array of actions.
+Don't make up new actions, only use the ones I've defined above.
+If you trigger an action that has a return value, the next chat message from me will be the return value. 
 
 """
 
@@ -136,6 +144,8 @@ Answer "yes" to respond or "no" to not respond, followed by one sentence describ
 
 how_many_messages_to_include_when_determining_if_agent_should_respond = 3
 
+how_many_messages_to_include_when_generating_response = 10
+
 
 class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
@@ -146,81 +156,114 @@ class L3AgentLayer(AceLayer):
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
 
-    def generate_response(self, conversation: List[GptMessage], communication_channel) -> GptMessage:
-        self.set_status(LayerStatus.INFERRING)
-        try:
-            current_time = datetime.now().astimezone()
-            formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
+    async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
+        # Check if I need to act
+        if not await self.should_act(communication_channel):
+            # I don't need to respond or talk to the LLM. Maybe I overheard a message that wasn't directed at me
+            return
 
-            system_message = f"""
+        # Build up the conversation
+        message_history: [GptMessage] = await communication_channel.get_message_history(
+            how_many_messages_to_include_when_generating_response
+        )
+        system_message = self.create_system_message(communication_channel)
+        conversation = [{"role": "system", "content": system_message}] + message_history
+
+        # Talk to the LLM
+        await self.talk_to_llm_and_execute_actions(communication_channel, conversation)
+
+    async def talk_to_llm_and_execute_actions(self, communication_channel, conversation):
+        await self.set_status(LayerStatus.INFERRING)
+        try:
+            llm_response: GptMessage = await self.llm.create_conversation_completion(self.model, conversation)
+            llm_response_content = llm_response["content"].strip()
+            if llm_response_content:
+                conversation.append(llm_response)
+
+                print("Raw LLM response:\n" + llm_response_content)
+
+                actions = self.parse_actions(communication_channel, llm_response_content)
+                if len(actions) == 0:
+                    # The LLM didn't return any actions, but it did return a text response. So respond with that.
+                    actions.append(RespondToUser(communication_channel, llm_response_content))
+
+                # Execute all actions in parallel
+                await asyncio.gather(
+                    *[self.execute_action_and_send_result_to_llm(action, communication_channel, conversation) for action in
+                      actions])
+            else:
+                print("LLM response was empty, so I guess we are done here.")
+        finally:
+            await self.set_status(LayerStatus.IDLE)
+
+    async def execute_action_and_send_result_to_llm(self, action: Action, communication_channel: CommunicationChannel, conversation: [GptMessage]):
+        print("Executing action: " + str(action))
+        action_output: Optional[str] = await action.execute()
+        if action_output is None:
+            print("No response from action")
+            return
+
+        print("Got action output, will add to the conversation and talk to llm again.")
+        conversation.append({"role": "user", "name": "action-output", "content": action_output})
+
+        await self.talk_to_llm_and_execute_actions(communication_channel, conversation)
+
+    def parse_actions(self, communication_channel: CommunicationChannel, actions_string: str):
+        action_data_list = parse_json(actions_string)
+
+        if action_data_list is None:
+            return []
+
+        actions = []
+        for action_data in action_data_list:
+            action_name = action_data.get("action")
+            if action_name == "get_web_content":
+                actions.append(GetWebContent(action_data["url"]))
+            elif action_name == "respond_to_user":
+                actions.append(RespondToUser(communication_channel, action_data["text"]))
+            else:
+                print(f"Warning: Unknown action: {action_name}")
+
+        return actions
+
+    def create_system_message(self, communication_channel: CommunicationChannel):
+        current_time = datetime.now().astimezone()
+        formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
+        system_message = f"""
                 {self_identity}
                 {knowledge.replace("[current_time]", formatted_time)}
                 {tools}
-                {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
+                {communication_channel_prompt.replace("[current_communication_channel]", communication_channel.describe())}
                 {personality}
                 {behaviour}
             """
-            conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
-            print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
-            print(f"{pprint.pformat(conversation_with_system_message)}")
+        return system_message
 
-            final_response: Optional[GptMessage] = None
-            while final_response is None:
-                response: GptMessage = self.llm.create_conversation_completion(
-                    self.model, conversation_with_system_message
-                )
-                conversation_with_system_message.append(response)
-                response_content = response['content']
-                print(f"  Got response: {response_content}")
+    async def should_act(self, communication_channel: CommunicationChannel):
+        """
+        Ask the LLM whether this is a message that we should act upon
+        """
 
-                # check if this is a function call
-                response_json = parse_json(response_content)
-                if response_json is not None and response_json.get('action') == 'call_function':
-                    if response_json.get('function') == 'get_web_content':
-                        url = response_json['arguments']['url']
-                        print("Calling get_web_content for " + url)
-                        compressed_web_content = get_compressed_web_content(url)
-                        function_response_message = {
-                            "role": "user",
-                            "content": compressed_web_content
-                        }
-                        print("Got compressed_web_content:\n" + compressed_web_content)
-                        print("Will send this back to GPT")
-                        conversation_with_system_message.append(
-                            function_response_message
-                        )
-                        # Loop back and send the function response back to GPT.
-                    else:
-                        print("Warning: GPT tried to trigger unknown function: " + response_json.get('function'))
-                        final_response = response
-                else:
-                    print("Got a json that isn't a function call. so I'll just return the response.")
-                    final_response = response
-        finally:
-            self.set_status(LayerStatus.IDLE)
-
-        return final_response if final_response["content"].strip() else None
-
-    def should_respond(self, conversation):
-        # Ask the LLM whether the bot should respond, considering the context and latest message
-
-        if len(conversation) >= how_many_messages_to_include_when_determining_if_agent_should_respond:
-            last_few_messages = conversation[-how_many_messages_to_include_when_determining_if_agent_should_respond:]
-        else:
-            last_few_messages = conversation
+        conversation: [GptMessage] = await communication_channel.get_message_history(
+            how_many_messages_to_include_when_determining_if_agent_should_respond
+        )
 
         prompt = prompt_for_determining_if_agent_should_respond.format(
-            messages="\n".join([f"- [{message['name']}] {message['content']}" for message in last_few_messages])
+            messages="\n".join([f"- [{message['name']}] {message['content']}" for message in conversation])
         )
 
-        print (f"Prompt to determine if we should respond:\n {prompt}")
-        response = self.llm.create_conversation_completion(
-            self.model,
-            [{"role": "user", "content": prompt}]
-        )
-        response_content = response['content'].strip().lower()
+        print(f"Prompt to determine if we should respond:\n {prompt}")
+        await self.set_status(LayerStatus.INFERRING)
+        try:
+            response = await self.llm.create_conversation_completion(
+                self.model,
+                [{"role": "user", "name": "user", "content": prompt}]
+            )
+            response_content = response['content'].strip().lower()
 
-        print(f"Response to prompt: {response_content}")
+            print(f"Response to prompt: {response_content}")
 
-        return response_content.startswith("yes")
+            return response_content.startswith("yes")
+        finally:
+            await self.set_status(LayerStatus.IDLE)
 
