@@ -8,6 +8,7 @@ from ace.layer_status import LayerStatus
 from actions.action import Action
 from actions.get_web_content import GetWebContent
 from actions.respond_to_user import RespondToUser
+from actions.schedule_action import ScheduleAction
 from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
 from util import parse_json
@@ -94,9 +95,8 @@ That will automatically be replaced by a generated image.
 # Actions
 You have the ability to trigger the following actions:
 - get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
-- send_discord_message(server, channel, message): Sends a message to the given discord server and channel
-- send_web_message(web_session_id, message): Sends a message to the web UI with the given session ID
 - respond_to_user(text): Responds to the user with the given text
+- schedule_action(action_to_schedule, delay_seconds): Schedules the given action to be executed after the given delay.
 
 To trigger one or more actions, your message should ONLY contain a json object like this example:
 [
@@ -221,15 +221,39 @@ class L3AgentLayer(AceLayer):
 
         actions = []
         for action_data in action_data_list:
-            action_name = action_data.get("action")
-            if action_name == "get_web_content":
-                actions.append(GetWebContent(action_data["url"]))
-            elif action_name == "respond_to_user":
-                actions.append(RespondToUser(communication_channel, action_data["text"]))
-            else:
-                print(f"Warning: Unknown action: {action_name}")
+            action = self.parse_action(communication_channel, action_data)
+            if action is not None:
+                print("Adding action: " + str(action))
+                actions.append(action)
 
         return actions
+
+    def parse_action(self, communication_channel: CommunicationChannel, action_data: dict):
+        action_name = action_data.get("action")
+        if action_name == "get_web_content":
+            return GetWebContent(action_data["url"])
+        elif action_name == "respond_to_user":
+            return RespondToUser(communication_channel, action_data["text"])
+        elif action_name == "schedule_action":
+            return self.create_schedule_action(communication_channel, action_data)
+        else:
+            print(f"Warning: Unknown action: {action_name}")
+            return None
+
+    def create_schedule_action(self, communication_channel: CommunicationChannel, action_data: dict):
+        print("Scheduling action: " + str(action_data))
+        action_data_to_schedule = action_data.get("action_to_schedule", {})
+        delay_seconds = action_data.get("delay_seconds", 0)
+        if not action_data_to_schedule or delay_seconds <= 0:
+            print(f"Warning: Invalid schedule_action data: {action_data}")
+            return None
+
+        action_to_schedule = self.parse_action(communication_channel, action_data_to_schedule)
+        if action_to_schedule is None:
+            print(f"Warning: Invalid schedule_action data: {action_data}")
+            return None
+
+        return ScheduleAction(communication_channel, action_to_schedule, delay_seconds)
 
     def create_system_message(self, communication_channel: CommunicationChannel):
         current_time = datetime.now().astimezone()
