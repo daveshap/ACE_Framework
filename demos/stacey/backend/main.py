@@ -1,5 +1,4 @@
 import asyncio
-import threading
 
 from dotenv import load_dotenv
 
@@ -11,11 +10,8 @@ from media.giphy_finder import GiphyFinder
 from util import get_environment_variable
 
 
-def run_discord_bot(discord_bot):
-    discord_bot.run()
-
-
-async def main():
+async def stacey_main(start_discord, start_web):
+    load_dotenv()
     openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
     ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"))
@@ -26,20 +22,24 @@ async def main():
         {"keyword": "GIF", "generator_function": giphy.get_giphy_url}
     ]
 
-    discord_bot_token = get_environment_variable('DISCORD_BOT_TOKEN')
-    discord_bot = DiscordBot(discord_bot_token, "stacey", ace, media_generators)
-
-    # Launch the Discord bot in a separate thread, since discord_bot.run() is blocking
-    discord_thread = threading.Thread(target=run_discord_bot, args=(discord_bot,))
-    discord_thread.start()
-
-    # Start the Ace system
     await ace.start()
 
-    # Start the web backend
-    web_backend = FastApiApp(ace, media_generators)
-    await web_backend.run()
+    discord_task = asyncio.create_task(asyncio.sleep(0))
+    if start_discord:
+        discord_bot_token = get_environment_variable('DISCORD_BOT_TOKEN')
+        discord_bot = DiscordBot(discord_bot_token, "stacey", ace, media_generators)
+        print('Starting discord bot')
+        discord_task = asyncio.create_task(discord_bot.start())
+        print('Started discord bot')
+
+    web_task = asyncio.create_task(asyncio.sleep(0))
+    if start_web:
+        web_backend = FastApiApp(ace, media_generators)
+        print('Starting web backend')
+        web_task = asyncio.create_task(web_backend.run())
+        print('Started web backend')
+
+    await asyncio.gather(discord_task, web_task)
 
 if __name__ == '__main__':
-    load_dotenv()
-    asyncio.run(main())
+    asyncio.run(stacey_main(start_discord=True, start_web=True))

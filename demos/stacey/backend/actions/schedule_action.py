@@ -30,3 +30,6 @@ class ScheduleAction(Action):
             id=action_id,
             name=str(self.action_to_schedule)
         )
+
+    def __str__(self):
+        return "schedule_action for action: " + str(self.action_to_schedule)

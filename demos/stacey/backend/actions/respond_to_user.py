@@ -8,6 +8,7 @@ class RespondToUser(Action):
         self.response_text = response_text
 
     async def execute(self):
+        print("Executing " + str(self))
         await self.communication_channel.send_message(self.response_text)
 
     def __str__(self):

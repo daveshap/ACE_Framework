@@ -229,5 +229,5 @@ class FastApiApp:
         self.setup_listeners()
         config = uvicorn.Config(app=self.app, host="localhost", port=5000)
         server = uvicorn.Server(config)
-        await server.serve()
+        return await server.serve()
 
