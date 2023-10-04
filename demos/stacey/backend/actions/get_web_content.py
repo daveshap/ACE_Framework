@@ -31,7 +31,8 @@ if __name__ == '__main__':
     import asyncio
 
     async def main():
-        content = await GetWebContent('https://raw.githubusercontent.com/daveshap/ACE_Framework/main/demos/stacey/docs/test_scenarios.md').execute()
+        url = 'https://raw.githubusercontent.com/daveshap/ACE_Framework/main/demos/stacey/docs/test_scenarios.md'
+        content = await GetWebContent(url).execute()
         print(content)
 
     asyncio.run(main())

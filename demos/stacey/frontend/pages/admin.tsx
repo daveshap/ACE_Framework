@@ -1,40 +1,16 @@
 // pages/admin/Bus.tsx
-import React, {useRef} from 'react';
+import React from 'react';
 import {Alert, Box, Heading, HStack, Image, VStack} from '@chakra-ui/react';
 import {Bus} from "@/components/bus";
 import LayerStatus from "@/components/layerStatus";
 import {WebSocketProvider} from "@/context/WebSocketContext";
 
-const BusesPage = () => {
+const AdminPage = () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const socketRef = useRef<WebSocket | null>(null);
-
 
     if (!backendUrl) {
         return <Alert status="error">I don't know where the backend is! Please set env variable NEXT_PUBLIC_BACKEND_URL</Alert>;
     }
-
-    /*
-    useEffect(() => {
-        if (!backendUrl) {
-            console.error("NEXT_PUBLIC_BACKEND_URL is not set");
-            return;
-        }
-
-        socketRef.current = new WebSocket(`ws://localhost:5000/ws/`);
-        console.log("Got socket:" + socketRef.current);
-
-        socketRef.current.onmessage = (event) => {
-            console.log("Admin onmessage", event.data);
-        };
-
-        return () => {
-            console.log("Closing socket")
-            socketRef.current?.close();
-        };
-    }, [backendUrl]);
-
-     */
 
     return (
         <WebSocketProvider>
@@ -61,4 +37,4 @@ const BusesPage = () => {
     );
 };
 
-export default BusesPage;
+export default AdminPage;

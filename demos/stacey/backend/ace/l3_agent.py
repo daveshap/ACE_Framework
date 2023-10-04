@@ -187,16 +187,21 @@ class L3AgentLayer(AceLayer):
                     # The LLM didn't return any actions, but it did return a text response. So respond with that.
                     actions.append(RespondToUser(communication_channel, llm_response_content))
 
-                # Execute all actions in parallel
-                await asyncio.gather(
-                    *[self.execute_action_and_send_result_to_llm(action, communication_channel, conversation) for action in
-                      actions])
+                # Start all actions in parallell
+                running_actions = []
+                for action in actions:
+                    running_actions.append(
+                        self.execute_action_and_send_result_to_llm(action, communication_channel, conversation)
+                    )
+                # Wait for all actions to finish
+                await asyncio.gather(*running_actions)
             else:
                 print("LLM response was empty, so I guess we are done here.")
         finally:
             await self.set_status(LayerStatus.IDLE)
 
-    async def execute_action_and_send_result_to_llm(self, action: Action, communication_channel: CommunicationChannel, conversation: [GptMessage]):
+    async def execute_action_and_send_result_to_llm(
+            self, action: Action, communication_channel: CommunicationChannel, conversation: [GptMessage]):
         print("Executing action: " + str(action))
         action_output: Optional[str] = await action.execute()
         if action_output is None:
@@ -233,7 +238,9 @@ class L3AgentLayer(AceLayer):
                 {self_identity}
                 {knowledge.replace("[current_time]", formatted_time)}
                 {tools}
-                {communication_channel_prompt.replace("[current_communication_channel]", communication_channel.describe())}
+                {communication_channel_prompt.replace(
+            "[current_communication_channel]", communication_channel.describe()
+                )}
                 {personality}
                 {behaviour}
             """

@@ -13,7 +13,7 @@ export const PublishMessageForm: React.FC<PublishMessageFormProps> = ({ busType 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); // Prevent the default form submission behaviour
         try {
-            const response = await axios.post(backendUrl + '/publish_message', {
+            await axios.post(backendUrl + '/publish_message', {
                 sender: 'admin web',
                 message: message,
                 bus: busType,
@@ -29,6 +29,7 @@ export const PublishMessageForm: React.FC<PublishMessageFormProps> = ({ busType 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault(); // Prevent new line
+            // noinspection JSIgnoredPromiseFromCall
             handleSubmit(e as any); // Trigger form submission
         }
     };

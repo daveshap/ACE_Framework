@@ -61,6 +61,7 @@ class L1AspirationalLayer(AceLayer):
         self.constitution = constitution
         self.personal_mission = personal_mission
 
+    # noinspection PyUnusedLocal
     async def on_northbound_message(self, sender, message):
         """
         The Aspirational Layer receives inputs from the northbound bus,

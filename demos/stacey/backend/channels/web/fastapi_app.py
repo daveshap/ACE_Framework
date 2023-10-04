@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI, Request, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.responses import HTMLResponse
 
 from actions.image_tool import replace_image_prompt_with_image_url_formatted_as_markdown
 from channels.web.web_communication_channel import WebCommunicationChannel
@@ -31,11 +32,12 @@ class ConnectionManager:
         }
         closed_connections = []  # List to hold closed connections for later removal
         for connection in self.active_connections:
+            # noinspection PyBroadException
             try:
                 print("Sending message to socket")
                 await connection.send_text(json.dumps(formatted_message))
                 print("Successfully sent message to socket")
-            except Exception as e:
+            except Exception:
                 print("Socket not open, marking for removal from active connections")
                 closed_connections.append(connection)  # Mark closed connections for removal
 
@@ -63,6 +65,7 @@ class FastApiApp:
 
         self.setup_routes()
 
+    # noinspection PyUnusedLocal
     async def custom_exception_handler(self, request: Request, exc: Exception):
         """
         Custom exception handler that logs the stack trace and returns a JSON response.
@@ -71,7 +74,6 @@ class FastApiApp:
         traceback_str = traceback.format_exc()
         print(traceback_str)
         return JSONResponse(content={"error": str(exc), "traceback": traceback_str}, status_code=500)
-
 
     def setup_routes(self):
         app = self.app  # to shorten the code
@@ -183,9 +185,9 @@ class FastApiApp:
             bus.clear_messages()
             return {"success": True, "message": "Messages cleared successfully"}
 
-        @app.get("/")
+        @app.get("/", response_class=HTMLResponse)
         def root():
-            return 'Hi! Stacey here. Yes, the backend is up and running! <a href="chat?message=hi">/chat?message=hi</a>'
+            return '<html>Hi! Stacey here. Yes, the backend is up and running! <a href="chat?message=hi">/chat?message=hi</a></html>'
 
     def setup_listeners(self):
         for bus in [self.ace.northbound_bus, self.ace.southbound_bus]:
@@ -221,7 +223,9 @@ class FastApiApp:
                 print(f"Error in layer status listener: {e}")
         return listener
 
-    def run(self):
+    async def run(self):
         self.setup_listeners()
-        uvicorn.run(self.app, host="0.0.0.0", port=5000)
+        config = uvicorn.Config(app=self.app, host="localhost", port=5000)
+        server = uvicorn.Server(config)
+        await server.serve()
 
