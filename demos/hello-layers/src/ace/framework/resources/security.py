@@ -50,7 +50,8 @@ class Security(Resource):
         await self.publish_message(queue_name, message)
 
     async def message_handler(self, message: aio_pika.IncomingMessage):
-        logger.debug(f"[{self.labeled_name}] received a message: {message.body.decode()}")
+        async with message.process():
+            logger.debug(f"[{self.labeled_name}] received a message: {message.body.decode()}")
 
     async def subscribe_security_queue(self):
         logger.debug(f"{self.labeled_name} subscribing to security queue...")

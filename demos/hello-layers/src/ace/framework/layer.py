@@ -104,10 +104,12 @@ class Layer(Resource):
         self.push_message_to_consumer_local_queue(data['type'], data, message)
 
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
-        await self.route_message('northbound', message)
+        async with message.process():
+            await self.route_message('northbound', message)
 
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
-        await self.route_message('southbound', message)
+        async with message.process():
+            await self.route_message('southbound', message)
 
     async def security_message_handler(self, message: aio_pika.IncomingMessage):
         message = message.body.decode()
