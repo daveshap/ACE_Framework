@@ -26,6 +26,7 @@ class Resource(ABC):
         self.publisher_channel = None
         self.consumers = {}
         self.consumer_local_queues = {}
+        self.publisher_local_queue = None
 
     @property
     @abstractmethod
@@ -59,10 +60,11 @@ class Resource(ABC):
         asyncio.set_event_loop(self.bus_loop)
         self.bus_loop.run_until_complete(self.get_busses_connection_and_channel())
         self.bus_loop.run_until_complete(self.post_connect())
+        self.bus_loop.run_until_complete(self.process_publisher_messages_to_exchanges())
         self.bus_loop.run_forever()
 
     async def get_busses_connection_and_channel(self):
-        self.log.debug(f"{self.labeled_name} getting busses connection and channel...")
+        self.log.debug(f"{self.labeled_name} getting busses connection and channels...")
         self.connection = await get_connection(settings=self.settings, loop=self.bus_loop)
         self.consumer_channel = await self.connection.channel()
         self.publisher_channel = await self.connection.channel()
@@ -80,12 +82,17 @@ class Resource(ABC):
     async def post_connect(self):
         pass
 
+    def post_start(self):
+        pass
+
     async def pre_disconnect(self):
         pass
 
     def start_resource(self):
         self.log.info("Starting resource...")
         self.setup_service()
+        # TODO: This isn't ideal, as the other thread still needs time to start up before this should be called.
+        self.post_start()
         self.log.info("Resource started")
 
     def stop_resource(self):
@@ -118,23 +125,37 @@ class Resource(ABC):
             messages.append(queue.get())
         return messages
 
+    def push_exchange_message_to_publisher_local_queue(self, queue_name, message):
+        data = (queue_name, message)
+        self.bus_loop.call_soon_threadsafe(self.publisher_local_queue.put_nowait, data)
+
+    async def process_publisher_messages_to_exchanges(self):
+        self.publisher_local_queue = asyncio.Queue()
+        while True:
+            try:
+                data = await self.publisher_local_queue.get()
+                queue_name, message = data
+                await self.publish_message(self.build_exchange_name(queue_name), message)
+            except Exception as e:
+                self.log.error(f"Publishing message from local publisher queue failed: {e}")
+                continue
+
     def build_queue_name(self, direction, layer):
         queue = None
         if layer and direction in constants.LAYER_ORIENTATIONS:
             queue = f"{direction}.{layer}"
         return queue
 
-    def build_exchange_name(self, direction, layer):
-        exchange = None
-        queue = self.build_queue_name(direction, layer)
-        if queue:
-            exchange = f"exchange.{queue}"
-        return exchange
+    def build_exchange_name(self, queue_name):
+        return f"exchange.{queue_name}"
 
-    def build_message(self, message=None, message_type='data'):
+    def build_message(self, destination, message=None, message_type='data'):
         message = message or {}
         message['type'] = message_type
-        message['resource'] = self.settings.name
+        message['resource'] = {
+            'source': self.settings.name,
+            'destination': destination,
+        }
         return json.dumps(message).encode()
 
     async def publish_message(self, exchange_name, message, delivery_mode=2):

@@ -42,7 +42,7 @@ class Security(Resource):
 
     async def post_layer(self, queue_name):
         self.log.debug(f"[{self.labeled_name}] sending POST to layer queue: {queue_name}")
-        message = self.build_message(message_type='ping')
+        message = self.build_message(queue_name, message_type='ping')
         await self.publish_message(queue_name, message)
 
     async def message_handler(self, message: aio_pika.IncomingMessage):

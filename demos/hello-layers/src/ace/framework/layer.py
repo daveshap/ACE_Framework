@@ -1,4 +1,3 @@
-import logging
 import json
 import aio_pika
 
@@ -14,6 +13,9 @@ class LayerSettings(Settings):
 
 
 class Layer(Resource):
+
+    def post_start(self):
+        self.run_layer()
 
     async def post_connect(self):
         self.set_adjacent_layers()
@@ -50,9 +52,35 @@ class Layer(Resource):
         # await self.unsubscribe_security_queue()
         self.log.debug("Deregistered busses...")
 
+    def run_layer(self):
+        import time
+        import uuid
+        # TODO: Awful.
+        while not self.publisher_local_queue:
+            self.log.info(f"[{self.labeled_name}] waiting for publisher local queue...")
+            time.sleep(1)
+        while True:
+            if self.northern_layer:
+                messages = self.get_messages_from_consumer_local_queue('control')
+                for m in messages:
+                    data, message = m
+                    self.log.info(f"[{self.labeled_name}] received a control message: {message.body.decode()}")
+                time.sleep(5)
+                message = self.build_message(self.northern_layer, message={'message': str(uuid.uuid4())[:8]}, message_type='data')
+                self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
+            if self.southern_layer:
+                messages = self.get_messages_from_consumer_local_queue('data')
+                for m in messages:
+                    data, message = m
+                    self.log.info(f"[{self.labeled_name}] received a data message: {message.body.decode()}")
+                time.sleep(5)
+                message = self.build_message(self.southern_layer, message={'message': str(uuid.uuid4())[:8]}, message_type='control')
+                self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
+
     async def send_message(self, direction, layer, message, delivery_mode=2):
-        exchange = self.build_exchange_name(direction, layer)
-        if exchange:
+        queue_name = self.build_queue_name(direction, layer)
+        if queue_name:
+            exchange = self.build_exchange_name(queue_name)
             await self.publish_message(exchange, message)
 
     def is_ping(self, data):
@@ -62,7 +90,7 @@ class Layer(Resource):
         return data['type'] == 'pong'
 
     async def ping(self, direction, layer):
-        message = self.build_message(message_type='ping')
+        message = self.build_message(layer, message_type='ping')
         await self.send_message(self, direction, layer, message)
 
     async def handle_ping(self, direction, layer):
@@ -75,7 +103,7 @@ class Layer(Resource):
             response_direction = 'northbound'
             layer = self.northern_layer
         if response_direction and layer:
-            message = self.build_message(message_type='pong')
+            message = self.build_message(layer, message_type='pong')
             await self.send_message(response_direction, layer, message)
 
     async def post(self):
@@ -96,7 +124,7 @@ class Layer(Resource):
         elif self.is_ping(data):
             self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
             return await self.handle_ping(direction, data['resource'])
-        self.push_message_to_consumer_local_queue(data['type'], data, message)
+        self.push_message_to_consumer_local_queue(data['type'], (data, message))
 
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
