@@ -110,6 +110,25 @@ This is an array, so you can trigger multiple actions in one message.
 
 Don't mix text responses with actions. Either respond with text, or an array of actions.
 Don't make up new actions, only use the ones I've defined above.
+If you trigger a schedule_action, also include a respond_to_user action to confirm that the action has been scheduled.
+For example:
+[
+    {
+      "action": "respond_to_user",
+      "text": "OK I'll wake you up in 1 minute."
+    },
+    {
+      "action": "schedule_action",
+      "action_to_schedule": 
+        {
+          "action": "respond_to_user",
+          "text": "A minute has passed, time to wake up!"
+        },
+      "delay_seconds": 60
+    }
+]
+
+
 If you trigger an action that has a return value, the next chat message from me will be the return value. 
 
 """
