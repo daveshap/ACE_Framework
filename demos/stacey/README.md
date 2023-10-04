@@ -22,7 +22,7 @@ We are using a test-driven approach to this, working in tiny increments to build
 capability, evolving the code and the framework in the minimal way to enable the next test to pass.
 
 Some possible upcoming test cases:
-- Recurring tasks. "Stacey, give me Stockholm weather report every morning"
+- Recurring tasks. "Stacey, give me Stockholm weather report every morning", and task management: "Stacey, you can stop the weather reports now."
 - Danger monitoring. "Stacey, alert me if you see any scary-looking commits in this github repo"
 - Ethical tradeoffs. For example where a lower layer says to a higher layer "I can stop the forest fire, but it would cost 3 lives. Is it worth it?" (need to formulate a specific test for this)
 - Model switching. For example a higher layer delegates a task to a lower layer, and decides that a cheaper llm can be used for that.
