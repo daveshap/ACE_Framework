@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-import json
+import yaml
 import asyncio
 import aio_pika
 from concurrent.futures import ThreadPoolExecutor
@@ -156,7 +156,7 @@ class Resource(ABC):
             'source': self.settings.name,
             'destination': destination,
         }
-        return json.dumps(message).encode()
+        return yaml.dump(message, default_flow_style=False).encode()
 
     async def publish_message(self, exchange_name, message, delivery_mode=2):
         exchange = await self.try_get_exchange(exchange_name)

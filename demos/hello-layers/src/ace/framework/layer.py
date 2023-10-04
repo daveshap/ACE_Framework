@@ -1,4 +1,4 @@
-import json
+import yaml
 import aio_pika
 
 from ace.settings import Settings
@@ -114,8 +114,8 @@ class Layer(Resource):
 
     async def route_message(self, direction, message):
         try:
-            data = json.loads(message.body.decode())
-        except json.JSONDecodeError as e:
+            data = yaml.safe_load(message.body.decode())
+        except yaml.YAMLError as e:
             self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
             return
         if self.is_pong(data):
@@ -135,11 +135,11 @@ class Layer(Resource):
             await self.route_message('southbound', message)
 
     async def security_message_handler(self, message: aio_pika.IncomingMessage):
-        message = message.body.decode()
+        decoded_message = message.body.decode()
         self.log.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
         try:
-            data = json.loads(message)
-        except json.JSONDecodeError as e:
+            data = yaml.safe_load(decoded_message)
+        except yaml.YAMLError as e:
             self.log.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
             return
         if data['type'] == 'post':
