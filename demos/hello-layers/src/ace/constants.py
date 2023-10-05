@@ -11,5 +11,6 @@ LOG_FORMAT = "%(name)s - %(levelname)s - %(message)s"
 THIRD_PARTY_LOGGERS = [
     'aio_pika',
     'aiormq',
+    'asyncio',
 ]
 THIRD_PARTY_LOG_LEVEL = "WARNING"
