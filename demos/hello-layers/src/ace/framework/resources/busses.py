@@ -23,13 +23,13 @@ class Busses(Resource):
 
     async def post_connect(self):
         # TODO: Need this?
-        # await self.create_security_queues()
+        # await self.create_system_integrity_queues()
         await self.create_exchanges()
 
     async def pre_disconnect(self):
         await self.destroy_exchanges()
         # TODO: Need this?
-        # await self.destroy_security_queues()
+        # await self.destroy_system_integrity_queues()
 
     async def create_exchanges(self):
         self.log.debug(f"{self.labeled_name} creating exchanges...")
@@ -60,13 +60,13 @@ class Busses(Resource):
         self.log.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
 
     # TODO: Need this?
-    async def create_security_queues(self):
+    async def create_system_integrity_queues(self):
         for layer in self.settings.layers:
-            queue_name = f"security.{layer}"
+            queue_name = f"system_integrity.{layer}"
             await self.consumer_channel.declare_queue(queue_name, durable=True)
 
     # TODO: Need this?
-    async def destroy_security_queues(self):
+    async def destroy_system_integrity_queues(self):
         for layer in self.settings.layers:
-            queue_name = f"security.{layer}"
+            queue_name = f"system_integrity.{layer}"
             await self.consumer_channel.queue_delete(queue_name)

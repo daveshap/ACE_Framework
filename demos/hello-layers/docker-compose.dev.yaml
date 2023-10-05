@@ -26,5 +26,5 @@ services:
   interlayer_communication_buses:
     volumes: *shared-volumes
 
-  security:
+  system_integrity:
     volumes: *shared-volumes

@@ -42,14 +42,14 @@ class Layer(Resource):
         self.log.debug("Registering busses...")
         await self.subscribe_adjacent_layers()
         # TODO: Need this?
-        # await self.subscribe_security_queue()
+        # await self.subscribe_system_integrity_queue()
         self.log.debug("Registered busses...")
 
     async def deregister_busses(self):
         self.log.debug("Deregistering busses...")
         await self.unsubscribe_adjacent_layers()
         # TODO: Need this?
-        # await self.unsubscribe_security_queue()
+        # await self.unsubscribe_system_integrity_queue()
         self.log.debug("Deregistered busses...")
 
     def run_layer(self):
@@ -134,13 +134,13 @@ class Layer(Resource):
         async with message.process():
             await self.route_message('southbound', message)
 
-    async def security_message_handler(self, message: aio_pika.IncomingMessage):
+    async def system_integrity_message_handler(self, message: aio_pika.IncomingMessage):
         decoded_message = message.body.decode()
-        self.log.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
+        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] message: {message}")
         try:
             data = yaml.safe_load(decoded_message)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}")
             return
         if data['type'] == 'post':
             await self.post()
@@ -155,10 +155,10 @@ class Layer(Resource):
             self.consumers[southbound_queue] = await self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
 
     # TODO: Need this?
-    async def subscribe_security_queue(self):
-        queue_name = f"security.{self.settings.name}"
+    async def subscribe_system_integrity_queue(self):
+        queue_name = f"system_integrity.{self.settings.name}"
         self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.security_message_handler)
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
 
     async def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
@@ -171,8 +171,8 @@ class Layer(Resource):
         self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
 
     # TODO: Need this?
-    async def unsubscribe_security_queue(self):
-        queue_name = f"security.{self.settings.name}"
+    async def unsubscribe_system_integrity_queue(self):
+        queue_name = f"system_integrity.{self.settings.name}"
         self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
         if queue_name in self.consumers:
             await self.consumers[queue_name].cancel()

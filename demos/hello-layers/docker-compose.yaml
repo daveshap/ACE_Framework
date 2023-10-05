@@ -175,12 +175,12 @@ services:
     networks: *default_networks
     healthcheck: *healthcheck
 
-  security:
+  system_integrity:
     build:
       <<: *default_build
     environment:
       <<: *rabbitmq_environment
-      ACE_RESOURCE_NAME: security
+      ACE_RESOURCE_NAME: system_integrity
     command: *default_command
     depends_on:
       - interlayer_communication_buses
