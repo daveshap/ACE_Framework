@@ -24,7 +24,10 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
 ### Requirements
 
 * Docker
+* Docker Compose
 * Python >= 3.7
+
+The user running the demo will need permissions to execute `docker` commands (e.g.  Rootless mode).
 
 ```sh
 pip install -r requirements.txt
