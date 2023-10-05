@@ -11,8 +11,8 @@ x-build: &default_build
     BASE_IMAGE: *default_python_image
 
 x-logging-environment: &logging_environment
-  ACE_LOG_LEVEL: ${ACE_LOG_LEVEL}
-  ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL}
+  ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
+  ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
 
 x-rabbitmq-username: &rabbitmq-username rabbit
 x-rabbitmq-password: &rabbitmq-password carrot
