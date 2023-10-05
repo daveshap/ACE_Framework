@@ -12,5 +12,7 @@ THIRD_PARTY_LOGGERS = [
     'aio_pika',
     'aiormq',
     'asyncio',
+    'docker',
+    'urllib3',
 ]
 THIRD_PARTY_LOG_LEVEL = "WARNING"
