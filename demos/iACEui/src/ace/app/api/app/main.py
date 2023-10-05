@@ -25,7 +25,7 @@ from schema import (
     LayerTestResponseModel,
 )
 
-from ai import generate_completion
+from ai import generate_bus_message
 
 import logging
 
@@ -71,24 +71,27 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 @app.post("/layer/test", response_model=LayerTestResponseModel)
 async def test_prompt(req: LayerTestRequest):
 
-    response, memory = generate_completion(
-        identity=req.prompts["identity"],
+    reasoning_result, bus_action_result = generate_bus_message(
         input=req.prompts["input"],
-        memory=req.memory,
-        model=req.model,
+        identity=req.prompts["identity"],
+        reasoning=req.prompts["reasoning"],
+        bus_prompt=req.prompts["bus"],
+        source_bus=req.source_bus,
+        desitination_bus=req.destination_bus,
+        llm_messages=req.llm_messages,
+        llm_model_name=req.llm_model_name,
+        llm_model_parameters=req.llm_model_parameters,
+        openai_api_key=settings.openai_api_key,
     )
 
     logger.info(f"{response}")
 
-    resp = LayerTestResponseModel(
-        identity=req.identity,
-        message=req.message,
-        memory=memory,
-        model=req.model,
-        response=response,
+    results = LayerTestResponseModel(
+        reasoning_result=reasoning_result,
+        action_reult=bus_action_result,
     )
 
-    return resp
+    return results
 
 @app.post("/layer/config", response_model=LayerConfigModel)
 def create_layer_config(

@@ -1,31 +1,48 @@
 import openai
 from typing import List, Dict
 
-def generate_completion(
-    identity: str, 
-    new_message: str, 
-    memory: List[Dict[str, str]],
-    temperature: int,
-    model: str,
-    openai_api_key: str,
+def generate_bus_message(
+        input: str,
+        identity: str,
+        reasoning: str,
+        bus_prompt: str,
+        source_bus: str,
+        destination_bus: str,
+        llm_messages: List,
+        llm_model_name: str,
+        llm_model_parameters: str,
+        openai_api_key: str,
 ):
     openai.api_key = openai_api_key
-    primary_directive = {"role": "system", "content": identity}
-    new_prompt = {"role": "user", "content": new_message}
-    conversation = (
-        [primary_directive] +
-        memory +
-        [new_prompt]
-    )
-    completion = openai.ChatCompletion.create(
-        model=model,
-        messages=conversation,
-        temperature=temperature,
-    )
-    response = completion.choices[0].message
 
-    response_memory = memory.copy()
-    response_memory.append(new_prompt)
-    response_memory.append(response)
+    reasoning_messages = llm_messages + [
+        {"role": "system", "content": identity},
+        {"role": "system", "content": reasoning},
+        {"role": "user", "content": f"You recieved a message from the {source_bus}"},
+        {"role": "user", "content": input},
+    ]
+    reasoning_response = openai.ChatCompletion.create(
+        model=llm_model_name,
+        messages=reasoning_messages,
+        **llm_model_parameters
+    )
+    reasoning_result = reasoning_response.choices[0].message
 
-    return response, response_memory
+    bus_action = llm_messages + [
+        {"role": "system", "content": identity},
+        {"role": "system", "content": reasoning},
+        {"role": "user", "content": reasoning_result},
+        {"role": "user", "content": f"You recieved a message from the {source_bus}"},
+        {"role": "user", "content": input},
+        {"role": "user", "content": f"Decide if you should place a message on the {destination_bus}"},
+        {"role": "user", "content": bus_prompt},
+    ]
+    bus_action_response = openai.ChatCompletion.create(
+        model=llm_model_name,
+        messages=bus_action,
+        **llm_model_parameters
+    )
+
+    bus_action_result = bus_action_response.choices[0].message
+
+    return reasoning_result, bus_action_result
