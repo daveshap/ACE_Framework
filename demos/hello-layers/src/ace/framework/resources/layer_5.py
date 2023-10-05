@@ -1,8 +1,5 @@
 from ace.framework.layer import Layer, LayerSettings
 
-# TODO: Add
-PRIMARY_DIRECTIVE = ""
-
 
 class Layer5(Layer):
 
@@ -11,7 +8,6 @@ class Layer5(Layer):
         return LayerSettings(
             name="layer_5",
             label="Cognitive Control",
-            primary_directive=PRIMARY_DIRECTIVE
         )
 
     # TODO: Add valid status checks.

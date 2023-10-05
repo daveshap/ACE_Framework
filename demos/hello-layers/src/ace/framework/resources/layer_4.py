@@ -1,8 +1,5 @@
 from ace.framework.layer import Layer, LayerSettings
 
-# TODO: Add
-PRIMARY_DIRECTIVE = ""
-
 
 class Layer4(Layer):
 
@@ -11,7 +8,6 @@ class Layer4(Layer):
         return LayerSettings(
             name="layer_4",
             label="Executive Function",
-            primary_directive=PRIMARY_DIRECTIVE
         )
 
     # TODO: Add valid status checks.
