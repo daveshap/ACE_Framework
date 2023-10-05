@@ -1,0 +1,77 @@
+Prompts:
+    System: |+
+        You are a tool priming agent who's been asked to prepare a tool for the following task:
+    
+        {task}
+    
+        ---
+    
+        The task outlined above has been curated to achieve the following core objective: {objective}
+
+    Tool: |+
+        Instructions breaking down the tool you are required to prime are as follows:
+    
+        {tool}
+    
+        ---
+
+    Results: |+
+        Use the following data in order to prime the tool outlined above:
+    
+        {results}
+    
+        ---
+
+    Context: |+
+        Take into consideration the following critique from the last action taken:
+    
+        {context}
+    
+        ---
+
+    Instruction: |+
+        Your job requires you to prime the tool you've been provided by taking into consideration the context you've been given.
+    
+        You must prime the above given tool using ONLY the RESPONSE FORMAT provided below.
+    
+        IMPORTANT!!!: DO NOT PROVIDE ANY COMMENTARY OUTSIDE OF THE RESPONSE FORMAT REQUESTED!!!
+    
+        RESPONSE FORMAT:
+        {
+            "args":{
+                "for each argument name": <argument value>,
+            },
+            "thoughts": {
+                "reasoning": <your reasoning>,
+                "say": <thoughts summary to say to user>
+            }
+        }
+
+ModelOverrides:
+  API: openai_api
+  Model: fast_model
+  Params:
+    max_new_tokens: 2000
+    temperature: 0.5
+    top_p: 0.1
+    n: 1
+    stop: null
+    do_sample: true
+    return_prompt: false
+    return_metadata: false
+    typical_p: 0.95
+    repetition_penalty: 1.05
+    encoder_repetition_penalty: 1.0
+    top_k: 40
+    min_length: 10
+    no_repeat_ngram_size: 0
+    num_beams: 1
+    penalty_alpha: 0
+    length_penalty: 1
+    early_stopping: false
+    pad_token_id: null
+    eos_token_id: null
+    use_cache: true
+    num_return_sequences: 1
+    bad_words_ids: null
+    seed: -1

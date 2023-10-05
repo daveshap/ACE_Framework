@@ -1,0 +1,5 @@
+Name: Create File
+Description: This action utilizes the 'Write File' tool to write or append text to a specified file in a given directory. It offers the flexibility to either create a new file or append to an existing one.
+Example: response = write_file('path/to/folder', 'filename.txt', 'This is the content', mode='a')
+Instruction: To create or modify a file, specify the target folder, the desired filename, and the content you wish to write. Optionally, provide a mode ('a' for append and 'w' for overwrite) to determine how the content should be added to the file.
+Tools: Write File

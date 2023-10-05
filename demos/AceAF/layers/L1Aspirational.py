@@ -11,7 +11,7 @@ class L1Aspirational(AceLayer):
 
     def load_relevant_data_from_memory(self):
         # Load Relevant Memories
-        self.constitution = self.config.data['Constitution']
+        self.constitution = self.config.settings['directives']['Constitution']
 
     def run_agents(self):
         self.result = self.l1_agent.run(constitution=self.constitution, strategy_layer=self.bottom_layer_message)

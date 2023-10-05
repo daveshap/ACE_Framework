@@ -1,0 +1,9 @@
+Name: Write File
+Args: folder (str), file (str), text (str), mode (str='a')
+Command: write_file
+Description: >-
+  The 'Write File' tool writes the provided text to a specified file. You can specify the folder, filename, and the mode (append or overwrite).
+Example: response = write_file(folder, file, text, mode='a')
+Instruction: >-
+  The 'write_file' method requires a folder, file name, and the text you want to write as inputs. An optional mode parameter can be provided to decide whether to append ('a') or overwrite ('w') the file. By default, the function appends to the file.
+Script: agentforge.tools.WriteFile

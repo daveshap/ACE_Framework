@@ -1,0 +1,6 @@
+Name: Web Search
+Description: This action performs a Google search from a query, scrapes the text from one of the returned URLs, and then breaks the scraped text into manageable chunks.
+Example: search_results = google.google_search(query, number_result); url = search_results[2][0]; scrapped = web_scrape.get_plain_text(url)
+Instruction: First, use the 'Google Search' tool to perform a Google search and retrieve a list of search results. Choose a URL from the search results, then use the 'Web Scrape' tool to scrape the text from that URL.
+Tools: Google Search, Web Scrape
+

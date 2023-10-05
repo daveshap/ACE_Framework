@@ -1,0 +1,18 @@
+Actions: ""
+Tools: ""
+Results: ""
+NorthBus: ""
+SouthBus: ""
+
+Tasks:
+  - >-
+    Plan the Batch File: Outline the commands that will be included, such as activation of a virtual environment,
+    installation or upgrading of the library, and any additional steps like running tests.
+  - Create the Batch File
+  - >-
+    Document the Batch File: Include comments within the batch file to explain what each command does. 
+    Provide external documentation if this batch file will be used by other team members.
+
+
+
+
