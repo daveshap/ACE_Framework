@@ -6,7 +6,6 @@ from ace.framework.resource import Resource
 
 
 class LayerSettings(Settings):
-    primary_directive: str
     mode: str = 'OpenAI'
     model: str = 'gpt-3.5-turbo'
     ai_retry_count: int = 3
