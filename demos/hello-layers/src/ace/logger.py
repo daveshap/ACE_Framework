@@ -32,6 +32,7 @@ class Logger:
 
     def __new__(cls, name):
         logger = logging.getLogger(name)
+        logger.propagate = False
         log_level = os.getenv('ACE_LOG_LEVEL') or constants.LOG_LEVEL
         logger.setLevel(get_log_level(log_level))
         if not any(isinstance(handler, ConsoleHandler) for handler in logger.handlers):
