@@ -55,3 +55,13 @@ This handles running `docker compose` with the appropriate config files for deve
 ## Stopping the demo
 
 Hit `Ctrl+c` or send a `SIGINT` to the running process.
+
+## Logging
+
+By default, third party libraries are set to log level `WARNING`, and the ACE logging is level `INFO`.
+
+To adjust these, you can pass the following environment variables when running via either of the above methods:
+
+```sh
+ACE_THIRD_PARTY_LOG_LEVEL=DEBUG ACE_LOG_LEVEL=DEBUG ./dev.sh
+```
