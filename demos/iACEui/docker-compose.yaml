@@ -15,8 +15,8 @@ services:
 
   api:
     build:
-      context: ./src/ace/app/api
-      dockerfile: Dockerfile
+      context: ./src/ace/app
+      dockerfile: api.Dockerfile
     env_file: ./src/ace/app/api/.env
     restart: always
     ports:

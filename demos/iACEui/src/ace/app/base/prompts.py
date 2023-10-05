@@ -111,6 +111,15 @@ And no explanation or other text.
             layer=self.layer,
             destination=self.destination,
         )
+    
+    def generate_prompt(self) -> str:
+        return Template(self.template).render(
+            src=self.source,
+            msg=self.message,
+            layer=self.layer,
+            destination=self.destination,
+        )
+    
 
 
 who_are_you = "Give me a brief summary about who or what you are."

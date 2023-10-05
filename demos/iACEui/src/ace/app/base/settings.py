@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     data_bus_pub_queue: str = "deadletter"
     control_bus_pub_queue: str = "deadletter"
     response_queue: str = "user-response-queue"
+    debug: bool = True
+    process_messages = False
 
 class DatabaseSettings(BaseSettings):
     database_uri: PostgresDsn = "postgresql://postgres:password@db:5432/ace-db"

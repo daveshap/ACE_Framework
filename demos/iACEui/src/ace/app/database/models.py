@@ -1,13 +1,14 @@
-import pika
-from sqlalchemy import Column, Integer, String, DateTime, Sequence, DDL, text, Text, UUID, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, UUID, JSON, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import relationship
+
 from datetime import datetime
 import uuid
 import json
 
+from .connection import engine
 
-# SQLAlchemy setup
+
 Base = declarative_base()
 
 
@@ -16,16 +17,16 @@ class RabbitMQLog(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     message_content = Column(Text)
-
-    # Message content and topic (routing key)
     queue = Column(String(255))
 
-    # Headers if the team will be using them.
-    source_bus = Column(String(50)) # Data or Control
-    destination_bus = Column(String(50)) # Data or Control
-    publisher = Column(String(50)) # The layer that published the message (settings.role_name)
-    layer_memory = Column(JSON) # The context or memory in the layer at the time of the message being sent
-    model = Column(String(50)) # The LLM model used to generate the message
+    # Headers manually added to the RabbitMQ message log
+    source_bus = Column(String(50))
+    destination_bus = Column(String(50))
+    layer_name = Column(String(50))
+    llm_messages = Column(JSON)
+    config_id = Column(UUID(as_uuid=True), ForeignKey('layer_config.config_id'))
+    input = Column(Text)
+    reasoning = Column(Text)
 
     # Properties from the message's properties 
     content_type = Column(String(50))
@@ -41,20 +42,18 @@ class RabbitMQLog(Base):
     app_id = Column(String(50))
     cluster_id = Column(String(255))
 
-
     @classmethod
     def from_message(cls, method, properties, body):
         headers = properties.headers or {}
 
         # Deserialize Memory
-        deserialized_memory = None
+        deserialized_llm_messages = None
         try:
-            if headers.get('layer_memory'):
-                serialized_memory = headers.get('layer_memory')
-                deserialized_memory = json.loads(serialized_memory)
+            if headers.get('llm_messages'):
+                llm_messages = headers.get('llm_messages')
+                deserialized_llm_messages = json.loads(llm_messages)
         except:
-            # TODO add logs
-            pass
+            print("Error decoding JSON for llm_messages:", llm_messages)
         
         log_entry = cls(
             queue=method.routing_key,
@@ -75,9 +74,41 @@ class RabbitMQLog(Base):
             # Extracting and assigning header fields
             source_bus=headers.get('source_bus'),
             destination_bus=headers.get('destination_bus'),
-            publisher=headers.get('publisher'),
-            layer_memory=deserialized_memory,
-            model=headers.get('model')
+            layer_name=headers.get('layer_name'),
+            llm_messages=deserialized_llm_messages,
+            config_id=uuid.UUID(headers.get('config_id')) if headers.get('config_id') else None,
+            input=headers.get('input'),
+            reasoning=headers.get('reasoning'),
         )
         
         return log_entry
+    
+    layer_config = relationship("LayerConfig", back_populates="rabbitmq_logs")
+
+
+class LayerState(Base):
+    __tablename__ = 'layer_state'
+
+    layer_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    layer_name = Column(String, nullable=False)
+    process_messages = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class LayerConfig(Base):
+    __tablename__ = 'layer_config'
+
+    config_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    parent_config_id = Column(UUID(as_uuid=True), nullable=True)
+    layer_name = Column(String, nullable=False)
+    prompts = Column(JSON, nullable=False)
+    llm_model_name = Column(String, nullable=False, default='gpt-3.5-turbo')
+    llm_model_parameters = Column(JSON, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    rabbitmq_logs = relationship("RabbitMQLog", back_populates="layer_config")
+
+Base.metadata.create_all(engine)

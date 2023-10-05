@@ -7,6 +7,8 @@ from base.prompts import Prompt, MissionCompletionPrompt
 import prompts as p
 from identity import primary_directive
 import re
+import uvicorn
+from fastapi import FastAPI
 
 
 logging.basicConfig(level=logging.INFO)
@@ -16,12 +18,13 @@ logger = logging.getLogger(__name__)
 class Layer1Aspirant(BaseLayer):
     # This is the mission proposed by the user.
     mission: str = "Deny all requests"
+    process_messages: bool = False
 
     def get_primary_directive(self):
         return primary_directive
 
     # These messages come from the user.
-    async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
+    async def control_bus_message_handler(self, message: aio_pika.IncomingMessage):
         self.mission = message.body.decode()
         logger.info(f"Mission from user: {self.mission}")
         judgement = await self._render_judgement(self.mission)
@@ -53,7 +56,7 @@ class Layer1Aspirant(BaseLayer):
 
 
     # These are northbound so they come from the layer below "Global Strategy"
-    async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
+    async def data_bus_message_handler(self, message: aio_pika.IncomingMessage):
         msg = message.body.decode()
         logger.info(f"Message from Global Strategy (Layer 2): {msg}")
 
@@ -133,7 +136,24 @@ class Layer1Aspirant(BaseLayer):
         else:
             return 'error'
 
+app_instance = None
+
+app = FastAPI()
+
+@app.post("/toggle_processing")
+async def toggle_processing():
+    app_instance.process_messages = not app_instance.process_messages
+    return {"detail": f"Message processing set to {app_instance.process_messages}"}
+
+def run_api():
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 
 if __name__ == "__main__":
-    layer = Layer1Aspirant(settings)
-    layer.run()
+
+    app_instance = Layer1Aspirant(settings)
+    
+    if settings.debug:
+        run_api()
+
+    app_instance.run()
