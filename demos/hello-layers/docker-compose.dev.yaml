@@ -1,7 +1,7 @@
 version: '3'
 
 x-shared-volumes: &shared-volumes
-  - ${HOME}/git/ace/framework/demos/hello-layers/src:/app
+  - ./src:/app
 
 services:
 
