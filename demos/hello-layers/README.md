@@ -8,13 +8,15 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
 
 ## What happens under the hood
 
-1. A resource manager script starts up all aspects of the ACE
-   * Each aspect is a `resource`, one resource per container
-   * Resource depedencies of the ACE are declared in `config.yaml`
+1. A resource manager script starts up all components of the ACE
+   * Each component is a `resource`, one resource per Docker container
+   * Resource depedencies of the ACE are inferred from `docker-compose.yaml`
    * Resources are started from the top down, and shut down from the bottom up
-   * The resource manager periodically monitors the 'health' of every resource, and if it failed, restarts the resource and any dependencies
-2. Once all resources are up, a simple communication exchange of test messages ensures all layers are communicating along the busses
-3. With the communication test checks complete, the ACE fullfills its mission by outputting "Hello, Layers!" to the console
+   * The resource manager periodically monitors the 'health' of every resource, restarting containers as necessary
+2. Once all resources are up, a simple communication exchange of test messages ensures all layers are communicating along the busses (Power On Self-Test)
+3. With the communication test checks complete, the ACE attempts to fullfill its mission:
+   * This is accomplished by fully exercising the agents at each layer of the ACE
+   * The mission is simple: output "Hello, Layers!" to the console
 4. Ooohs and ahhhs ensue :P
 
 ## Setup
@@ -22,18 +24,44 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
 ### Requirements
 
 * Docker
+* Docker Compose
 * Python >= 3.7
 
-```
+The user running the demo will need permissions to execute `docker` commands (e.g.  Rootless mode).
+
+```sh
 pip install -r requirements.txt
 ```
 
-## Running the demo
+## Running the demo using the resource manager
 
+From the root directory of the demo (where this README resides)
+
+```sh
+./resource_manager.py
 ```
-python resource_manager.py
+
+## Running the demo in dev mode
+
+From the root directory of the demo (where this README resides)
+
+```sh
+# Any additional args, such as --build, will be passed to docker compose
+./dev.sh
 ```
+
+This handles running `docker compose` with the appropriate config files for development, which shares the host `src` directory in the container, allowing for easy editing of the demo.
 
 ## Stopping the demo
 
 Hit `Ctrl+c` or send a `SIGINT` to the running process.
+
+## Logging
+
+By default, third party libraries are set to log level `WARNING`, and the ACE logging is level `INFO`.
+
+To adjust these, you can pass the following environment variables when running via either of the above methods:
+
+```sh
+ACE_THIRD_PARTY_LOG_LEVEL=DEBUG ACE_LOG_LEVEL=DEBUG ./dev.sh
+```

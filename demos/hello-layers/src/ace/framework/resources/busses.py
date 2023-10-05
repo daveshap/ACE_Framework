@@ -1,11 +1,6 @@
-import logging
-
 from ace.settings import Settings
 from ace.amqp.exchange import setup_exchange, teardown_exchange
 from ace.framework.resource import Resource
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 
 class BussesSettings(Settings):
@@ -23,55 +18,55 @@ class Busses(Resource):
 
     # TODO: Add valid status checks.
     def status(self):
-        logger.debug(f"Checking {self.labeled_name} status")
+        self.log.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
     async def post_connect(self):
         # TODO: Need this?
-        # await self.create_security_queues()
+        # await self.create_system_integrity_queues()
         await self.create_exchanges()
 
     async def pre_disconnect(self):
         await self.destroy_exchanges()
         # TODO: Need this?
-        # await self.destroy_security_queues()
+        # await self.destroy_system_integrity_queues()
 
     async def create_exchanges(self):
-        logger.debug(f"{self.labeled_name} creating exchanges...")
+        self.log.debug(f"{self.labeled_name} creating exchanges...")
         for queue_name in self.build_all_layer_queue_names():
             await self.create_exchange(queue_name)
-        logger.debug(f"{self.labeled_name} queues created")
+        self.log.debug(f"{self.labeled_name} queues created")
 
     async def create_exchange(self, queue_name):
         await setup_exchange(
             settings=self.settings,
-            channel=self.channel,
+            channel=self.publisher_channel,
             queue_name=queue_name,
         )
-        logger.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
+        self.log.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
 
     async def destroy_exchanges(self):
-        logger.debug(f"{self.labeled_name} destroying exchanges...")
+        self.log.debug(f"{self.labeled_name} destroying exchanges...")
         for queue_name in self.build_all_layer_queue_names():
             await self.destroy_exchange(queue_name)
-        logger.debug(f"{self.labeled_name} exchanges destroyed")
+        self.log.debug(f"{self.labeled_name} exchanges destroyed")
 
     async def destroy_exchange(self, queue_name):
         await teardown_exchange(
             settings=self.settings,
-            channel=self.channel,
+            channel=self.publisher_channel,
             queue_name=queue_name,
         )
-        logger.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
+        self.log.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
 
     # TODO: Need this?
-    async def create_security_queues(self):
+    async def create_system_integrity_queues(self):
         for layer in self.settings.layers:
-            queue_name = f"security.{layer}"
-            await self.channel.declare_queue(queue_name, durable=True)
+            queue_name = f"system_integrity.{layer}"
+            await self.consumer_channel.declare_queue(queue_name, durable=True)
 
     # TODO: Need this?
-    async def destroy_security_queues(self):
+    async def destroy_system_integrity_queues(self):
         for layer in self.settings.layers:
-            queue_name = f"security.{layer}"
-            await self.channel.queue_delete(queue_name)
+            queue_name = f"system_integrity.{layer}"
+            await self.consumer_channel.queue_delete(queue_name)

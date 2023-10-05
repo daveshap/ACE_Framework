@@ -3,6 +3,8 @@ FROM $BASE_IMAGE
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends vim
+
 COPY src/ .
 
 # TODO: Probably a cleaner way to do this.

@@ -1,24 +1,20 @@
-import logging
-import json
+import yaml
 import aio_pika
-from abc import abstractmethod
 
-from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 
 class LayerSettings(Settings):
-    primary_directive: str
     mode: str = 'OpenAI'
     model: str = 'gpt-3.5-turbo'
     ai_retry_count: int = 3
 
 
 class Layer(Resource):
+
+    def post_start(self):
+        self.run_layer()
 
     async def post_connect(self):
         self.set_adjacent_layers()
@@ -38,26 +34,52 @@ class Layer(Resource):
                 self.southern_layer = self.settings.layers[layer_index + 1]
         except ValueError:
             message = f"Invalid layer name: {self.settings.name}"
-            logger.error(message)
+            self.log.error(message)
             raise ValueError(message)
 
     async def register_busses(self):
-        logger.debug("Registering busses...")
+        self.log.debug("Registering busses...")
         await self.subscribe_adjacent_layers()
         # TODO: Need this?
-        # await self.subscribe_security_queue()
-        logger.debug("Registered busses...")
+        # await self.subscribe_system_integrity_queue()
+        self.log.debug("Registered busses...")
 
     async def deregister_busses(self):
-        logger.debug("Deregistering busses...")
+        self.log.debug("Deregistering busses...")
         await self.unsubscribe_adjacent_layers()
         # TODO: Need this?
-        # await self.unsubscribe_security_queue()
-        logger.debug("Deregistered busses...")
+        # await self.unsubscribe_system_integrity_queue()
+        self.log.debug("Deregistered busses...")
+
+    def run_layer(self):
+        import time
+        import uuid
+        # TODO: Awful.
+        while not self.publisher_local_queue:
+            self.log.info(f"[{self.labeled_name}] waiting for publisher local queue...")
+            time.sleep(1)
+        while True:
+            if self.northern_layer:
+                messages = self.get_messages_from_consumer_local_queue('control')
+                for m in messages:
+                    data, message = m
+                    self.log.info(f"[{self.labeled_name}] received a control message: {message.body.decode()}")
+                time.sleep(5)
+                message = self.build_message(self.northern_layer, message={'message': str(uuid.uuid4())[:8]}, message_type='data')
+                self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
+            if self.southern_layer:
+                messages = self.get_messages_from_consumer_local_queue('data')
+                for m in messages:
+                    data, message = m
+                    self.log.info(f"[{self.labeled_name}] received a data message: {message.body.decode()}")
+                time.sleep(5)
+                message = self.build_message(self.southern_layer, message={'message': str(uuid.uuid4())[:8]}, message_type='control')
+                self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
-        exchange = self.build_exchange_name(direction, layer)
-        if exchange:
+        queue_name = self.build_queue_name(direction, layer)
+        if queue_name:
+            exchange = self.build_exchange_name(queue_name)
             await self.publish_message(exchange, message)
 
     def is_ping(self, data):
@@ -67,7 +89,7 @@ class Layer(Resource):
         return data['type'] == 'pong'
 
     async def ping(self, direction, layer):
-        message = self.build_message(message_type='ping')
+        message = self.build_message(layer, message_type='ping')
         await self.send_message(self, direction, layer, message)
 
     async def handle_ping(self, direction, layer):
@@ -80,7 +102,7 @@ class Layer(Resource):
             response_direction = 'northbound'
             layer = self.northern_layer
         if response_direction and layer:
-            message = self.build_message(message_type='pong')
+            message = self.build_message(layer, message_type='pong')
             await self.send_message(response_direction, layer, message)
 
     async def post(self):
@@ -91,31 +113,33 @@ class Layer(Resource):
 
     async def route_message(self, direction, message):
         try:
-            data = json.loads(message.body.decode())
-        except json.JSONDecodeError as e:
-            logger.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
+            data = yaml.safe_load(message.body.decode())
+        except yaml.YAMLError as e:
+            self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
             return
         if self.is_pong(data):
-            logger.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
+            self.log.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
             return
         elif self.is_ping(data):
-            logger.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
+            self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {data['resource']}, bus direction: {direction}")
             return await self.handle_ping(direction, data['resource'])
-        self.push_message_to_consumer_local_queue(data['type'], data, message)
+        self.push_message_to_consumer_local_queue(data['type'], (data, message))
 
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
-        await self.route_message('northbound', message)
+        async with message.process():
+            await self.route_message('northbound', message)
 
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
-        await self.route_message('southbound', message)
+        async with message.process():
+            await self.route_message('southbound', message)
 
-    async def security_message_handler(self, message: aio_pika.IncomingMessage):
-        message = message.body.decode()
-        logger.debug(f"[{self.labeled_name}] received a [Security] message: {message}")
+    async def system_integrity_message_handler(self, message: aio_pika.IncomingMessage):
+        decoded_message = message.body.decode()
+        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] message: {message}")
         try:
-            data = json.loads(message)
-        except json.JSONDecodeError as e:
-            logger.error(f"[{self.labeled_name}] could not parse [Security] message: {e}")
+            data = yaml.safe_load(decoded_message)
+        except yaml.YAMLError as e:
+            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}")
             return
         if data['type'] == 'post':
             await self.post()
@@ -123,32 +147,32 @@ class Layer(Resource):
     async def subscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
-        logger.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
+        self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         if self.northern_layer:
             self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
         if self.southern_layer:
             self.consumers[southbound_queue] = await self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
 
     # TODO: Need this?
-    async def subscribe_security_queue(self):
-        queue_name = f"security.{self.settings.name}"
-        logger.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.security_message_handler)
+    async def subscribe_system_integrity_queue(self):
+        queue_name = f"system_integrity.{self.settings.name}"
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
 
     async def unsubscribe_adjacent_layers(self):
         northbound_queue = self.build_queue_name('northbound', self.northern_layer)
         southbound_queue = self.build_queue_name('southbound', self.southern_layer)
-        logger.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
+        self.log.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
         if self.northern_layer and northbound_queue in self.consumers:
             await self.consumers[northbound_queue].cancel()
         if self.southern_layer and southbound_queue in self.consumers:
             await self.consumers[southbound_queue].cancel()
-        logger.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
+        self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
 
     # TODO: Need this?
-    async def unsubscribe_security_queue(self):
-        queue_name = f"security.{self.settings.name}"
-        logger.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+    async def unsubscribe_system_integrity_queue(self):
+        queue_name = f"system_integrity.{self.settings.name}"
+        self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
         if queue_name in self.consumers:
             await self.consumers[queue_name].cancel()
-        logger.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+        self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
