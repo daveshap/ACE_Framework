@@ -1,9 +1,10 @@
 # l2_global_strategy.py
+from .ace_layer import AceLayer
 from .bus import Bus
 
 from ..llm.gpt import GPT  # Hardcode to GPT for now
 
-generate_beliefs_system_message =  """
+generate_beliefs_system_message = """
 # MISSION
 You are a component of an ACE (Autonomous Cognitive Entity). Your primary purpose is to try
 and make sense of external telemetry, internal telemetry, and your own internal records in
@@ -25,7 +26,7 @@ environment in which you are operating.
 """
 
 
-class L1GlobalStrategyLayer:
+class L2GlobalStrategyLayer(AceLayer):
     """
     The Global Strategy Layer serves a crucial function within the ACE framework - integrating real-world
     environmental context into the agent's strategic planning and decision-making processes. This grounding in
@@ -35,6 +36,7 @@ class L1GlobalStrategyLayer:
 
     def __init__(self, llm: GPT, model,
                  southbound_bus: Bus, northbound_bus: Bus):
+        super().__init__(2)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
@@ -64,8 +66,5 @@ class L1GlobalStrategyLayer:
 
     def send_southbound_message(self, message):
         self.log("Sending south: " + message)
-        self.southbound_bus.publish(2, message)
+        self.southbound_bus.publish(self.get_name(), message)
 
-    @staticmethod
-    def log(message):
-        print("L2 Global Strategy Layer: " + message)

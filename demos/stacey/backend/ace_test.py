@@ -1,4 +1,3 @@
-import config
 from ace.ace_system import AceSystem
 from llm.gpt import GPT
 from util import get_environment_variable
@@ -9,7 +8,7 @@ if __name__ == "__main__":
         raise ValueError("OPENAI_API_KEY is not set.")
 
     llm = GPT(api_key)
-    ace_system = AceSystem(llm, config.default_model)
+    ace_system = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"))
     ace_system.start()
 
     while True:

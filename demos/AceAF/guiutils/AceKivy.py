@@ -1,42 +1,26 @@
-# kivy_flask_app.py
-
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.lang import Builder
+from kivy.uix.scrollview import ScrollView
+
 from flask import Flask, request, jsonify
 import threading
 import requests
-from kivy.lang import Builder
-from kivy.uix.scrollview import ScrollView
 
 app = Flask(__name__)
 
 
-
-@app.route('/api1', methods=['POST'])
-def api1():
+@app.route('/layer_update', methods=['POST'])
+def layer_update():
     data = request.json
+    layer_number = data.get('layer_number')
     message = data.get('message', '')
-    kivy_app.update_label_api1(message)
-    return jsonify({"status": "received"})
 
-
-@app.route('/api2', methods=['POST'])
-def api2():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api2(message)
-    return jsonify({"status": "received"})
-
-
-@app.route('/api3', methods=['POST'])
-def api3():
-    data = request.json
-    message = data.get('message', '')
-    kivy_app.update_label_api3(message)
+    kivy_app.update_label(layer_number, message)
     return jsonify({"status": "received"})
 
 
@@ -48,87 +32,85 @@ class KivyApp(App):
 
     def __init__(self, **kwargs):
         super(KivyApp, self).__init__(**kwargs)
-        self.history_api1 = ""
-        self.history_api2 = ""
-        self.history_api3 = ""
+
+        # Initialize each layer's history - 7 items (0) for the console and (1-6) for layers 1 to 6
+        self.history = [""] * 7
+
+        # Initialize the GUI Elements
+        self.main_layout = None
+        self.tab_panel = None
+        self.bottom_layout = None
+        self.chat = None
+        self.send_button = None
+        self.tabs = []
+        self.views = []
+        self.labels = []
 
     def build(self):
         self.main_layout = BoxLayout(orientation='vertical')
-        self.tab_panel = TabbedPanel()
+        self.tab_panel = TabbedPanel(do_default_tab=False)
 
-        self.tab_default = TabbedPanelItem(text='Default')
-        self.tab1 = TabbedPanelItem(text='API 1')
-        self.tab2 = TabbedPanelItem(text='API 2')
-        self.tab3 = TabbedPanelItem(text='API 3')
+        tab_titles = ['Console', 'L1 Aspirational', 'L2 Strategy', 'L3 Agent',
+                      'L4 Executive', 'L5 Cognitive', 'L6 Prosecution']
 
-        self.label_default = Label(text='This is the default tab.')
+        for i, title in enumerate(tab_titles):
+            self.history[i] = "Listening to Messages...\n"
+            view = ScrollView()
+            label = Label(
+                text=self.history[i],
+                size_hint_y=None,
+                width=650,
+                text_size=(650, None),
+                halign='left',
+                valign='top')
 
-        # Message histories
-        self.history_api1 = "Waiting for message on API 1...\n"
-        self.history_api2 = "Waiting for message on API 2...\n"
-        self.history_api3 = "Waiting for message on API 3...\n"
+            label.bind(texture_size=label.setter('size'))
+            view.add_widget(label)
 
-        # API 1 ScrollView and Label
-        self.scrollview_api1 = ScrollView()
-        self.label_api1 = Label(text=self.history_api1, size_hint_y=None)
-        self.label_api1.bind(texture_size=self.label_api1.setter('size'))
-        self.scrollview_api1.add_widget(self.label_api1)
+            self.views.append(view)
+            self.labels.append(label)
 
-        # API 2 ScrollView and Label
-        self.scrollview_api2 = ScrollView()
-        self.label_api2 = Label(text=self.history_api2, size_hint_y=None)
-        self.label_api2.bind(texture_size=self.label_api2.setter('size'))
-        self.scrollview_api2.add_widget(self.label_api2)
+            # Create and populate the tabs
+            tab = TabbedPanelItem(text=title)
+            tab.add_widget(self.views[i])
+            self.tabs.append(tab)
 
-        # API 3 ScrollView and Label
-        self.scrollview_api3 = ScrollView()
-        self.label_api3 = Label(text=self.history_api3, size_hint_y=None)
-        self.label_api3.bind(texture_size=self.label_api3.setter('size'))
-        self.scrollview_api3.add_widget(self.label_api3)
-
-        self.tab_default.add_widget(self.label_default)
-        self.tab1.add_widget(self.scrollview_api1)
-        self.tab2.add_widget(self.scrollview_api2)
-        self.tab3.add_widget(self.scrollview_api3)
-
-        self.tab_panel.add_widget(self.tab_default)
-        self.tab_panel.add_widget(self.tab1)
-        self.tab_panel.add_widget(self.tab2)
-        self.tab_panel.add_widget(self.tab3)
+            # Add tabs to the tab panel
+            self.tab_panel.add_widget(self.tabs[i])
 
         self.main_layout.add_widget(self.tab_panel)
 
-        # Chatbox and Send button
-        self.chatbox = TextInput(hint_text='Enter a message...')
+        # Chat and Send button
+        self.chat = TextInput(hint_text='Enter a message...')
         self.send_button = Button(text='Send', size_hint_x=None, width=100)
-        self.send_button.bind(on_press=self.send_message)
+        self.send_button.bind(on_press=self.send_chat_message)
 
         self.bottom_layout = BoxLayout(size_hint_y=None, height=44)
-        self.bottom_layout.add_widget(self.chatbox)
+        self.bottom_layout.add_widget(self.chat)
         self.bottom_layout.add_widget(self.send_button)
 
         self.main_layout.add_widget(self.bottom_layout)
 
         return self.main_layout
 
-    def update_label_api1(self, message):
-        self.history_api1 += message + '\n'
-        self.label_api1.text = self.history_api1
+    def update_label(self, layer_number, message):
+        # Check if the label attribute exists
+        if self.labels[layer_number]:
+            self.history[layer_number] += message + '\n'
+            self.labels[layer_number].text = self.history[layer_number]
+        else:
+            print(f"Error: Layer {layer_number} does not have a matching label attribute.")
 
-    def update_label_api2(self, message):
-        self.history_api2 += message + '\n'
-        self.label_api2.text = self.history_api2
+    def send_chat_message(self, instance):
+        if self.chat.text:
+            data = {
+                "layer_number": 0,
+                "message": self.chat.text
+            }
 
-    def update_label_api3(self, message):
-        self.history_api3 += message + '\n'
-        self.label_api3.text = self.history_api3
-
-    def send_message(self, instance):
-        message = self.chatbox.text
-        if message:
-            response = requests.post('http://127.0.0.1:1337/bot', json={'message': message})
-            # Clear the chatbox after sending
-            self.chatbox.text = ''
+            self.result = requests.post('http://127.0.0.1:5001/bot', json=data)
+            # Clear the chat box after sending
+            self.chat.text = ''
 
 
 if __name__ == '__main__':
