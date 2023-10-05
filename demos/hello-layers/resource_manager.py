@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import argparse
 
 import docker
@@ -9,7 +10,7 @@ import subprocess
 
 from ace.logger import Logger
 
-logger = Logger(__name__)
+logger = Logger(os.path.basename(__file__))
 
 DEFAULT_DOCKER_COMPOSE_FILE = 'docker-compose.yaml'
 DEFAULT_MONITOR_SECONDS = 60
