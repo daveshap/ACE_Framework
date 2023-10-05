@@ -40,6 +40,12 @@ rails db:migrate
 
 * Services (job queues, cache servers, search engines, etc.)
 
+Run this and fill in the appropriate credentials:
+
+```bash
+cp .env.example .env
+```
+
 * Deployment instructions
 
 * ...
