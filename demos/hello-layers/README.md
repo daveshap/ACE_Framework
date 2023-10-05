@@ -14,7 +14,9 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
    * Resources are started from the top down, and shut down from the bottom up
    * The resource manager periodically monitors the 'health' of every resource, restarting containers as necessary
 2. Once all resources are up, a simple communication exchange of test messages ensures all layers are communicating along the busses (Power On Self-Test)
-3. With the communication test checks complete, the ACE fullfills its mission by outputting "Hello, Layers!" to the console
+3. With the communication test checks complete, the ACE attempts to fullfill its mission:
+   * This is accomplished by fully exercising the agents at each layer of the ACE
+   * The mission is simple: output "Hello, Layers!" to the console
 4. Ooohs and ahhhs ensue :P
 
 ## Setup
