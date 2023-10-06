@@ -71,27 +71,25 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 @app.post("/layer/test", response_model=LayerTestResponseModel)
 async def test_prompt(req: LayerTestRequest):
 
-    reasoning_result, bus_action_result = generate_bus_message(
-        input=req.prompts["input"],
-        identity=req.prompts["identity"],
-        reasoning=req.prompts["reasoning"],
-        bus_prompt=req.prompts["bus"],
+    reasoning_result, bus_action_result, llm_messages = generate_bus_message(
+        layer_name=req.layer_name,
+        prompts=req.prompts,
         source_bus=req.source_bus,
-        desitination_bus=req.destination_bus,
-        llm_messages=req.llm_messages,
+        destination_bus=req.destination_bus,
+        llm_messages=req.llm_messages if req.llm_messages else [],
         llm_model_name=req.llm_model_name,
         llm_model_parameters=req.llm_model_parameters,
         openai_api_key=settings.openai_api_key,
     )
 
-    logger.info(f"{response}")
-
     results = LayerTestResponseModel(
         reasoning_result=reasoning_result,
-        action_reult=bus_action_result,
+        action_result=bus_action_result,
+        llm_messages=llm_messages,
     )
 
     return results
+
 
 @app.post("/layer/config", response_model=LayerConfigModel)
 def create_layer_config(
@@ -104,6 +102,7 @@ def create_layer_config(
             return LayerConfigModel.model_validate(results)
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ve.args[0])
+
 
 @app.get("/layer/config/{layer_name}/all", response_model=List[LayerConfigModel])
 def get_all_layer_config(
