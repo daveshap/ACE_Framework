@@ -164,7 +164,7 @@ class FastApiApp:
             try:
                 print(f"flask_app detected message on bus from {sender}: {message}")
                 await self.admin_connection_manager.send_message({
-                    'event_type': 'bus-message',
+                    'eventType': 'busMessage',
                     'data': {
                         'bus': bus.name,
                         'sender': sender,
@@ -180,7 +180,7 @@ class FastApiApp:
             try:
                 print(f"flask_app detected status change in layer {layer.get_id}: {status}")
                 await self.admin_connection_manager.send_message({
-                        'event_type': 'layer-status',
+                        'eventType': 'layerStatus',
                         'data': {
                             'layerId': layer.get_id(),
                             'status': status.name

@@ -16,7 +16,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     const [socketEvent, setSocketEvent] = useState<WebSocketEvent | null>(null);
 
     useEffect(() => {
-        const socket = new WebSocket('ws://localhost:5000/ws/');
+        const socket = new WebSocket('ws://localhost:5000/ws-admin/');
 
         socket.onmessage = (event) => {
             console.log("WebSocketProvider got event:", event.data)

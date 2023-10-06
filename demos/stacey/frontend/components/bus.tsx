@@ -25,7 +25,7 @@ export const Bus: React.FC<BusProps> = ({ busName }) => {
     }
 
     useEffect(() => {
-        if (socketEvent && socketEvent.eventType === 'bus-message' && socketEvent.data.bus === busName) {
+        if (socketEvent && socketEvent.eventType === 'busMessage' && socketEvent.data.bus === busName) {
             const messageData: MessageData = {
                 sender: socketEvent.data.sender,
                 message: socketEvent.data.message,
