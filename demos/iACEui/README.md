@@ -5,12 +5,23 @@
 ### Runing the backend
 
 #### Step 1: Set up your environment
+- create the .env file
 ```bash
-mv src/ace/app/api/example.env src/ace/app/api/.env
+cp src/ace/app/example.env src/ace/app/.env
 ```
-Set you Open API key in the .evn file on this line:
+- Set you Open API key in the .evn file on this line:
 ```bash
-OPENAI_API_KEY="<your api key>"
+OPENAI_API_KEY=<OPENAI API key>
+```
+- Copy the .env file to all the services
+```bash
+cp src/ace/app/.env src/ace/app/api/app
+cp src/ace/app/.env src/ace/app/layer_1_aspirational
+cp src/ace/app/.env src/ace/app/layer_2_global_strategy
+cp src/ace/app/.env src/ace/app/layer_3_agent_model
+cp src/ace/app/.env src/ace/app/layer_4_executive
+cp src/ace/app/.env src/ace/app/layer_5_cognitive_control
+cp src/ace/app/.env src/ace/app/layer_6_task_prosecution
 ```
 
 #### Step 2: Build the base image with:
