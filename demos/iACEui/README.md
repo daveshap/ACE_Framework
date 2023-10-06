@@ -5,14 +5,17 @@
 ### Runing the backend
 
 #### Step 1: Set up your environment
+
 - create the .env file
 ```bash
 cp src/ace/app/example.env src/ace/app/.env
 ```
+
 - Set you Open API key in the .evn file on this line:
 ```bash
 OPENAI_API_KEY=<OPENAI API key>
 ```
+
 - Copy the .env file to all the services
 ```bash
 cp src/ace/app/.env src/ace/app/api/app
