@@ -48,14 +48,23 @@ def get_layer_logs(db: Session, layer_name: str):
     return logs_and_config
 
 
-def update_layer_config(
+def add_layer_config(
     db: Session,
-    config_id: uuid.UUID, 
+    config_id: Optional[uuid.UUID], 
     layer_name: str, 
     prompts, 
     llm_model_name, 
     llm_model_parameters,
 ):
+    layer_state = db.query(LayerState).filter_by(layer_name=layer_name).first()
+    
+    if not layer_state:
+        layer_state = create_layer_state(
+            db=db,
+            layer_name=layer_name,
+            process_messages=False,
+        )
+
     db.query(LayerConfig).filter_by(
         layer_name=layer_name
     ).update({LayerConfig.is_active: False})
@@ -67,16 +76,22 @@ def update_layer_config(
         .first()
     )
     if not current_config:
-        raise ValueError("LayerConfig not found")
-    
-    new_config = LayerConfig(
-        parent_config_id=current_config.config_id,
-        layer_name=layer_name,
-        prompts=prompts,
-        llm_model_name=llm_model_name,
-        llm_model_parameters=llm_model_parameters,
-        is_active=True
-    )
+        new_config = LayerConfig(
+            layer_name=layer_name,
+            prompts=prompts,
+            llm_model_name=llm_model_name,
+            llm_model_parameters=llm_model_parameters,
+            is_active=True
+        )
+    else:    
+        new_config = LayerConfig(
+            parent_config_id=current_config.config_id,
+            layer_name=layer_name,
+            prompts=prompts,
+            llm_model_name=llm_model_name,
+            llm_model_parameters=llm_model_parameters,
+            is_active=True
+        )
     
     db.add(new_config)
     db.commit()

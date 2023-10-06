@@ -62,7 +62,7 @@ class LayerConfigCreate(ModelNameBase, LayerNameBase, BaseModel):
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
 
-class LayerConfigUpdate(ModelNameBase, LayerNameBase, BaseModel):
+class LayerConfigAdd(ModelNameBase, LayerNameBase, BaseModel):
     config_id: uuid.UUID
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters

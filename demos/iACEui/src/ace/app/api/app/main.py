@@ -9,13 +9,11 @@ from base.amqp.exchange import create_exchange
 
 from fastapi import FastAPI, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-import uuid
 from database.connection import get_db
 from database import dao
 
 from schema import (
-    LayerConfigCreate,
-    LayerConfigUpdate,
+    LayerConfigAdd,
     LayerStateUpdate,
     LayerStateCreate,
     Mission,
@@ -91,19 +89,6 @@ async def test_prompt(req: LayerTestRequest):
     return results
 
 
-@app.post("/layer/config", response_model=LayerConfigModel)
-def create_layer_config(
-    layer_config: LayerConfigCreate,
-    session: Session = Depends(get_db),
-):
-    try:
-        with session as db:
-            results = dao.create_layer_config(db, **layer_config.model_dump())
-            return LayerConfigModel.model_validate(results)
-    except ValueError as ve:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=ve.args[0])
-
-
 @app.get("/layer/config/{layer_name}/all", response_model=List[LayerConfigModel])
 def get_all_layer_config(
     layer_name: str,
@@ -137,14 +122,17 @@ def get_layer_logs(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ve.args[0])
 
 
-@app.put("/layer/config", response_model=LayerConfigModel)
-def update_layer_config(
-    layer_config: LayerConfigUpdate, 
+@app.post("/layer/config", response_model=LayerConfigModel)
+def add_layer_config(
+    layer_config: LayerConfigAdd, 
     session: Session = Depends(get_db),
 ):
-    with session as db:
-        results = dao.update_layer_config(db, **layer_config.model_dump())
-        return LayerConfigModel.model_validate(results)
+    try:
+        with session as db:
+            results = dao.add_layer_config(db, **layer_config.model_dump())
+            return LayerConfigModel.model_validate(results)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0])
 
 
 @app.post("/layer/state", response_model=LayerStateModel)
