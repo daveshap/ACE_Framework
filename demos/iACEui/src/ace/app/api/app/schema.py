@@ -8,7 +8,7 @@ from constants import LAYER_NAMES, LLM_MODEL_NAMES, OPENAI_API_ROLES
 
 class LayerNameBase(BaseModel):
     layer_name: str
-    
+
     @validator("layer_name")
     def validate_layer_name(cls, value):
         if value not in LAYER_NAMES:
@@ -23,7 +23,7 @@ class ModelNameBase(BaseModel):
         if value not in LLM_MODEL_NAMES:
             raise ValueError(f"llm_model_name must be one of {LLM_MODEL_NAMES}")
         return value
-    
+
 class OpenAiGPTChatParameters(BaseModel):
     temperature: float = 0.0
     max_tokens: int = 512
@@ -59,14 +59,14 @@ class Mission(BaseModel):
     mission: str
 
 class LayerConfigCreate(ModelNameBase, LayerNameBase, BaseModel):
-    prompts: dict
-    llm_model_parameters: dict
+    prompts: Prompts
+    llm_model_parameters: OpenAiGPTChatParameters
 
 class LayerConfigUpdate(ModelNameBase, LayerNameBase, BaseModel):
     config_id: uuid.UUID
-    prompts: dict
-    llm_model_parameters: dict
-    
+    prompts: Prompts
+    llm_model_parameters: OpenAiGPTChatParameters
+
 class LayerConfigDelete(BaseModel):
     config_id: uuid.UUID
 
@@ -81,8 +81,8 @@ class LayerStateUpdate(LayerNameBase, BaseModel):
 class LayerConfigModel(ModelNameBase, LayerNameBase, BaseModel):
     config_id: uuid.UUID
     parent_config_id: Optional[uuid.UUID] = None
-    prompts: Dict[str, Any]
-    llm_model_parameters: Dict[str, Any]
+    prompts: Prompts
+    llm_model_parameters: OpenAiGPTChatParameters
     is_active: bool = True
     created_at: datetime
     updated_at: datetime
@@ -108,7 +108,7 @@ class RabbitMQLogModel(BaseModel):
     source_bus: Optional[str] = None
     destination_bus: Optional[str] = None
     layer_name: Optional[str] = None
-    llm_messages: Optional[Dict[str, Any]] = None
+    llm_messages: Optional[List[LlmMessage]] = None
     config_id: Optional[uuid.UUID] = None
     input: Optional[str] = None
     reasoning: Optional[str] = None
@@ -120,6 +120,7 @@ class RabbitMQLogModel(BaseModel):
     reply_to: Optional[str] = None
     expiration: Optional[str] = None
     message_id: Optional[str] = None
+    parent_message_id: Optional[str] = None
     type: Optional[str] = None
     user_id: Optional[str] = None
     app_id: Optional[str] = None

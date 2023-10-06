@@ -21,6 +21,7 @@ class RabbitMQLog(Base):
 
     # Headers manually added to the RabbitMQ message log
     source_bus = Column(String(50))
+    parent_message_id = Column(UUID(as_uuid=True))
     destination_bus = Column(String(50))
     layer_name = Column(String(50))
     llm_messages = Column(JSON)
@@ -58,6 +59,7 @@ class RabbitMQLog(Base):
         log_entry = cls(
             queue=method.routing_key,
             message_content=body.decode(),
+            # Message Properties
             content_type=properties.content_type,
             content_encoding=properties.content_encoding,
             delivery_mode=properties.delivery_mode,
@@ -73,6 +75,7 @@ class RabbitMQLog(Base):
             
             # Extracting and assigning header fields
             source_bus=headers.get('source_bus'),
+            parent_message_id=headers.get('parent_message_id'),
             destination_bus=headers.get('destination_bus'),
             layer_name=headers.get('layer_name'),
             llm_messages=deserialized_llm_messages,
