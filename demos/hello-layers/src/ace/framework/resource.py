@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+import time
 import yaml
 import asyncio
 import aio_pika
@@ -91,7 +92,7 @@ class Resource(ABC):
     def start_resource(self):
         self.log.info("Starting resource...")
         self.setup_service()
-        # TODO: This isn't ideal, as the other thread still needs time to start up before this should be called.
+        self.wait_for_local_publisher_queue()
         self.post_start()
         self.log.info("Resource started")
 
@@ -109,6 +110,13 @@ class Resource(ABC):
         self.log.debug("Shutting down service...")
         self.disconnect_busses()
         self.api_endpoint.stop_endpoint()
+
+    def wait_for_local_publisher_queue(self):
+        # TODO: Would be nice if this was cleaner, but we need to wait on the
+        # messaging thread to call post_start().
+        while not self.publisher_local_queue:
+            self.log.info(f"[{self.labeled_name}] waiting for publisher local queue...")
+            time.sleep(1)
 
     def get_consumer_local_queue(self, queue_name):
         if queue_name not in self.consumer_local_queues:
