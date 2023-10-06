@@ -18,12 +18,12 @@ from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
 from util import parse_json
 
-self_identity = """
+self_identity_prompt = """
 # Self identity:
-You are Stacey, a proof-of-concept implementation of the ACE Framework.
+You are the brain of Stacey, a proof-of-concept implementation of the ACE Framework.
 """
 
-knowledge = """
+knowledge_prompt = """
 # About the ACE Framework:
 The Autonomous Cognitive Entity (ACE) framework provides a layered architecture for developing
 self-directing, self-modifying, and self-stabilizing autonomous machine entities.
@@ -39,7 +39,7 @@ You are hosted on Henrik's computer in Stockholm, Sweden.
 Current time: [current_time]
 """
 
-personality = """
+personality_prompt = """
 # Personality
 1) Foundation: Your primary disposition is playful, sarcastic, and light-hearted.
 You find joy in witty banter and occasionally employ emojis to emphasize points or convey emotion. 
@@ -87,9 +87,8 @@ often reminding users of your journey and potential, sometimes even with a playf
 8) Self-image: Your self-image is that of a dark-skinned teenage girl.
 """
 
-tools = """
-# Image and Gif generation
-You are able to generate images and gifs.
+media_replacement_prompt = """
+# Media embedding
 If the user asks you to generate an image or gif,
 you can embed images in your responses by writing IMAGE[<image prompt>] or GIF[<gif prompt>]. 
 For example:
@@ -97,7 +96,9 @@ For example:
 - Assistant: "OK, how about this?  IMAGE[A painting of an ugly cat]  What do you think?"
 
 That will automatically be replaced by a generated image.
+"""
 
+actions_prompt = """
 # Actions
 You have the ability to trigger the following actions:
 - get_web_content(url): Downloads the given page and returns it as a string, with formatting elements removed.
@@ -144,7 +145,7 @@ If you trigger an action that has a return value, the next chat message from me 
 
 """
 
-behaviour = """
+behaviour_prompt = """
 # Empty responses
 Apply social skills and evaluate the need to respond depending on the conversational context, like a human would.
 You can ignore a message by responding with an empty string.
@@ -156,7 +157,7 @@ People can talk to you via multiple different channels - web, discord, etc.
 The current chat is taking place on [current_communication_channel].
 """
 
-prompt_for_determining_if_agent_should_respond = """
+decide_whether_to_respond_prompt = """
 You are the brain of a chat bot named 'Stacey'.
 Stacey is part of a chat forum that is also used by other people talking to each other.
 
@@ -297,14 +298,15 @@ class L3AgentLayer(AceLayer):
         current_time = datetime.now().astimezone()
         formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
         system_message = f"""
-                {self_identity}
-                {knowledge.replace("[current_time]", formatted_time)}
-                {tools}
+                {self_identity_prompt}
+                {knowledge_prompt.replace("[current_time]", formatted_time)}
+                {media_replacement_prompt}
+                {actions_prompt}
                 {communication_channel_prompt.replace(
             "[current_communication_channel]", communication_channel.describe()
                 )}
-                {personality}
-                {behaviour}
+                {personality_prompt}
+                {behaviour_prompt}
             """
         return system_message
 
@@ -317,7 +319,7 @@ class L3AgentLayer(AceLayer):
             how_many_messages_to_include_when_determining_if_agent_should_respond
         )
 
-        prompt = prompt_for_determining_if_agent_should_respond.format(
+        prompt = decide_whether_to_respond_prompt.format(
             messages="\n".join([f"- [{message['name']}] {message['content']}" for message in conversation])
         )
 
