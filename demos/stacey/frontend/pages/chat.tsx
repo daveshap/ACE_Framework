@@ -14,16 +14,20 @@ function Chat() {
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState('gpt-4');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const chatSocketUrl = process.env.NEXT_PUBLIC_CHAT_SOCKET_URL;
     const webSocketRef = useRef<WebSocket | null>(null);
 
 
     if (!backendUrl) {
         return <Alert status="error">I don't know where the backend is! Please set env variable NEXT_PUBLIC_BACKEND_URL</Alert>;
     }
+    if (!chatSocketUrl) {
+        return <Alert status="error">I don't know where the chat socket backend is! Please set env variable NEXT_PUBLIC_CHAT_SOCKET_URL</Alert>;
+    }
 
     useEffect(() => {
         // Initialize WebSocket connection
-        webSocketRef.current = new WebSocket('ws://localhost:5000/ws-chat/');
+        webSocketRef.current = new WebSocket(chatSocketUrl);
 
         // Define event handlers
         webSocketRef.current.onopen = (event) => {
