@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import logging
 import requests
 
 from ace.logger import Logger
 
-logger = Logger(__name__)
+logger = Logger(os.path.basename(__file__))
 
 HOST = 'http://localhost:3000'
 

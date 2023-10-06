@@ -4,7 +4,7 @@ import importlib
 
 from ace.logger import Logger
 
-logger = Logger(__name__)
+logger = Logger(os.path.basename(__file__))
 
 
 def loader(resource_name):

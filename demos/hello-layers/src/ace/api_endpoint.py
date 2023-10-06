@@ -1,10 +1,12 @@
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import os
 import threading
 import json
 
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
 from ace.logger import Logger
 
-logger = Logger(__name__)
+logger = Logger(os.path.basename(__file__))
 
 
 class StatusHandler(BaseHTTPRequestHandler):
