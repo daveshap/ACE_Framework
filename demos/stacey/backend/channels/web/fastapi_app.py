@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.responses import HTMLResponse
 
+from ace.types import ChatMessage, create_chat_message
 from channels.web.web_communication_channel import WebCommunicationChannel
 from media.media_replace import replace_media_prompt_with_media_url_formatted_as_markdown, MediaGenerator
 
@@ -97,8 +98,8 @@ class FastApiApp:
         @app.post("/chat/")
         async def chat(request: Request):
             data = await request.json()
-            conversation = data.get('conversation', [])
-            communication_channel = WebCommunicationChannel(conversation)
+            messages: [ChatMessage] = data.get('messages', [])
+            communication_channel = WebCommunicationChannel(messages)
 
             try:
                 await self.ace.l3_agent.process_incoming_user_message(communication_channel)
@@ -109,7 +110,7 @@ class FastApiApp:
                 response_with_images = await replace_media_prompt_with_media_url_formatted_as_markdown(
                     self.media_generators, communication_channel.response
                 )
-                return {"role": "assistant", "name": "Stacey", "content": response_with_images}
+                return create_chat_message("Stacey", response_with_images)
             except Exception as e:
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
@@ -118,13 +119,12 @@ class FastApiApp:
         @app.get("/chat/")
         async def chat_get(message: str):
             """
-            For testing purposes. Lets you send a single chat message (without a conversation history)
-            and see the raw response from GPT.
+            For testing purposes. Lets you send a single chat message and see the response (if any)
             """
             if not message:
                 raise HTTPException(status_code=400, detail="message parameter is required")
-            conversation = [{"role": "user", "name": "web-user", "content": message}]
-            communication_channel = WebCommunicationChannel(conversation)
+            messages = [create_chat_message("api-user", message)]
+            communication_channel = WebCommunicationChannel(messages)
 
             try:
                 await self.ace.l3_agent.process_incoming_user_message(communication_channel)
@@ -230,4 +230,3 @@ class FastApiApp:
         config = uvicorn.Config(app=self.app, host="localhost", port=5000)
         server = uvicorn.Server(config)
         return await server.serve()
-

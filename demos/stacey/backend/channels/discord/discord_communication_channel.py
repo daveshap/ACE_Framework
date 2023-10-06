@@ -1,8 +1,8 @@
 import discord
 from discord import Embed
 
+from ace.types import ChatMessage
 from channels.communication_channel import CommunicationChannel
-from llm.gpt import GptMessage
 from media.media_replace import MediaGenerator, split_message_by_media
 
 
@@ -27,13 +27,13 @@ class DiscordCommunicationChannel(CommunicationChannel):
             else:
                 await self.discord_channel.send(segment)
 
-    async def get_message_history(self, message_count) -> [GptMessage]:
-        conversation: [GptMessage] = []
+    async def get_message_history(self, message_count) -> [ChatMessage]:
+        chat_messages: [ChatMessage] = []
         discord_messages = await self.get_previous_discord_messages_in_channel(message_count)
         for discord_message in discord_messages:
-            conversation.append(self.construct_gpt_message(discord_message))
-        conversation.append(self.construct_gpt_message(self.incoming_discord_message))  # appending the incoming message
-        return conversation
+            chat_messages.append(self.construct_chat_message(discord_message))
+        chat_messages.append(self.construct_chat_message(self.incoming_discord_message))
+        return chat_messages
 
     async def get_previous_discord_messages_in_channel(self, message_count):
         messages = []
@@ -42,13 +42,9 @@ class DiscordCommunicationChannel(CommunicationChannel):
                 messages.append(historic_message)
         return messages[::-1]  # reverse the list, so we get oldest first
 
-    def construct_gpt_message(self, discord_message) -> GptMessage:
-        if discord_message.author == self.discord_client.user:
-            role = 'assistant'
-        else:
-            role = 'user'
+    def construct_chat_message(self, discord_message) -> ChatMessage:
         name = self.get_user_display_name(discord_message)
-        return {"role": role, "name": name, "content": discord_message.content}
+        return ChatMessage(sender=name, content=discord_message.content, time_utc=discord_message.created_at)
 
     @staticmethod
     def get_user_display_name(msg):

@@ -4,9 +4,12 @@ import axios from 'axios';
 import {Alert, Box, Container, Flex, Heading, Image, Select, Spinner, Text, Textarea, VStack} from '@chakra-ui/react';
 import ChakraUIRenderer from "chakra-ui-markdown-renderer";
 import ReactMarkdown from "react-markdown";
+import {ChatMessage, createChatMessage} from "@/lib/types";
+
+const userName = 'web-user'
 
 function Chat() {
-    const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState('gpt-4');
@@ -19,7 +22,8 @@ function Chat() {
     const handleKeyPress = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const updatedMessages = [...messages, {role: 'user', name: 'web-user', content: input}];
+            const newMessage = createChatMessage(userName, input);
+            const updatedMessages = [...messages, newMessage];
             setMessages(updatedMessages);
             setLoading(true);
             setInput('');
@@ -27,7 +31,7 @@ function Chat() {
             try {
                 const response = await axios.post(backendUrl + "/chat", {
                     model: model,
-                    conversation: updatedMessages,
+                    messages: updatedMessages,
                 });
 
                 setMessages([...updatedMessages, response.data]);
@@ -45,11 +49,11 @@ function Chat() {
                 <Heading mb={4}>Stacey</Heading>
                 <Box flex="1" overflowY="auto" p={3}>
                     {messages.map((msg, index) => (
-                        <Flex key={index} mb={2} direction="column" align={msg.role === 'user' ? 'flex-end' : 'flex-start'}>
+                        <Flex key={index} mb={2} direction="column" align={msg.sender === userName ? 'flex-end' : 'flex-start'}>
                             <Flex align="center">
-                                {msg.role !== 'user' && <Image src="/images/stacey-160.png" borderRadius="full" boxSize="40px" mr={2} />}
-                                <Box p={2} rounded="md" bg={msg.role === 'user' ? 'blue.100' : 'gray.100'}>
-                                    <Text><b>{msg.role === 'user' ? 'You' : 'Stacey'}:</b></Text>
+                                {msg.sender === 'Stacey' && <Image src="/images/stacey-160.png" borderRadius="full" boxSize="40px" mr={2} />}
+                                <Box p={2} rounded="md" bg={msg.sender === userName ? 'blue.100' : 'gray.100'}>
+                                    <Text><b>{msg.sender === userName ? 'You' : msg.sender}:</b></Text>
                                     <ReactMarkdown  components={ChakraUIRenderer()} skipHtml>
                                         {msg.content}
                                     </ReactMarkdown>

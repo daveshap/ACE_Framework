@@ -1,13 +1,14 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
+import ace.l3_agent_prompts as prompts
 from ace.ace_layer import AceLayer
 from ace.bus import Bus
-import ace.l3_agent_prompts as prompts
 from ace.layer_status import LayerStatus
+from ace.types import ChatMessage
 from actions.action import Action
 from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
 from actions.cancel_scheduled_action import CancelScheduledAction
@@ -19,9 +20,9 @@ from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
 from util import parse_json
 
-how_many_messages_to_include_when_determining_if_agent_should_respond = 3
+chat_history_length_short = 3
 
-how_many_messages_to_include_when_generating_response = 10
+chat_history_length = 10
 
 
 class L3AgentLayer(AceLayer):
@@ -36,28 +37,33 @@ class L3AgentLayer(AceLayer):
         self.scheduler.start()
 
     async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
-        # Check if I need to act
+        # Early out if I don't need to act, for example if I overheard a message that wasn't directed at me
         if not await self.should_act(communication_channel):
-            # I don't need to respond or talk to the LLM. Maybe I overheard a message that wasn't directed at me
             return
 
-        # Build up the conversation
-        message_history: [GptMessage] = await communication_channel.get_message_history(
-            how_many_messages_to_include_when_generating_response
+        system_message = self.create_system_message()
+
+        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        user_message = (
+            prompts.act_on_user_input
+            .replace("[communication_channel]", communication_channel.describe())
+            .replace("[chat_history]", self.stringify_chat_history(chat_history))
         )
-        system_message = self.create_system_message(communication_channel)
-        conversation = [{"role": "system", "content": system_message}] + message_history
+        llm_messages: [GptMessage] = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ]
+        print("System prompt: " + system_message)
+        print("User prompt: " + user_message)
+        await self.talk_to_llm_and_execute_actions(communication_channel, llm_messages)
 
-        # Talk to the LLM
-        await self.talk_to_llm_and_execute_actions(communication_channel, conversation)
-
-    async def talk_to_llm_and_execute_actions(self, communication_channel, conversation):
+    async def talk_to_llm_and_execute_actions(self, communication_channel, llm_messages: [GptMessage]):
         await self.set_status(LayerStatus.INFERRING)
         try:
-            llm_response: GptMessage = await self.llm.create_conversation_completion(self.model, conversation)
+            llm_response: GptMessage = await self.llm.create_conversation_completion(self.model, llm_messages)
             llm_response_content = llm_response["content"].strip()
             if llm_response_content:
-                conversation.append(llm_response)
+                llm_messages.append(llm_response)
 
                 print("Raw LLM response:\n" + llm_response_content)
 
@@ -70,7 +76,7 @@ class L3AgentLayer(AceLayer):
                 running_actions = []
                 for action in actions:
                     running_actions.append(
-                        self.execute_action_and_send_result_to_llm(action, communication_channel, conversation)
+                        self.execute_action_and_send_result_to_llm(action, communication_channel, llm_messages)
                     )
                 # Wait for all actions to finish
                 await asyncio.gather(*running_actions)
@@ -80,17 +86,21 @@ class L3AgentLayer(AceLayer):
             await self.set_status(LayerStatus.IDLE)
 
     async def execute_action_and_send_result_to_llm(
-            self, action: Action, communication_channel: CommunicationChannel, conversation: [GptMessage]):
+            self, action: Action, communication_channel: CommunicationChannel, llm_messages: [GptMessage]):
         print("Executing action: " + str(action))
         action_output: Optional[str] = await action.execute()
         if action_output is None:
             print("No response from action")
             return
 
-        print("Got action output, will add to the conversation and talk to llm again.")
-        conversation.append({"role": "user", "name": "action-output", "content": action_output})
+        print("Got action output, will add to the llm messages and talk to llm again.")
+        llm_messages.append({
+            "role": "user",
+            "name": "action-output",
+            "content": action_output
+        })
 
-        await self.talk_to_llm_and_execute_actions(communication_channel, conversation)
+        await self.talk_to_llm_and_execute_actions(communication_channel, llm_messages)
 
     def parse_actions(self, communication_channel: CommunicationChannel, actions_string: str):
         action_data_list = parse_json(actions_string)
@@ -140,33 +150,31 @@ class L3AgentLayer(AceLayer):
 
         return ScheduleAction(self.scheduler, communication_channel, action_to_schedule, delay_seconds)
 
-    def create_system_message(self, communication_channel: CommunicationChannel):
-        current_time = datetime.now().astimezone()
-        formatted_time = f"{current_time.strftime('%A')} {current_time.isoformat()}"
+    def create_system_message(self):
+        current_time_utc = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
         system_message = f"""
                 {prompts.self_identity}
-                {prompts.knowledge.replace("[current_time]", formatted_time)}
+                {prompts.personality}
+                {prompts.knowledge.replace("[current_time_utc]", current_time_utc)}
                 {prompts.media_replacement}
                 {prompts.actions}
-                {prompts.communication_channel.replace(
-            "[current_communication_channel]", communication_channel.describe()
-                )}
-                {prompts.personality}
-                {prompts.behaviour}
             """
         return system_message
 
     async def should_act(self, communication_channel: CommunicationChannel):
         """
-        Ask the LLM whether this is a message that we should act upon
+        Ask the LLM whether this is a message that we should act upon.
+        This is a cheaper request than asking the LLM to generate a response,
+        allows us to early-out for unrelated messages.
         """
 
-        conversation: [GptMessage] = await communication_channel.get_message_history(
-            how_many_messages_to_include_when_determining_if_agent_should_respond
+        message_history: [ChatMessage] = await communication_channel.get_message_history(
+            chat_history_length_short
         )
 
         prompt = prompts.decide_whether_to_respond_prompt.format(
-            messages="\n".join([f"- [{message['name']}] {message['content']}" for message in conversation])
+            messages=self.stringify_chat_history(message_history)
         )
 
         print(f"Prompt to determine if we should respond:\n {prompt}")
@@ -183,4 +191,10 @@ class L3AgentLayer(AceLayer):
             return response_content.startswith("yes")
         finally:
             await self.set_status(LayerStatus.IDLE)
+
+    def stringify_chat_history(self, conversation: [ChatMessage]):
+        return "\n".join(f"- {self.stringify_chat_message(message)}" for message in conversation)
+
+    def stringify_chat_message(self, chat_message: ChatMessage):
+        return f"<{chat_message['time_utc']}> [{chat_message['sender']}] {chat_message['content']}"
 
