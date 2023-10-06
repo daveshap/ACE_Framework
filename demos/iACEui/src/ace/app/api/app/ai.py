@@ -37,8 +37,6 @@ f"""
         **llm_model_parameters.model_dump(exclude_none=True, exclude_unset=True),
     )
     reasoning_result = reasoning_response.choices[0].message
-    llm_messages.append(reasoning_result)
-
 
     action_prompt = (
 f"""

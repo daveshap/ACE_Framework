@@ -69,10 +69,9 @@ class RabbitMQLogModel(LayerNameBase, BaseModel):
     app_id: Optional[str]
     cluster_id: Optional[str]
 
-class LayerConfigModel(ModelNameBase, BaseModel):
+class LayerConfigModel(ModelNameBase, LayerNameBase, BaseModel):
     config_id: UUID
     layer_id: UUID
-    layer_name: str
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
     is_active: bool
