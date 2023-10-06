@@ -1,5 +1,4 @@
 # channels/web/fastapi_app.py
-import json
 import traceback
 
 import uvicorn
@@ -10,41 +9,8 @@ from starlette.responses import HTMLResponse
 
 from ace.types import ChatMessage, create_chat_message
 from channels.web.web_communication_channel import WebCommunicationChannel
-from media.media_replace import replace_media_prompt_with_media_url_formatted_as_markdown, MediaGenerator
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections = []
-
-    async def connect(self, websocket: WebSocket):
-        print("connect socket")
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    async def disconnect(self, websocket: WebSocket):
-        print("disconnect socket")
-        self.active_connections.remove(websocket)
-
-    async def send_message(self, event_type: str, message: dict):
-        formatted_message = {
-            "eventType": event_type,
-            "data": message
-        }
-        closed_connections = []  # List to hold closed connections for later removal
-        for connection in self.active_connections:
-            # noinspection PyBroadException
-            try:
-                print("Sending message to socket")
-                await connection.send_text(json.dumps(formatted_message))
-                print("Successfully sent message to socket")
-            except Exception:
-                print("Socket not open, marking for removal from active connections")
-                closed_connections.append(connection)  # Mark closed connections for removal
-
-        # Remove closed connections from active_connections list
-        for closed_connection in closed_connections:
-            self.active_connections.remove(closed_connection)
+from channels.web.web_socket_connection_manager import WebSocketConnectionManager
+from media.media_replace import MediaGenerator
 
 
 class FastApiApp:
@@ -52,7 +18,8 @@ class FastApiApp:
         self.app = FastAPI()
         self.ace = ace_system
         self.media_generators = media_generators
-        self.connection_manager = ConnectionManager()
+        self.admin_connection_manager = WebSocketConnectionManager()
+        self.chatConnectionManager = WebSocketConnectionManager()
         self.app.add_exception_handler(Exception, self.custom_exception_handler)
 
         # Setup CORS
@@ -79,11 +46,15 @@ class FastApiApp:
     def setup_routes(self):
         app = self.app  # to shorten the code
 
-        @app.websocket("/ws/")
-        async def websocket_endpoint(websocket: WebSocket):
-            print("websocket_endpoint called")
-            await self.connection_manager.connect(websocket)
-            print("2")
+        @app.websocket("/ws-admin/")
+        async def websocket_endpoint_admin(websocket: WebSocket):
+            print("websocket_endpoint_admin called")
+            await self.admin_connection_manager.connect(websocket)
+
+        @app.websocket("/ws-chat/")
+        async def websocket_endpoint_chat(websocket: WebSocket):
+            print("websocket_endpoint_chat called")
+            await self.chatConnectionManager.connect(websocket)
 
         # noinspection PyUnusedLocal
         @app.exception_handler(Exception)
@@ -99,18 +70,11 @@ class FastApiApp:
         async def chat(request: Request):
             data = await request.json()
             messages: [ChatMessage] = data.get('messages', [])
-            communication_channel = WebCommunicationChannel(messages)
+            communication_channel = WebCommunicationChannel(messages, self.chatConnectionManager, self.media_generators)
 
             try:
                 await self.ace.l3_agent.process_incoming_user_message(communication_channel)
-                if communication_channel.response is None:
-                    print("No response from process_incoming_user_message")
-                    return {"role": "assistant", "name": "Stacey", "content": "(no response)"}
-                print("process_incoming_user_message completed. Response: " + communication_channel.response)
-                response_with_images = await replace_media_prompt_with_media_url_formatted_as_markdown(
-                    self.media_generators, communication_channel.response
-                )
-                return create_chat_message("Stacey", response_with_images)
+                return JSONResponse(content={"success": True}, status_code=200)
             except Exception as e:
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
@@ -124,14 +88,11 @@ class FastApiApp:
             if not message:
                 raise HTTPException(status_code=400, detail="message parameter is required")
             messages = [create_chat_message("api-user", message)]
-            communication_channel = WebCommunicationChannel(messages)
+            communication_channel = WebCommunicationChannel(messages, self.chatConnectionManager, self.media_generators)
 
             try:
                 await self.ace.l3_agent.process_incoming_user_message(communication_channel)
-                if communication_channel.response is None:
-                    print("No response from ask_llm_which_actions_to_take")
-                    return "(no response)"
-                return communication_channel.response
+                return "Message sent to Stacey"
             except Exception as e:
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
@@ -202,11 +163,13 @@ class FastApiApp:
         async def listener(sender, message):
             try:
                 print(f"flask_app detected message on bus from {sender}: {message}")
-                event_type = f'bus-message'
-                await self.connection_manager.send_message(event_type, {
-                    'bus': bus.name,
-                    'sender': sender,
-                    'message': message
+                await self.admin_connection_manager.send_message({
+                    'event_type': 'bus-message',
+                    'data': {
+                        'bus': bus.name,
+                        'sender': sender,
+                        'message': message
+                    }
                 })
             except Exception as e:
                 print(f"Error in bus listener: {e}")
@@ -216,10 +179,12 @@ class FastApiApp:
         async def listener(status):
             try:
                 print(f"flask_app detected status change in layer {layer.get_id}: {status}")
-                event_type = f'layer-status'
-                await self.connection_manager.send_message(event_type, {
-                    'layerId': layer.get_id(),
-                    'status': status.name
+                await self.admin_connection_manager.send_message({
+                        'event_type': 'layer-status',
+                        'data': {
+                            'layerId': layer.get_id(),
+                            'status': status.name
+                        }
                 })
             except Exception as e:
                 print(f"Error in layer status listener: {e}")

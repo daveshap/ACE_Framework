@@ -1,5 +1,5 @@
 // pages/chat.tsx
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import {Alert, Box, Container, Flex, Heading, Image, Select, Spinner, Text, Textarea, VStack} from '@chakra-ui/react';
 import ChakraUIRenderer from "chakra-ui-markdown-renderer";
@@ -14,10 +14,43 @@ function Chat() {
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState('gpt-4');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const webSocketRef = useRef<WebSocket | null>(null);
+
 
     if (!backendUrl) {
         return <Alert status="error">I don't know where the backend is! Please set env variable NEXT_PUBLIC_BACKEND_URL</Alert>;
     }
+
+    useEffect(() => {
+        // Initialize WebSocket connection
+        webSocketRef.current = new WebSocket('ws://localhost:5000/ws-chat/');
+
+        // Define event handlers
+        webSocketRef.current.onopen = (event) => {
+            console.log('WebSocket open:', event);
+        };
+
+        webSocketRef.current.onmessage = (event) => {
+            const incomingMessage: ChatMessage = JSON.parse(event.data);
+            setMessages(prevMessages => [...prevMessages, incomingMessage]);
+        };
+
+        webSocketRef.current.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        webSocketRef.current.onclose = (event) => {
+            console.log('WebSocket closed:', event);
+        };
+
+        // Cleanup: close the WebSocket connection when the component is unmounted
+        return () => {
+            if (webSocketRef.current) {
+                webSocketRef.current.close();
+            }
+        };
+    }, []);  // Empty dependency array means this useEffect runs once, similar to componentDidMount
+
 
     const handleKeyPress = async (e: React.KeyboardEvent) => {
         if (e.key === 'Enter') {
@@ -33,8 +66,8 @@ function Chat() {
                     model: model,
                     messages: updatedMessages,
                 });
+                console.log('Response from backend:', response)
 
-                setMessages([...updatedMessages, response.data]);
             } catch (error) {
                 console.error('Error sending message:', error);
             } finally {
