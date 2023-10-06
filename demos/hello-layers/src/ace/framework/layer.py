@@ -1,3 +1,5 @@
+import time
+import uuid
 import yaml
 import aio_pika
 
@@ -52,20 +54,16 @@ class Layer(Resource):
         self.log.debug("Deregistered busses...")
 
     def run_layer(self):
-        import time
-        import uuid
-        # TODO: Awful.
-        while not self.publisher_local_queue:
-            self.log.info(f"[{self.labeled_name}] waiting for publisher local queue...")
-            time.sleep(1)
         while True:
             if self.northern_layer:
                 messages = self.get_messages_from_consumer_local_queue('control')
+                reply = None
                 for m in messages:
                     data, message = m
+                    reply = data['message']
                     self.log.info(f"[{self.labeled_name}] received a control message: {message.body.decode()}")
                 time.sleep(5)
-                message = self.build_message(self.northern_layer, message={'message': str(uuid.uuid4())[:8]}, message_type='data')
+                message = self.build_message(self.northern_layer, message={'message': f"{reply} REPLY"}, message_type='data')
                 self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
             if self.southern_layer:
                 messages = self.get_messages_from_consumer_local_queue('data')
@@ -89,6 +87,7 @@ class Layer(Resource):
         return data['type'] == 'pong'
 
     async def ping(self, direction, layer):
+        self.log.info(f"Sending PING: {self.labeled_name} ->  {self.build_queue_name(direction, layer)}")
         message = self.build_message(layer, message_type='ping')
         await self.send_message(self, direction, layer, message)
 
@@ -145,13 +144,14 @@ class Layer(Resource):
             await self.post()
 
     async def subscribe_adjacent_layers(self):
-        northbound_queue = self.build_queue_name('northbound', self.northern_layer)
-        southbound_queue = self.build_queue_name('southbound', self.southern_layer)
-        self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue} and {southbound_queue}...")
         if self.northern_layer:
-            self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
-        if self.southern_layer:
+            southbound_queue = self.build_queue_name('southbound', self.settings.name)
+            self.log.debug(f"{self.labeled_name} subscribing to {southbound_queue}...")
             self.consumers[southbound_queue] = await self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
+        if self.southern_layer:
+            northbound_queue = self.build_queue_name('northbound', self.settings.name)
+            self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue}...")
+            self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
 
     # TODO: Need this?
     async def subscribe_system_integrity_queue(self):
