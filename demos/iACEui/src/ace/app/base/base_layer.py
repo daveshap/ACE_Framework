@@ -49,7 +49,7 @@ class BaseLayer(ABC):
     async def control_bus_message_handler(self, message: aio_pika.IncomingMessage):
         try:
             if self.settings.debug:
-                self.wait_for_signal()
+                await self.wait_for_signal()
 
             with get_db() as session:
                 await self._process_message(message, session, "Control Bus")
@@ -57,7 +57,7 @@ class BaseLayer(ABC):
         except:
             await message.nack()
 
-    def wait_for_signal(self):
+    async def wait_for_signal(self):
         with get_db() as session:
             while True:
                 process_messages = get_layer_state_by_name(
@@ -66,7 +66,8 @@ class BaseLayer(ABC):
                 )
                 if process_messages:
                     break
-                time.sleep(3)
+                await asyncio.sleep(3)
+
 
     async def _process_message(self, message: aio_pika.IncomingMessage, source_bus: str):
         self._fetch_layer_config()
