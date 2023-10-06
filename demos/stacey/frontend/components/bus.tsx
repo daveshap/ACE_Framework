@@ -72,7 +72,7 @@ export const Bus: React.FC<BusProps> = ({ busName }) => {
 
     return (
         <Box p={4} background={background} rounded={10}>
-            <VStack spacing={4} w={500}>
+            <VStack spacing={4}>
                 <Text fontSize="xl" mb={2}>🚌{arrowIcon} {`${busName} bus`} {arrowIcon}🚌</Text>
                 <VStack align="start" spacing={1}>
                     {logs.map((log, index) => (

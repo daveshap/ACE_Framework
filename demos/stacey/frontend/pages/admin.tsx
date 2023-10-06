@@ -1,6 +1,6 @@
 // pages/admin/Bus.tsx
 import React from 'react';
-import {Alert, Box, Heading, HStack, Image, VStack} from '@chakra-ui/react';
+import {Alert, Box, Flex, Heading, Image, VStack} from '@chakra-ui/react';
 import {Bus} from "@/components/bus";
 import LayerStatus from "@/components/layerStatus";
 import {WebSocketProvider} from "@/context/WebSocketContext";
@@ -18,8 +18,8 @@ const AdminPage = () => {
             <Box backgroundColor="black" minH="100vh">
                 <VStack w={"full"}>
                     <Heading color={"white"} >Stacey's brain</Heading>
-                    <HStack spacing={8} align="start">
-                        <Bus busName="southbound" />
+                    <Flex w="full" align="start">
+                        <Box flex="1" mx="3"><Bus busName="southbound" /></Box>
                         <VStack>
                             <Image src="/images/stacey-160.png" alt="Stacey" borderRadius="full"  mb={8} />
                             <LayerStatus layerId={1} displayName={"Layer 1: Aspirational 🌟"} backgroundColor={"red.100"} />
@@ -29,8 +29,8 @@ const AdminPage = () => {
                             <LayerStatus layerId={5} displayName={"Layer 5: Cognitive Control ⚙️"} backgroundColor={"teal.100"} />
                             <LayerStatus layerId={6} displayName={"Layer 6: Task Prosecution 🛠️"} backgroundColor={"blue.100"} />
                         </VStack>
-                        <Bus busName="northbound" />
-                    </HStack>
+                        <Box flex="1" mx="3"><Bus busName="northbound" /></Box>
+                    </Flex>
                 </VStack>
             </Box>
         </WebSocketProvider>
