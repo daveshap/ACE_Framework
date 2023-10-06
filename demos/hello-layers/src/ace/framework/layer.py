@@ -87,6 +87,7 @@ class Layer(Resource):
         return data['type'] == 'pong'
 
     async def ping(self, direction, layer):
+        self.log.info(f"Sending PING: {self.labeled_name} ->  {self.build_queue_name(direction, layer)}")
         message = self.build_message(layer, message_type='ping')
         await self.send_message(self, direction, layer, message)
 
