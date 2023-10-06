@@ -114,7 +114,7 @@ class FastApiApp:
             except Exception as e:
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
-                return JSONResponse(content={"error": str(e), "traceback": traceback_str}, status_code=400)
+                return create_chat_message("Stacey", f"Damn! Something went wrong: {str(e)}")
 
         @app.get("/chat/")
         async def chat_get(message: str):
