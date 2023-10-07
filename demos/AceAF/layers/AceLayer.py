@@ -20,6 +20,7 @@ class AceLayer:
 
         self.bus = {'NorthBus': None, 'SouthBus': None}
         self.top_layer_message = None
+        self.my_message = None
         self.bottom_layer_message = None
 
         self.events = []
@@ -77,7 +78,7 @@ class AceLayer:
                 callback()
                 event.clear()
 
-        self.interface.output_message(self.layer_number, f"{self.layer_name} - Listening to {event_name}!!!")
+        # self.interface.output_message(self.layer_number, f"{self.layer_name} - Listening to {event_name}!!!")
 
         thread = threading.Thread(target=event_loop)
         thread.daemon = True
@@ -85,16 +86,20 @@ class AceLayer:
         return thread
 
     def update_bus(self, **kwargs):
+        self.my_message = kwargs['message'].__str__()
+
         params = {
             'collection_name': kwargs['bus'],
             'ids': [self.layer_number.__str__()],
-            'data': [kwargs['message'].__str__()]
+            'data': [self.my_message]
         }
 
         self.storage.save_memory(params)
 
         if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
             LAYER_REGISTRY[self.south_layer].input_update_event.set()
+
+        self.interface.output_message(self.layer_number, f"\n{self.my_message}\n")
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
@@ -120,9 +125,9 @@ class AceLayer:
             index = south_bus['ids'].index(north_layer)
             self.top_layer_message = south_bus['documents'][index]
 
-        self.interface.output_message(self.layer_number, f"North Incoming Message:\n{self.top_layer_message}\n")
+        # self.interface.output_message(self.layer_number, f"North Incoming Message:\n{self.top_layer_message}\n")
 
-        # North Layer Writes to South Bus, Hence it's a Message from the Bottom Layer
+        # # North Layer Writes to South Bus, Hence it's a Message from the Bottom Layer
         # if south_layer in north_bus['ids']:
         #     index = north_bus['ids'].index(north_layer)
         #     self.bottom_layer_message = north_bus['documents'][index]
