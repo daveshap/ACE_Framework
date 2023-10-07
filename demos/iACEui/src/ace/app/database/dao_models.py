@@ -14,16 +14,8 @@ class LayerNameBase(BaseModel):
             raise ValueError(f"layer_name must be one of {LAYER_NAMES}")
         return value
 
-class ModelNameBase(BaseModel):
-    llm_model_name: str = 'gpt-3.5-turbo'
-    
-    @validator("llm_model_name")
-    def validate_llm_model_name(cls, value):
-        if value not in LLM_MODEL_NAMES:
-            raise ValueError(f"llm_model_name must be one of {LLM_MODEL_NAMES}")
-        return value
-
 class OpenAiGPTChatParameters(BaseModel):
+    model: str = 'gpt-3.5-turbo'
     temperature: float = 0.0
     max_tokens: int = 512
     top_p: Optional[float]
@@ -69,9 +61,11 @@ class RabbitMQLogModel(LayerNameBase, BaseModel):
     app_id: Optional[str]
     cluster_id: Optional[str]
 
-class LayerConfigModel(ModelNameBase, LayerNameBase, BaseModel):
+class LayerConfigModel(LayerNameBase, BaseModel):
     config_id: UUID
-    layer_id: UUID
+    llm_model_name: str = 'gpt-3.5-turbo'
+    parent_config_id: Optional[UUID] = None
+    layer_name: str
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
     is_active: bool
@@ -81,3 +75,11 @@ class LayerConfigModel(ModelNameBase, LayerNameBase, BaseModel):
 class MessageWithLayerConfigModel(BaseModel):
     rabbitmq_log: RabbitMQLogModel
     layer_config: LayerConfigModel
+
+class AncestralPrompt(BaseModel):
+    ancestral_prompt_id: UUID
+    parent_ancestral_prompt_id: Optional[UUID]
+    prompt: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime

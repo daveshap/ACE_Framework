@@ -64,7 +64,7 @@ class LayerConfigCreate(LayerNameBase, BaseModel):
     llm_model_parameters: OpenAiGPTChatParameters
 
 class LayerConfigAdd(LayerNameBase, BaseModel):
-    config_id: uuid.UUID
+    config_id: Optional[uuid.UUID] = None # if passed it uses this as the parent config id
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
 
@@ -76,6 +76,14 @@ class LayerStateCreate(LayerNameBase, BaseModel):
 
 class LayerStateUpdate(LayerNameBase, BaseModel):
     process_messages: bool
+
+class AncestralPromptAdd(BaseModel):
+    ancestral_prompt_id: Optional[uuid.UUID] = None # if passed it uses this as the parent
+    prompt: str
+    is_active: Optional[bool] = False
+
+class AncestralPromptUpdate(BaseModel):
+    ancestral_prompt_id: Optional[uuid.UUID]
 
 
 # responses:
@@ -138,3 +146,14 @@ class LayerTestResponseModel(LayerNameBase, BaseModel):
 
 class ConfirmationModel(BaseModel):
     status: str = "success"
+
+class AncestralPromptModel(BaseModel):
+    ancestral_prompt_id: uuid.UUID
+    parent_ancestral_prompt_id: Optional[uuid.UUID]
+    prompt: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

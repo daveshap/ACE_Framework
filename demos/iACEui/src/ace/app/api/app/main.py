@@ -1,5 +1,6 @@
 import asyncio
 from typing import Dict, List
+import uuid
 
 import aio_pika
 from fastapi import FastAPI
@@ -21,8 +22,9 @@ from schema import (
     LayerStateModel,
     LayerTestRequest,
     LayerTestResponseModel,
-    ConfirmationModel,
-    LlmMessage
+    LlmMessage,
+    AncestralPromptAdd,
+    AncestralPromptModel,
 )
 
 from ai import generate_bus_message
@@ -81,20 +83,38 @@ async def test_prompt(req: LayerTestRequest):
         openai_api_key=settings.openai_api_key,
     )
 
-    print(f"{reasoning_result=}")
-    reason = LlmMessage.model_validate(reasoning_result)
-    print(f"{reason=}")
     results = LayerTestResponseModel(
         layer_name=req.layer_name,
-        reasoning_result=LlmMessage.model_validate(reasoning_result),
-        data_bus_action=LlmMessage.model_validate(data_bus_action),
-        control_bus_action=LlmMessage.model_validate(control_bus_action),
+        reasoning_result=LlmMessage(**reasoning_result),
+        data_bus_action=LlmMessage(**data_bus_action),
+        control_bus_action=LlmMessage(**control_bus_action),
     )
 
     return results
 
 
-@app.post("/layer/prompt/ancestral", response_model=ConfirmationModel)
+@app.post("/prompt/ancestral", response_model=AncestralPromptModel)
+def add_ancestral_prompt(
+    ancestral_prompt: AncestralPromptAdd, 
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.add_ancestral_prompt(db=db, **ancestral_prompt.model_dump())
+        return AncestralPromptModel.model_validate(results)
+    
+
+@app.patch("/prompt/ancestral/id/{ancestral_prompt_id}/active", response_model=AncestralPromptModel)
+def set_active_ancestral_prompt(
+    ancestral_prompt_id: uuid.UUID,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.set_active_ancestral_prompt(
+            db=db, 
+            ancestral_prompt_id=ancestral_prompt_id,
+        )
+        return AncestralPromptModel.model_validate(results)
+    
 
 @app.get("/layer/config/{layer_name}/all", response_model=List[LayerConfigModel])
 def get_all_layer_config(
@@ -140,7 +160,17 @@ def add_layer_config(
             return LayerConfigModel.model_validate(results)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.args[0])
+    
 
+@app.patch("/layer/config/{config_id}/active", response_model=LayerConfigModel)
+def set_active_config(
+    config_id: uuid.UUID,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.set_active_layer_config(db=db, config_id=config_id)
+        return LayerConfigModel.model_validate(results)
+    
 
 @app.post("/layer/state", response_model=LayerStateModel)
 def create_layer_state(
@@ -162,13 +192,30 @@ def get_layer_state_by_name(
         return LayerStateModel.model_validate(results)
 
 
-@app.put("/layer/state", response_model=LayerStateModel)
+@app.patch("/layer/state/{layer_name}/pause", response_model=LayerStateModel)
 def update_layer_state(
-    layer_state: LayerStateUpdate,
+    layer_name: str,
     session: Session = Depends(get_db),
 ):
     with session as db:
-        results = dao.update_layer_state(db, **layer_state.model_dump())
+        results = dao.update_layer_state(
+            db=db,
+            layer_name=layer_name,
+            process_messages=False,
+        )
+        return LayerStateModel.model_validate(results)
+    
+@app.patch("/layer/state/{layer_name}/resume", response_model=LayerStateModel)
+def update_layer_state(
+    layer_name: str,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.update_layer_state(
+            db=db,
+            layer_name=layer_name,
+            process_messages=True,
+        )
         return LayerStateModel.model_validate(results)
 
 

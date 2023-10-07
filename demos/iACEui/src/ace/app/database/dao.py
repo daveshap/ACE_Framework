@@ -1,36 +1,56 @@
-from .models import LayerConfig, LayerState, RabbitMQLog
+from .models import LayerConfig, LayerState, RabbitMQLog, AncestralPrompt
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 import uuid
 from typing import Optional
 
 
-def create_layer_config(db: Session, layer_name: str, prompts: dict, llm_model_name: str, llm_model_parameters: dict):
-    layer = db.query(LayerState).filter_by(layer_name=layer_name).first()
-    
-    if not layer:
-        layer = create_layer_state(
-            db=db,
-            layer_name=layer_name,
-            process_messages=False,
+def add_ancestral_prompt(
+    db: Session,
+    ancestral_prompt_id: Optional[uuid.UUID],
+    prompt: str, 
+    is_active: Optional[bool] = False,
+):
+    new_prompt = None
+    current_prompt = None
+    if ancestral_prompt_id:
+        current_prompt = db.query(AncestralPrompt).filter_by(ancestral_prompt_id=ancestral_prompt_id).first()
+
+    if not current_prompt:
+        new_prompt = AncestralPrompt(prompt=prompt)
+
+    else:
+        new_prompt = AncestralPrompt(
+            parent_ancestral_prompt_id=current_prompt.ancestral_prompt_id,
+            prompt=prompt,
         )
-
-    config = db.query(LayerConfig).first()
-
-    if config:
-        raise ValueError(f"Layer config for '{layer_name}' already exists, use update api")
-
-    new_config = LayerConfig(
-        layer_name=layer_name,
-        prompts=prompts,
-        llm_model_name=llm_model_name,
-        llm_model_parameters=llm_model_parameters,
-        is_active=True
-    )
     
-    db.add(new_config)
+    if is_active:
+        db.query(AncestralPrompt).update({AncestralPrompt.is_active: False})
+    
+    new_prompt.is_active = is_active
+    
+    db.add(new_prompt)
     db.commit()
-    return new_config
+    db.refresh(new_prompt)
+    
+    return new_prompt
+
+
+def set_active_ancestral_prompt(
+    db: Session,
+    ancestral_prompt_id: uuid.UUID
+):
+    db_prompt = db.query(AncestralPrompt).filter_by(ancestral_prompt_id=ancestral_prompt_id).first()
+
+    if db_prompt:
+        db.query(AncestralPrompt).update({AncestralPrompt.is_active: False})
+        db_prompt.is_active = True
+    
+    db.add(db_prompt)
+    db.commit()
+    db.refresh(db_prompt)
+    return db_prompt
 
 
 def get_layer_logs(db: Session, layer_name: str):
@@ -48,12 +68,31 @@ def get_layer_logs(db: Session, layer_name: str):
     return logs_and_config
 
 
+def set_active_layer_config(
+    db: Session,
+    config_id: uuid.UUID,
+):
+    db_config = db.query(LayerConfig).filter(config_id == config_id).first()
+
+    if db_config:
+        db.query(LayerConfig).filter_by(
+            layer_name=db_config.layer_name
+        ).update({LayerConfig.is_active: False})
+
+        db_config.is_active = True
+
+        db.add(db_config)
+        db.commit()
+        db.refresh(db_config)
+
+        return db_config
+
+
 def add_layer_config(
     db: Session,
-    config_id: Optional[uuid.UUID], 
-    layer_name: str, 
-    prompts, 
-    llm_model_name, 
+    config_id: Optional[uuid.UUID],
+    layer_name: str,
+    prompts,
     llm_model_parameters,
 ):
     layer_state = db.query(LayerState).filter_by(layer_name=layer_name).first()
@@ -70,16 +109,17 @@ def add_layer_config(
     ).update({LayerConfig.is_active: False})
     
     # Ensure the specific config is deactivated
-    current_config = (
-        db.query(LayerConfig)
-        .filter_by(config_id=config_id)
-        .first()
-    )
+    current_config = None
+    if config_id:
+        current_config = (
+            db.query(LayerConfig)
+            .filter_by(config_id=config_id)
+            .first()
+        )
     if not current_config:
         new_config = LayerConfig(
             layer_name=layer_name,
             prompts=prompts,
-            llm_model_name=llm_model_name,
             llm_model_parameters=llm_model_parameters,
             is_active=True
         )
@@ -88,7 +128,6 @@ def add_layer_config(
             parent_config_id=current_config.config_id,
             layer_name=layer_name,
             prompts=prompts,
-            llm_model_name=llm_model_name,
             llm_model_parameters=llm_model_parameters,
             is_active=True
         )

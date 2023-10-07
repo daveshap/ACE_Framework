@@ -106,12 +106,23 @@ class LayerConfig(Base):
     parent_config_id = Column(UUID(as_uuid=True), nullable=True)
     layer_name = Column(String, nullable=False)
     prompts = Column(JSON, nullable=False)
-    llm_model_name = Column(String, nullable=False, default='gpt-3.5-turbo')
     llm_model_parameters = Column(JSON, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     rabbitmq_logs = relationship("RabbitMQLog", back_populates="layer_config")
+
+
+class AncestralPrompt(Base):
+    __tablename__ = 'ancestral_prompt'
+
+    ancestral_prompt_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    parent_ancestral_prompt_id = Column(UUID(as_uuid=True), nullable=True)
+    prompt = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 Base.metadata.create_all(engine)
