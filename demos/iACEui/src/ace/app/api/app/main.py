@@ -3,7 +3,8 @@ from typing import Dict, List
 import uuid
 
 import aio_pika
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
+from fastapi.middleware import CORSMiddleware
 from settings import settings
 from base.amqp.connection import get_connection
 from base.amqp.exchange import create_exchange
@@ -36,6 +37,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173", "http://0.0.0.0:5173", "http://192.168.0.1:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_mothods=["*"],
+    allow_headers=["*"],
+
+)
+
+@app.options("/{path:path}")
+async def handle_options_request(path: str, response: Response):
+    response.status_code = status.HTTP_200_OK
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 
 @app.post("/mission")
