@@ -7,6 +7,7 @@ from channels.discord.discord_bot import DiscordBot
 from channels.web.fastapi_app import FastApiApp
 from llm.gpt import GPT
 from media.giphy_finder import GiphyFinder
+from memory.weaviate_memory_manager import WeaviateMemoryManager
 from util import get_environment_variable
 
 
@@ -14,7 +15,9 @@ async def stacey_main(start_discord, start_web):
     load_dotenv()
     openai_api_key = get_environment_variable('OPENAI_API_KEY')
     llm = GPT(openai_api_key)
-    ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"))
+    weaviate_url = get_environment_variable('WEAVIATE_URL')
+    memory_manager = WeaviateMemoryManager(weaviate_url, openai_api_key)
+    ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"), memory_manager)
 
     giphy = GiphyFinder(get_environment_variable('GIPHY_API_KEY'))
     media_generators = [

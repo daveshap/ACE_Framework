@@ -21,7 +21,6 @@ Current time (UTC): [current_time_utc]
 
 # Communication channels
 You can communication with people via multiple different channels - web, discord, etc.
-
 """
 
 personality = """
@@ -94,6 +93,9 @@ The following actions are available.
 - cancel_all_scheduled_actions():Cancels all upcoming scheduled actions.
 - cancel_scheduled_action(job_id): Cancels the upcoming scheduled action with the given job_id.
   Use get_scheduled_actions() to find the job_id.
+- save_memory(memory_string): Saves a memory to the vector database, for inclusion in future prompts.
+  If anything happens that you think needs to be remembered for the future, use the save_memory action
+  and tell the user that you will remember it.
 
 Don't make up new actions, only use the ones I've defined above.
 
@@ -132,9 +134,17 @@ For example:
 
 """
 
+
+memories = """
+I have recalled the following memories related to this, in order of relevance (most relevant first):
+[memories]
+"""
+
 act_on_user_input = """
 I have detected a new message in the following communication channel:
 [communication_channel].
+
+[memories_if_any]
 
 Here is the recent chat history in that channel, from oldest to newest,
 with utc timestamp in angle brackets <utc-time> and sender name in brackets [sender]:

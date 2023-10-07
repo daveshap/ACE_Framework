@@ -8,26 +8,30 @@ import ace.l3_agent_prompts as prompts
 from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
-from ace.types import ChatMessage
+from ace.types import ChatMessage, Memory
 from actions.action import Action
 from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
 from actions.cancel_scheduled_action import CancelScheduledAction
 from actions.get_web_content import GetWebContent
 from actions.list_scheduled_actions import GetScheduledActions
 from actions.respond_to_user import RespondToUser
+from actions.save_memory import SaveMemory
 from actions.schedule_action import ScheduleAction
 from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
+from memory.weaviate_memory_manager import WeaviateMemoryManager
 from util import parse_json
 
 chat_history_length_short = 3
 
 chat_history_length = 10
 
+max_memories_to_include = 5
+
 
 class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
-                 southbound_bus: Bus, northbound_bus: Bus):
+                 southbound_bus: Bus, northbound_bus: Bus, memory_manager: WeaviateMemoryManager):
         super().__init__(3)
         self.llm = llm
         self.model = model
@@ -35,18 +39,35 @@ class L3AgentLayer(AceLayer):
         self.northbound_bus = northbound_bus
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+        self.memory_manager = memory_manager
 
     async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
         # Early out if I don't need to act, for example if I overheard a message that wasn't directed at me
         if not await self.should_act(communication_channel):
             return
 
+        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+
+        memories: [Memory] = []
+        if len(chat_history) > 0:
+            last_chat_message = chat_history[-1]
+            memories: [Memory] = self.memory_manager.find_relevant_memories(
+                self.stringify_chat_message(last_chat_message),
+                max_memories_to_include
+            )
+
+        print("Found memories: " + str(memories))
         system_message = self.create_system_message()
 
-        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        memories_if_any = ""
+        if memories:
+            memories_string = "\n".join(f"- <{memory['time_utc']}>: {memory['content']}" for memory in memories)
+            memories_if_any = prompts.memories.replace("[memories]", memories_string)
+
         user_message = (
             prompts.act_on_user_input
             .replace("[communication_channel]", communication_channel.describe())
+            .replace("[memories_if_any]", memories_if_any)
             .replace("[chat_history]", self.stringify_chat_history(chat_history))
         )
         llm_messages: [GptMessage] = [
@@ -131,6 +152,8 @@ class L3AgentLayer(AceLayer):
             return CancelAllScheduledActions(self.scheduler)
         elif action_name == "cancel_scheduled_action":
             return CancelScheduledAction(self.scheduler, action_data["job_id"])
+        elif action_name == "save_memory":
+            return SaveMemory(self.memory_manager, action_data["memory_string"])
         else:
             print(f"Warning: Unknown action: {action_name}")
             return None

@@ -1,0 +1,19 @@
+version: '3.4'
+services:
+  weaviate:
+    image: semitechnologies/weaviate:1.19.4
+    ports:
+      - 8080:8080
+    restart: on-failure
+    environment:
+      AUTOSCHEMA_ENABLED: 'true'
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+      CLUSTER_HOSTNAME: 'node1'
+      ENABLE_MODULES: 'text2vec-openai'
+    # Uncomment the below to control where your data is stored (the path to the left)
+    # Note that relative paths are relative to the location of this docker compose file.
+    # volumes:
+    #   - ../memories/weaviate:/var/lib/weaviate

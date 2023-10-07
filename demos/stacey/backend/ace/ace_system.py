@@ -1,11 +1,13 @@
 # ace/ace_system.py
+from llm.gpt import GPT
+from memory.weaviate_memory_manager import WeaviateMemoryManager
 from .bus import Bus
 from .l1_aspirational import L1AspirationalLayer
 from .l3_agent import L3AgentLayer
 
 
 class AceSystem:
-    def __init__(self, llm, model):
+    def __init__(self, llm: GPT, model: str, memory_manager: WeaviateMemoryManager):
         self.northbound_bus = Bus('northbound')
         self.southbound_bus = Bus('southbound')
 
@@ -20,7 +22,8 @@ class AceSystem:
             llm,
             model,
             self.southbound_bus,
-            self.northbound_bus
+            self.northbound_bus,
+            memory_manager
         )
 
         self.layers = [
