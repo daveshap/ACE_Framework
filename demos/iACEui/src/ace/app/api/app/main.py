@@ -21,6 +21,8 @@ from schema import (
     LayerStateModel,
     LayerTestRequest,
     LayerTestResponseModel,
+    ConfirmationModel,
+    LlmMessage
 )
 
 from ai import generate_bus_message
@@ -69,25 +71,30 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 @app.post("/layer/test", response_model=LayerTestResponseModel)
 async def test_prompt(req: LayerTestRequest):
 
-    reasoning_result, bus_action_result, llm_messages = generate_bus_message(
+    reasoning_result, data_bus_action, control_bus_action = generate_bus_message(
+        input= req.input,
         layer_name=req.layer_name,
         prompts=req.prompts,
         source_bus=req.source_bus,
-        destination_bus=req.destination_bus,
         llm_messages=req.llm_messages if req.llm_messages else [],
-        llm_model_name=req.llm_model_name,
         llm_model_parameters=req.llm_model_parameters,
         openai_api_key=settings.openai_api_key,
     )
 
+    print(f"{reasoning_result=}")
+    reason = LlmMessage.model_validate(reasoning_result)
+    print(f"{reason=}")
     results = LayerTestResponseModel(
-        reasoning_result=reasoning_result,
-        action_result=bus_action_result,
-        llm_messages=llm_messages,
+        layer_name=req.layer_name,
+        reasoning_result=LlmMessage.model_validate(reasoning_result),
+        data_bus_action=LlmMessage.model_validate(data_bus_action),
+        control_bus_action=LlmMessage.model_validate(control_bus_action),
     )
 
     return results
 
+
+@app.post("/layer/prompt/ancestral", response_model=ConfirmationModel)
 
 @app.get("/layer/config/{layer_name}/all", response_model=List[LayerConfigModel])
 def get_all_layer_config(

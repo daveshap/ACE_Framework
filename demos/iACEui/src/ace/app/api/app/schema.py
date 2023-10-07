@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, validator
 import uuid
@@ -15,16 +15,17 @@ class LayerNameBase(BaseModel):
             raise ValueError(f"layer_name must be one of {LAYER_NAMES}")
         return value
 
-class ModelNameBase(BaseModel):
-    llm_model_name: str = 'gpt-3.5-turbo'
+# class ModelNameBase(BaseModel):
+#     llm_model_name: str = 'gpt-3.5-turbo'
     
-    @validator("llm_model_name")
-    def validate_llm_model_name(cls, value):
-        if value not in LLM_MODEL_NAMES:
-            raise ValueError(f"llm_model_name must be one of {LLM_MODEL_NAMES}")
-        return value
+#     @validator("llm_model_name")
+#     def validate_llm_model_name(cls, value):
+#         if value not in LLM_MODEL_NAMES:
+#             raise ValueError(f"llm_model_name must be one of {LLM_MODEL_NAMES}")
+#         return value
 
 class OpenAiGPTChatParameters(BaseModel):
+    model: str = 'gpt-3.5-turbo'
     temperature: float = 0.0
     max_tokens: int = 512
     top_p: Optional[float]
@@ -33,9 +34,10 @@ class OpenAiGPTChatParameters(BaseModel):
 
 class Prompts(BaseModel):
     identity: str
-    input: str
     reasoning: str
-    bus: str
+    data_bus: str
+    control_bus: str
+
 
 class LlmMessage(BaseModel):
     role: str
@@ -45,24 +47,23 @@ class LlmMessage(BaseModel):
     def validate_role(cls, value):
         if value not in OPENAI_API_ROLES:
             raise ValueError(f"role must be one of {OPENAI_API_ROLES}")
+        return value
 
-class LayerTestRequest(LayerNameBase, ModelNameBase, BaseModel):
-    source_bus: str
-    destination_bus: str
+class LayerTestRequest(LayerNameBase, BaseModel):
     input: str
+    source_bus: str
     prompts: Prompts
     llm_messages: Optional[List[LlmMessage]]
-    llm_model_name: str
     llm_model_parameters: OpenAiGPTChatParameters
 
 class Mission(BaseModel):
     mission: str
 
-class LayerConfigCreate(ModelNameBase, LayerNameBase, BaseModel):
+class LayerConfigCreate(LayerNameBase, BaseModel):
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
 
-class LayerConfigAdd(ModelNameBase, LayerNameBase, BaseModel):
+class LayerConfigAdd(LayerNameBase, BaseModel):
     config_id: uuid.UUID
     prompts: Prompts
     llm_model_parameters: OpenAiGPTChatParameters
@@ -78,7 +79,7 @@ class LayerStateUpdate(LayerNameBase, BaseModel):
 
 
 # responses:
-class LayerConfigModel(ModelNameBase, LayerNameBase, BaseModel):
+class LayerConfigModel(LayerNameBase, BaseModel):
     config_id: uuid.UUID
     parent_config_id: Optional[uuid.UUID] = None
     prompts: Prompts
@@ -130,7 +131,10 @@ class RabbitMQLogModel(BaseModel):
         from_attributes = True
 
 
-class LayerTestResponseModel(LayerNameBase, ModelNameBase, BaseModel):
+class LayerTestResponseModel(LayerNameBase, BaseModel):
     reasoning_result: LlmMessage
-    action_result: LlmMessage
-    llm_messages: LlmMessage
+    data_bus_action: LlmMessage
+    control_bus_action: LlmMessage
+
+class ConfirmationModel(BaseModel):
+    status: str = "success"
