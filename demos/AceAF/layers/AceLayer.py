@@ -30,6 +30,7 @@ class AceLayer:
         self.user_update_event = threading.Event()
 
         self.result = None
+        self.agent = None
 
         LAYER_REGISTRY[self.layer_number] = self
 
@@ -49,6 +50,9 @@ class AceLayer:
         self.interface.output_message(self.layer_number, f"\n------Running {self.layer_name} ------\n")
         # self.update_bus(bus="NorthBus", message="Hello North Bus")
         # self.load_data_from_bus(bus="NorthBus")
+
+        self.initialize_agents()
+
         self.load_data_from_bus(bus="SouthBus")
 
         self.process_data_from_buses()
@@ -69,9 +73,15 @@ class AceLayer:
 
     def run_agents(self):
         # Call individual Agents From Each Layer
+        self.result = self.agent.run(top_message=self.top_layer_message,
+                                     bottom_message=self.bottom_layer_message,
+                                     self_message=self.my_message)
+
+    def initialize_agents(self):
         pass
 
-    def create_event_thread(self, event_name, event, callback):
+    @staticmethod
+    def create_event_thread(event_name, event, callback):
         def event_loop():
             while True:
                 event.wait()

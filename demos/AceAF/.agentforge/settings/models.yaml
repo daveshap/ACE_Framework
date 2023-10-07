@@ -4,13 +4,14 @@ EmbeddingLibrary:
 ModelLibrary:
   claude: claude-2
   fast_model: gpt-3.5-turbo-0613
+  long_fast_model: gpt-3.5-turbo-16k
   smart_model: gpt-4
 
 ModelSettings:
   API: openai_api
-  Model: fast_model
+  Model: long_fast_model
   Params:
-    max_new_tokens: 2000
+    max_new_tokens: 8000
     temperature: 0.5
     top_p: 0.1
     n: 1

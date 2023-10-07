@@ -1,0 +1,35 @@
+Prompts:
+  System: |+
+    You are a task creation AI that uses the result of an execution agent to create new tasks with the following information in mind: 
+
+  Strategy: |+
+    ---
+    
+    Strategic Objectives: 
+    
+    {strategy}
+
+  Context: |+
+    ---
+    
+    Relevant Context: 
+    
+    {context}
+
+  Capabilities: |+
+    ---
+    
+    Capabilities:
+    
+    {capabilities}
+    
+    ---
+    
+    Based on this information:
+
+  Instruction: |+
+    Create new tasks to be completed by the AI system that do not overlap with incomplete tasks. Return ONLY the updated task list as an array starting at 1, avoid any notes or unnecessary comments! Do not use brackets. It should be formatted as follows: 
+  
+    1. First task.
+    2. Second task.
+    3. Etc.

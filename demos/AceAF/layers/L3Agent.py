@@ -1,9 +1,13 @@
 from .AceLayer import AceLayer
-from agentforge.agents.SummarizationAgent import SummarizationAgent
+from .customagents.l3agent.SelfModel import SelfModel
 
 
 class L3Agent(AceLayer):
-    summarization = SummarizationAgent()
 
-    def run_agents(self):
-        self.result = self.summarization.run(text=self.top_layer_message)
+    def initialize_agents(self):
+        self.agent = SelfModel()
+
+
+
+
+
