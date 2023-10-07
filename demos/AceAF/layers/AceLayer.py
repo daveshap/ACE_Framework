@@ -127,7 +127,7 @@ class AceLayer:
         #     index = north_bus['ids'].index(north_layer)
         #     self.bottom_layer_message = north_bus['documents'][index]
 
-    def handle_north_bus_update(self):
+    def handle_north_bus_update(self, text):
         # Load Data From North Bus and process
         self.run()
 

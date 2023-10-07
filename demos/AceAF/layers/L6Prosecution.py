@@ -7,4 +7,3 @@ class L6Prosecution(AceLayer):
 
     def run_agents(self):
         self.result = self.task_prosecution.run(task=self.top_layer_message)
-        print(self.result)

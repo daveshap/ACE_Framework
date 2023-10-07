@@ -5,16 +5,20 @@ from .customagents.l1aspirational.L1Default import L1Default
 
 class L1Aspirational(AceLayer):
 
-    constitution = None
-    environment = None
     l1_agent = L1Default()
 
     def load_relevant_data_from_memory(self):
-        # Load Relevant Memories
-        self.constitution = self.config.settings['directives']['Constitution']
+        # Load Relevant Data
+        self.l1_agent.data['mission'] = self.config.settings['directives']['Mission']
+        self.l1_agent.data['udhr'] = self.config.settings['directives']['UDHR']
+        self.l1_agent.data['heuristics'] = self.config.settings['directives']['Heuristics']
+        self.l1_agent.data['situation'] = self.config.settings['directives']['Situation']
+
+        if self.bottom_layer_message:
+            self.l1_agent.data['situation'] = self.bottom_layer_message
 
     def run_agents(self):
-        self.result = self.l1_agent.run(constitution=self.constitution, strategy_layer=self.bottom_layer_message)
+        self.result = self.l1_agent.run()
 
 
 
