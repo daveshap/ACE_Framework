@@ -53,6 +53,11 @@ def set_active_ancestral_prompt(
     return db_prompt
 
 
+def get_ancestral_prompt(db: Session, ancestral_prompt_id: uuid.UUID):
+    db_prompt = db.query(AncestralPrompt).filter_by(ancestral_prompt_id=ancestral_prompt_id).first()
+    return db_prompt
+
+
 def get_layer_logs(db: Session, layer_name: str):
     
     logs_and_config = (

@@ -103,7 +103,7 @@ def add_ancestral_prompt(
         return AncestralPromptModel.model_validate(results)
     
 
-@app.patch("/prompt/ancestral/id/{ancestral_prompt_id}/active", response_model=AncestralPromptModel)
+@app.patch("/prompt/ancestral/{ancestral_prompt_id}/active", response_model=AncestralPromptModel)
 def set_active_ancestral_prompt(
     ancestral_prompt_id: uuid.UUID,
     session: Session = Depends(get_db),
@@ -113,6 +113,15 @@ def set_active_ancestral_prompt(
             db=db, 
             ancestral_prompt_id=ancestral_prompt_id,
         )
+        return AncestralPromptModel.model_validate(results)
+    
+@app.get("/prompt/ancestral/{ancestral_prompt_id}", response_model=AncestralPromptAdd)
+def get_active_ancestral_prompt(
+    ancestral_prompt_id: uuid.UUID,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.get_ancestral_prompt(db=db, ancestral_prompt_id=ancestral_prompt_id)
         return AncestralPromptModel.model_validate(results)
     
 
