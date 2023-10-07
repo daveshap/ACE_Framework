@@ -28,7 +28,7 @@ class AceLayer:
         self.input_update_event = threading.Event()
         self.user_update_event = threading.Event()
 
-        self.result = "Just a testo"
+        self.result = None
 
         LAYER_REGISTRY[self.layer_number] = self
 
@@ -45,9 +45,9 @@ class AceLayer:
         self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
 
     def run(self):
-        self.interface.output_message(self.layer_number, f"\n------Running {self.layer_name}------\n")
+        self.interface.output_message(self.layer_number, f"\n------Running {self.layer_name} ------\n")
         # self.update_bus(bus="NorthBus", message="Hello North Bus")
-        self.load_data_from_bus(bus="NorthBus")
+        # self.load_data_from_bus(bus="NorthBus")
         self.load_data_from_bus(bus="SouthBus")
 
         self.process_data_from_buses()
@@ -88,7 +88,7 @@ class AceLayer:
         params = {
             'collection_name': kwargs['bus'],
             'ids': [self.layer_number.__str__()],
-            'data': [kwargs['message']]
+            'data': [kwargs['message'].__str__()]
         }
 
         self.storage.save_memory(params)
@@ -109,7 +109,7 @@ class AceLayer:
     def process_data_from_buses(self):
         # self.interface.output_message(0, self.bus.__str__())
         # print(self.bus.__str__())
-        north_bus = self.bus.get("NorthBus", None)
+        # north_bus = self.bus.get("NorthBus", None)
         south_bus = self.bus.get("SouthBus", None)
 
         north_layer = self.north_layer.__str__()
@@ -120,10 +120,12 @@ class AceLayer:
             index = south_bus['ids'].index(north_layer)
             self.top_layer_message = south_bus['documents'][index]
 
+        self.interface.output_message(self.layer_number, f"North Incoming Message:\n{self.top_layer_message}\n")
+
         # North Layer Writes to South Bus, Hence it's a Message from the Bottom Layer
-        if south_layer in north_bus['ids']:
-            index = north_bus['ids'].index(north_layer)
-            self.bottom_layer_message = north_bus['documents'][index]
+        # if south_layer in north_bus['ids']:
+        #     index = north_bus['ids'].index(north_layer)
+        #     self.bottom_layer_message = north_bus['documents'][index]
 
     def handle_north_bus_update(self):
         # Load Data From North Bus and process

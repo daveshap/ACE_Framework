@@ -15,9 +15,6 @@ class L1Aspirational(AceLayer):
 
     def run_agents(self):
         self.result = self.l1_agent.run(constitution=self.constitution, strategy_layer=self.bottom_layer_message)
-        self.update_bus(bus="SouthBus", message=self.result)
-        self.interface.output_message(self.layer_number, self.result)
-        # self.update_bus(bus="SouthBus", message=testo)
 
 
 

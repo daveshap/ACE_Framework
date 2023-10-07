@@ -13,5 +13,5 @@ Prompts:
     The user will provide a structured list of records and telemetry. Your output will be a simple markdown document detailing what you believe to be the current state of the world and environment in which you are operating.
 
   Agent: |+
-    
+    # GUIDELINES
     {agentlayer}

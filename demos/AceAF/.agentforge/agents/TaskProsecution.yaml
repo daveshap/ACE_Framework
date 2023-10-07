@@ -1,0 +1,30 @@
+Prompts:
+  System: |+
+    You are a task prosecution agent, your purpose is to perform the selected task below. 
+
+  Task: |+
+    ---
+    
+    Task: 
+    
+    {task}
+
+  TaskStatus: |+
+    ---
+    
+    Task Status: 
+    
+    {task_status}
+
+  Criteria: |+
+    ---
+    
+    Success Criteria: 
+    
+    {success_criteria}
+
+  Instruction: |+
+    ---
+    
+    Based on this information please complete the given task!
+

@@ -1,0 +1,36 @@
+Prompts:
+  System: |+
+    You are a task selection agent, your purpose is to select a task a task list with the following information in mind: 
+
+  TaskList: |+
+    ---
+    
+    Task List: 
+    
+    {task_list}
+
+  TaskStatus: |+
+    ---
+    
+    Task Status: 
+    
+    {task_status}
+
+  Criteria: |+
+    ---
+    
+    SuccessCriteria: 
+    
+    {success_criteria}
+    
+    ---
+    
+    Based on this information:
+
+  Instruction: |+
+    To direct the lower Task Prosecution Layer, please issues specific authoritative commands:
+
+    Selected Task Instructions - Precise instructions on performing the chosen task, including directives, logic, parameters, APIs/tools to leverage, and allowable actions.
+    Task Halting/Failure/Success - Decision guidelines on when the current task should be interrupted and a new one initiated based on factors like timeouts, milestones, errors, or environmental triggers.
+    Definition of Done - Clear definition of what the success condition and desired end state look like.
+
