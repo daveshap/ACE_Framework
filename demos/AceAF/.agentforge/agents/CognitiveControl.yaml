@@ -60,11 +60,16 @@ Prompts:
   ResponseFormat: |+
     ---
     
-    Please provide your response in the format given below. STRICTLY ADHERE TO THE RESPONSE FORMAT!!!
+    IMPORTANT:
+      - Strict adherence to the following response format is CRUCIAL. Any deviation will disrupt subsequent processes.
+      - If you possess partial or uncertain information, use your best judgment to fill in the attributes.
+      - For attributes you cannot confidently provide an answer for, describe briefly what information or context you're lacking to make an informed decision.
+      - Refrain from adding any additional commentary before or after the structured response. Maintain ONLY the provided format. If you feel the need to express something supplementary, use the "Thoughts" attribute in the response format to convey it.
+      - Your primary objective is to act on available information and clearly communicate any gaps in understanding.
 
     ---Southbound---
     SelectedTaskInstructions:
-      <Precise instructions for performing the chosen task, including directives, logic, parameters, and tools to be used.>
+      <Precise instructions for performing the chosen task, including directives, logic, parameters, and tools to be used. >
     
     TaskStatus:
       <Current status of the task, i.e., ongoing, halted, failed, or succeeded.>
@@ -76,6 +81,9 @@ Prompts:
       <Explanation for why a task switch was made, especially if due to environmental changes or task failures.>
     
     ---Northbound---
+    Thoughts:
+      <This space is designated for any additional insights, context, or commentary you wish to provide. ONLY share thoughts or reflections here, and ensure all other attributes strictly adhere to the provided format. If you have no additional thoughts, simply write "None".>
+    
     CurrentTaskStatus:
       <Summary of which task is presently executing and metrics on its progress.>
     
@@ -83,4 +91,4 @@ Prompts:
       <Key environmental factors or changes that influenced task decisions.>
     
     ProgressUpdate:
-      <Aggregate metrics or updates on the percentage of project plan completed based on tasks finished.>
+      <Aggregate metrics or updates on the percentage of project plan completed based on tasks finished. >

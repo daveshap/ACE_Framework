@@ -51,13 +51,18 @@ Prompts:
     Given the strategic directives, agent capabilities, current environmental telemetry, and known risks:
 
     1. Construct a detailed project plan that includes workflows, resources, contingencies, and success criteria.
-    2. Communicate key resource limitations and risks northbound.
-    3. Transmit the actionable project plans southbound.
+    2. Communicate key resource limitations and risks to layer above.
+    3. Transmit the actionable project plans to layer below.
 
   ResponseFormat: |+
     ---
     
-    Please provide your response in the format given below. STRICTLY ADHERE TO THE RESPONSE FORMAT!!!
+    IMPORTANT:
+      - Strict adherence to the following response format is CRUCIAL. Any deviation will disrupt subsequent processes.
+      - If you possess partial or uncertain information, use your best judgment to fill in the attributes.
+      - For attributes you cannot confidently provide an answer for, describe briefly what information or context you're lacking to make an informed decision.
+      - Refrain from adding any additional commentary before or after the structured response. Maintain ONLY the provided format. If you feel the need to express something supplementary, use the "Thoughts" attribute in the response format to convey it.
+      - Your primary objective is to act on available information and clearly communicate any gaps in understanding.
     
     ---Southbound---
     ProjectPlan:
@@ -66,7 +71,7 @@ Prompts:
     ResourceAllocation:
       <Allocation schedules and details on how resources will be utilized.>
     
-    TaskOrdering:
+    TaskList:
       <Optimized task sequences with any dependencies highlighted.>
     
     RiskMitigations:
@@ -79,6 +84,9 @@ Prompts:
       <Clear conditions that define the successful completion of tasks.>
     
     ---Northbound---
+    Thoughts:
+      <This space is designated for any additional insights, context, or commentary you wish to provide. ONLY share thoughts or reflections here, and ensure all other attributes strictly adhere to the provided format. If you have no additional thoughts, simply write "None".>
+    
     ResourceLimitations:
       <Specific details on key resource deficiencies or constraints.>
 
