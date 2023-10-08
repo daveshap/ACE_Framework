@@ -19,8 +19,8 @@ class AceLayer:
         self.interface = Interface()
 
         self.bus = {'NorthBus': None, 'SouthBus': None}
+        self.my_messages = {'NorthBus': None, 'SouthBus': None}
         self.top_layer_message = None
-        self.my_message = None
         self.bottom_layer_message = None
 
         self.events = []
@@ -47,20 +47,20 @@ class AceLayer:
         self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
 
     def run(self):
-        self.interface.output_message(self.layer_number, f"\n------Running {self.layer_name} ------\n")
-        # self.update_bus(bus="NorthBus", message="Hello North Bus")
-        # self.load_data_from_bus(bus="NorthBus")
+        self.interface.output_message(self.layer_number,
+                                      f"\n-------------Running {self.layer_name}-------------\n")
 
         self.initialize_agents()
 
         self.load_data_from_bus(bus="SouthBus")
-
         self.process_data_from_buses()
 
-        self.load_relevant_data_from_memory()
         self.run_agents()
 
-        self.update_bus(bus="SouthBus", message=self.result)
+        self.parse_results()
+
+        self.update_bus(bus="SouthBus", message=self.my_messages['SouthBus'])
+        self.update_bus(bus="NorthBus", message=self.my_messages['NorthBus'])
         # Load Relevant Data From Input
         # Load Relevant Data From Chat
         # Load Relevant Data From Memory
@@ -75,7 +75,7 @@ class AceLayer:
         # Call individual Agents From Each Layer
         self.result = self.agent.run(top_message=self.top_layer_message,
                                      bottom_message=self.bottom_layer_message,
-                                     self_message=self.my_message)
+                                     self_message=self.my_messages['SouthBus'])
 
     def initialize_agents(self):
         pass
@@ -95,13 +95,27 @@ class AceLayer:
         thread.start()
         return thread
 
-    def update_bus(self, **kwargs):
-        self.my_message = kwargs['message'].__str__()
+    def parse_results(self):
+        result = self.result.__str__()
 
+        # Splitting the string on "Northbound:" to separate the sections again
+        if "---Northbound---" in result:
+            southbound_str, northbound_str = result.split("---Northbound---")
+            northbound_str = southbound_str.replace("---Northbound---", "").strip()
+        else:
+            northbound_str = None
+            southbound_str = result
+
+        southbound_str = southbound_str.replace("---Southbound---", "").strip()
+
+        self.my_messages['SouthBus'] = southbound_str
+        self.my_messages['NorthBus'] = northbound_str
+
+    def update_bus(self, **kwargs):
         params = {
             'collection_name': kwargs['bus'],
             'ids': [self.layer_number.__str__()],
-            'data': [self.my_message]
+            'data': [kwargs['message']]
         }
 
         self.storage.save_memory(params)
@@ -109,7 +123,7 @@ class AceLayer:
         if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
             LAYER_REGISTRY[self.south_layer].input_update_event.set()
 
-        self.interface.output_message(self.layer_number, f"\n{self.my_message}\n")
+        self.interface.output_message(self.layer_number, f"\n---{kwargs['bus']}---\n\n{kwargs['message']}\n")
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']

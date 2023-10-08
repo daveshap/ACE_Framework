@@ -87,4 +87,43 @@ Prompts:
     3. If a task is switched, provide a clear reason based on the data inputs and conditions.
 
     4. Communicate any significant updates or decisions to both the upper and lower layers for seamless integration and action.
-  
+
+  Response Format: |+
+    ---
+    
+    Provide your Task Selection and Status in the following yaml format:
+    
+      TaskStatus: +|
+      {{
+        "CurrentTask": 
+        {
+          "Name": <name or identifier of the current task>,
+          "Progress": <description of the task's progress or state>,
+          "Reasons": <reasons or justifications for task's current state, if applicable>
+        },
+        "SwitchingDecision":
+        {
+          "SwitchRequired": <boolean indicating if task switching is needed>,
+          "NewTask": <name or identifier of the task to switch to, if applicable>,
+          "ReasonForSwitch": <clear reason based on inputs and conditions for switching, if applicable>
+        }
+      }}
+    
+      OutputCommunications:
+      {{
+        "Northbound":
+        {
+          "TaskStatus": <current status of the task>,
+          "WorldStateBeliefs": <beliefs or perceptions about the key environmental factors>,
+          "ProgressUpdate": <update on progress towards overall goals>
+        },
+        "Southbound":
+        {
+          "TaskInstructions": <guidelines or directives for performing the chosen task>,
+          "HaltingOrFailureCriteria": <conditions or metrics that indicate the task should be halted or has failed>,
+          "DefinitionOfDone": <criteria or state that indicates successful task completion>
+        }
+      }}
+    
+      AdditionalFeedback: |+
+        <any other pertinent information, clarifications, or advisories>

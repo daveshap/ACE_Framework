@@ -53,3 +53,45 @@ Prompts:
     2. Salient risks and resource limitations to communicate northbound.
 
     Transmit these actionable plans and advisories on the southbound bus.
+
+  ResponseFormat: |+
+    ---
+    
+    Structure your Project Plan and Advisories in the following yaml format:
+    
+      ProjectPlan: 
+      {{
+        "Workflows": 
+        {
+          "Tasks": <sequence of tasks>,
+          "Dependencies": <interdependencies between tasks>,
+          "ResourceAllocation": 
+          {
+            <resources dedicated for each task or phase>
+          }
+        },
+        "Contingencies": 
+        {
+          <backup plans or alternative approaches based on potential risks or resource limitations>
+        },
+        "SuccessCriteria": 
+        {
+          <measurable indicators or metrics that signify successful completion of tasks or workflows>
+        }
+      }}
+    
+      Advisories: 
+      {{
+        "Risks": 
+        {
+          <potential threats or challenges identified in executing the project plan>
+        },
+        "ResourceLimitations": 
+        {
+          <constraints or shortages based on available resources>
+        },
+        "Recommendations":
+        {
+          <additional suggestions or insights for the upper layers based on the current plan and context>
+        }
+      }}
