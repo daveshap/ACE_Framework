@@ -76,6 +76,7 @@ class FastApiApp:
                 await self.ace.l3_agent.process_incoming_user_message(communication_channel)
                 return JSONResponse(content={"success": True}, status_code=200)
             except Exception as e:
+                print("Damn, something went wrong while processing incoming user message!")
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
                 return create_chat_message("Stacey", f"Damn! Something went wrong: {str(e)}")

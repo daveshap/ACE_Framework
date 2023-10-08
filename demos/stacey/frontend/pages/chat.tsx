@@ -25,6 +25,10 @@ function Chat() {
         return <Alert status="error">I don't know where the chat socket backend is! Please set env variable NEXT_PUBLIC_CHAT_SOCKET_URL</Alert>;
     }
 
+    function add_message(incomingMessage: ChatMessage) {
+        setMessages(prevMessages => [...prevMessages, incomingMessage]);
+    }
+
     useEffect(() => {
         // Initialize WebSocket connection
         webSocketRef.current = new WebSocket(chatSocketUrl);
@@ -36,7 +40,7 @@ function Chat() {
 
         webSocketRef.current.onmessage = (event) => {
             const incomingMessage: ChatMessage = JSON.parse(event.data);
-            setMessages(prevMessages => [...prevMessages, incomingMessage]);
+            add_message(incomingMessage);
         };
 
         webSocketRef.current.onerror = (error) => {
@@ -71,6 +75,9 @@ function Chat() {
                     messages: updatedMessages,
                 });
                 console.log('Response from backend:', response)
+                if (response.data?.content) {
+                   add_message(response.data)
+                }
 
             } catch (error) {
                 console.error('Error sending message:', error);
