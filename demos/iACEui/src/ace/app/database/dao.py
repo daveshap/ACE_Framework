@@ -1,8 +1,39 @@
-from .models import LayerConfig, LayerState, RabbitMQLog, AncestralPrompt
+from .models import LayerConfig, LayerState, RabbitMQLog, AncestralPrompt, TestRun
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 import uuid
-from typing import Optional
+from typing import Optional, List, Dict, Any
+
+
+def store_test_results(
+    db: Session,
+    input: str,
+    layer_name: str,
+    prompts: Dict[str, str],
+    source_bus: str,
+    llm_messages: List[Dict[str, str]],
+    llm_model_parameters: Dict[str, Any],
+    reasoning_result: str,
+    data_bus_action: str,
+    control_bus_action: str,
+):
+    new_test_run = TestRun(
+        input=input,
+        layer_name=layer_name,
+        prompts=prompts,
+        source_bus=source_bus,
+        llm_messages=llm_messages,
+        llm_model_parameters=llm_model_parameters,
+        reasoning_result=reasoning_result,
+        data_bus_action=data_bus_action,
+        control_bus_action=control_bus_action,
+    )
+    
+    db.add(new_test_run)
+    db.commit()
+    db.refresh(new_test_run)
+    
+    return new_test_run
 
 
 def add_ancestral_prompt(

@@ -2,7 +2,7 @@ from pydantic import BaseModel, validator
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
-from constants import LAYER_NAMES, LLM_MODEL_NAMES, OPENAI_API_ROLES
+from constants import LAYER_NAMES
 
 
 class LayerNameBase(BaseModel):

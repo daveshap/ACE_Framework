@@ -125,4 +125,20 @@ class AncestralPrompt(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class TestRun(Base):
+    __tablename__ = 'test_run'
+    
+    test_run_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
+    input = Column(String, nullable=False)
+    layer_name = Column(String, nullable=False)
+    prompts = Column(JSON, nullable=False)
+    source_bus = Column(String, nullable=False)
+    llm_messages = Column(JSON, nullable=False)
+    llm_model_parameters = Column(JSON, nullable=False)
+    reasoning_result = Column(Text, nullable=False)
+    data_bus_action = Column(Text, nullable=False)
+    control_bus_action = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(engine)
