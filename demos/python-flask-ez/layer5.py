@@ -23,8 +23,8 @@ if __name__ == '__main__':
             chat_print(response)
             
             # POST TO BUS
-            south_out = response.splitlines()[0].replace('SOUTH:').strip()
-            north_out = response.splitlines()[1].replace('NORTH:').strip()
+            south_out = response.splitlines()[0].replace('SOUTH:','').strip()
+            north_out = response.splitlines()[1].replace('NORTH:','').strip()
             send_message('south', layer_num, south_out)
             send_message('north', layer_num, north_out)
             

@@ -76,7 +76,7 @@ def chatbot(conversation, model="gpt-4", temperature=0, max_tokens=2000):
         return text, response['usage']['total_tokens']
     except Exception as oops:
         print(f'\n\nError communicating with OpenAI: "{oops}"')
-        exit(5)
+        sleep(5)
 
 
 def chat_print(text):

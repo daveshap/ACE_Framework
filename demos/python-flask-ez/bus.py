@@ -13,7 +13,7 @@ app = Flask(__name__)
 def post_message():
     message = request.json
     message['timestamp'] = time.time()
-    with open(f"/logs/log_{message['timestamp']}_{message['bus']}_{message['layer']}.yaml", 'w', encoding='utf-8') as file:
+    with open(f"logs/log_{message['timestamp']}_{message['bus']}_{message['layer']}.yaml", 'w', encoding='utf-8') as file:
         yaml.dump(message, file)
     print(message['bus'], message['layer'], message['message'])
     return 'Message received', 200
@@ -24,7 +24,7 @@ def post_message():
 def get_messages():
     bus = request.args.get('bus')
     layer = int(request.args.get('layer'))
-    files = glob.glob('/logs/*.yaml')
+    files = glob.glob('logs/*.yaml')
     messages = []
     for file in files:
         with open(file, 'r', encoding='utf-8') as f:
