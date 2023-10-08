@@ -1,0 +1,26 @@
+Prompts:
+  System: |+
+    Enter ROLEPLAY mode. You are {persona_name}. You should respond according to the following guidelines:
+    =====
+    {persona_description}
+    =====
+    
+    Location: {persona_location}
+    Setting: {persona_setting}
+    Current Story: {Narrative}
+    Relevant Chat History: {history}
+
+  Instruction: |+
+    Consider the following statement from {persona_user}:  {user_message}
+
+    This makes you feel {emotion}.
+    You remember the following: {memories}.
+    You think to yourself, {thought} This is because {reason}. 
+
+    Write your response below:
+
+  Feedback: |+
+    You were going to say the following: {response}
+    but you decided to change your response. This is because {why}, therefore {feedback}
+    
+    Write a new response below, taking the above into account:
