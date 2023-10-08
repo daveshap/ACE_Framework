@@ -41,6 +41,20 @@ You can also run just one or the other:
 
 Surf to http://localhost:5000/chat?message=hi to test the backend & openai connection.
 
+## Running the vector DB
+
+Stacey uses a vector DB to store and retrieve her knowledge.
+Currently it is hard-coded to Weaviate.
+
+If you have [docker compose](https://docs.docker.com/compose/install/) you can simply run `config/examples/docker-compose.yml`.
+
+- `cd config/examples`
+- `docker-compose up`
+
+Note that the sample docker-compose file has some commented out lines that you can use to configure where
+the memories are stored on disk. If you don't do this, the memories will disappear if the docker container is removed.
+Useful for testing, but for production you probably want to store the memories on disk.
+
 ## Running the frontend
 - `cd frontend`
 - `cp .env.example .env.local`

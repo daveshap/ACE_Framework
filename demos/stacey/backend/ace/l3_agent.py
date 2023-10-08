@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -8,26 +9,34 @@ import ace.l3_agent_prompts as prompts
 from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
-from ace.types import ChatMessage
+from ace.types import ChatMessage, Memory
 from actions.action import Action
 from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
 from actions.cancel_scheduled_action import CancelScheduledAction
+from actions.get_all_memories import GetAllMemories
 from actions.get_web_content import GetWebContent
 from actions.list_scheduled_actions import GetScheduledActions
+from actions.remove_memory import RemoveClosestMemory
 from actions.respond_to_user import RespondToUser
+from actions.save_memory import SaveMemory
 from actions.schedule_action import ScheduleAction
 from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
+from memory.weaviate_memory_manager import WeaviateMemoryManager
 from util import parse_json
 
 chat_history_length_short = 3
 
 chat_history_length = 10
 
+max_memories_to_include = 5
+
+# Used when removing memories. Lower number means we will be more picky about only removing closely matching memories.
+remove_memory_max_distance = 0.1
 
 class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
-                 southbound_bus: Bus, northbound_bus: Bus):
+                 southbound_bus: Bus, northbound_bus: Bus, memory_manager: WeaviateMemoryManager):
         super().__init__(3)
         self.llm = llm
         self.model = model
@@ -35,18 +44,36 @@ class L3AgentLayer(AceLayer):
         self.northbound_bus = northbound_bus
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
+        self.memory_manager = memory_manager
 
     async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
         # Early out if I don't need to act, for example if I overheard a message that wasn't directed at me
         if not await self.should_act(communication_channel):
             return
 
+        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        if not chat_history:
+            print("Warning: process_incoming_user_message was called with no chat history. That's weird. Ignoring.")
+            return
+        last_chat_message = chat_history[-1]
+
+        memories: [Memory] = self.memory_manager.find_relevant_memories(
+            self.stringify_chat_message(last_chat_message),
+            max_memories_to_include
+        )
+
+        print("Found memories:\n" + json.dumps(memories, indent=2))
         system_message = self.create_system_message()
 
-        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        memories_if_any = ""
+        if memories:
+            memories_string = "\n".join(f"- <{memory['time_utc']}>: {memory['content']}" for memory in memories)
+            memories_if_any = prompts.memories.replace("[memories]", memories_string)
+
         user_message = (
             prompts.act_on_user_input
             .replace("[communication_channel]", communication_channel.describe())
+            .replace("[memories_if_any]", memories_if_any)
             .replace("[chat_history]", self.stringify_chat_history(chat_history))
         )
         llm_messages: [GptMessage] = [
@@ -68,9 +95,6 @@ class L3AgentLayer(AceLayer):
                 print("Raw LLM response:\n" + llm_response_content)
 
                 actions = self.parse_actions(communication_channel, llm_response_content)
-                if len(actions) == 0:
-                    # The LLM didn't return any actions, but it did return a text response. So respond with that.
-                    actions.append(RespondToUser(communication_channel, llm_response_content))
 
                 # Start all actions in parallell
                 running_actions = []
@@ -93,7 +117,10 @@ class L3AgentLayer(AceLayer):
             print("No response from action")
             return
 
-        print("Got action output, will add to the llm messages and talk to llm again.")
+        print(f"Got action output:\n{action_output}")
+
+        print("I will add this to the llm conversation and talk to llm again.")
+
         llm_messages.append({
             "role": "user",
             "name": "action-output",
@@ -114,6 +141,13 @@ class L3AgentLayer(AceLayer):
             if action is not None:
                 print("Adding action: " + str(action))
                 actions.append(action)
+            else:
+                print("Adding action to report unknown action")
+                actions.append(RespondToUser(
+                    communication_channel,
+                    f"OK this is embarrassing. "
+                    f"My brain asked me to do something that I don't know how to do: {action_data}"
+                ))
 
         return actions
 
@@ -131,6 +165,12 @@ class L3AgentLayer(AceLayer):
             return CancelAllScheduledActions(self.scheduler)
         elif action_name == "cancel_scheduled_action":
             return CancelScheduledAction(self.scheduler, action_data["job_id"])
+        elif action_name == "save_memory":
+            return SaveMemory(self.memory_manager, action_data["memory_string"])
+        elif action_name == "get_all_memories":
+            return GetAllMemories(self.memory_manager)
+        elif action_name == "remove_closest_memory":
+            return RemoveClosestMemory(self.memory_manager, action_data["memory_string"], remove_memory_max_distance)
         else:
             print(f"Warning: Unknown action: {action_name}")
             return None

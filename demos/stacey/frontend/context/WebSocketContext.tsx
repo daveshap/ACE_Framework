@@ -1,5 +1,6 @@
 // context/WebSocketContext.js
 import React, {createContext, ReactNode, useEffect, useState} from 'react';
+import {Alert} from "@chakra-ui/react";
 
 export interface WebSocketEvent {
     eventType: string;
@@ -14,9 +15,13 @@ interface WebSocketProviderProps {
 
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
     const [socketEvent, setSocketEvent] = useState<WebSocketEvent | null>(null);
+    const adminSocketUrl = process.env.NEXT_PUBLIC_ADMIN_SOCKET_URL;
+    if (!adminSocketUrl) {
+        return <Alert status="error">I don't know where the admin socket backend is! Please set env variable NEXT_PUBLIC_ADMIN_SOCKET_URL</Alert>;
+    }
 
     useEffect(() => {
-        const socket = new WebSocket('ws://localhost:5000/ws/');
+        const socket = new WebSocket(adminSocketUrl);
 
         socket.onmessage = (event) => {
             console.log("WebSocketProvider got event:", event.data)

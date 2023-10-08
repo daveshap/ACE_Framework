@@ -20,7 +20,7 @@ export const LayerStatus: React.FC<LayerProps> = ({ layerId, displayName, backgr
     }
 
     useEffect(() => {
-        if (socketEvent && socketEvent.eventType === 'layer-status' && socketEvent.data.layerId === layerId) {
+        if (socketEvent && socketEvent.eventType === 'layerStatus' && socketEvent.data.layerId === layerId) {
             setStatus(socketEvent.data.status);
         }
     }, [socketEvent, layerId]);
