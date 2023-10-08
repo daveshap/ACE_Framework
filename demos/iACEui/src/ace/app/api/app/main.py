@@ -94,7 +94,6 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db)):
     ancestral_prompt_content = None
     with session as db:
-        
         ancestral_prompt = dao.get_active_ancestral_prompt(db=db)
         if not ancestral_prompt:
             raise HTTPException(
@@ -120,6 +119,7 @@ async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db))
             reasoning_result=reasoning_response["content"],
             data_bus_action=data_bus_action["content"],
             control_bus_action=control_bus_action["content"],
+            ancestral_prompt_id=ancestral_prompt.ancestral_prompt_id,
             db=db,
         )
 
@@ -132,6 +132,7 @@ async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db))
             reasoning_result=reasoning_result,
             data_bus_action=data_bus_action,
             control_bus_action=control_bus_action,
+            ancestral_prompt=ancestral_prompt_content,
         )
 
         return results
@@ -180,6 +181,12 @@ def get_active_ancestral_prompt(
 ):
     with session as db:
         results = dao.get_active_ancestral_prompt(db=db)
+        if not results:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No active ancestral prompt",
+            )
+
         return AncestralPromptModel.model_validate(results)
 
 
@@ -189,6 +196,21 @@ def get_all_ancestral_prompts(
 ):
     with session as db:
         results = dao.get_ancestral_prompts(db=db)
+        return [AncestralPromptModel.model_validate(result) for result in results]
+
+
+@app.get(
+    "/prompt/ancestral/{ancestral_prompt_id}", response_model=List[AncestralPromptModel]
+)
+def get_ancestral_prompt_by_id(
+    ancestral_prompt_id: uuid.UUID,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.get_ancestral_prompt_by_id(
+            db=db,
+            ancestral_prompt_id=ancestral_prompt_id,
+        )
         return [AncestralPromptModel.model_validate(result) for result in results]
 
 

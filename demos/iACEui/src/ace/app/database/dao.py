@@ -27,6 +27,7 @@ def store_test_results(
     reasoning_result: str,
     data_bus_action: str,
     control_bus_action: str,
+    ancestral_prompt_id: uuid.UUID,
 ):
     new_test_run = TestRun(
         input=input,
@@ -38,6 +39,7 @@ def store_test_results(
         reasoning_result=reasoning_result,
         data_bus_action=data_bus_action,
         control_bus_action=control_bus_action,
+        ancestral_prompt_id=ancestral_prompt_id,
     )
     
     db.add(new_test_run)
@@ -84,6 +86,14 @@ def get_active_ancestral_prompt(
     db_prompt = db.query(AncestralPrompt).filter_by(is_active=True).first()
     return db_prompt
 
+
+def get_ancestral_prompt_by_id(
+    db: Session,
+    ancestral_prompt_id: uuid.UUID
+):
+    db_prompt = db.query(AncestralPrompt).filter_by(ancestral_prompt_id=ancestral_prompt_id).first()
+    return db_prompt
+   
 
 def get_ancestral_prompts(
     db: Session,

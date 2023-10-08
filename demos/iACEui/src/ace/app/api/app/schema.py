@@ -143,6 +143,7 @@ class LayerTestResponseModel(LayerNameBase, BaseModel):
     reasoning_result: LlmMessage
     data_bus_action: LlmMessage
     control_bus_action: LlmMessage
+    ancestral_prompt: str
     
 
 class ConfirmationModel(BaseModel):

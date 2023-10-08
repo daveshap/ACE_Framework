@@ -139,6 +139,11 @@ class TestRun(Base):
     data_bus_action = Column(Text, nullable=False)
     control_bus_action = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    ancestral_prompt_id = Column(UUID(as_uuid=True), ForeignKey('ancestral_prompt.ancestral_prompt_id'), nullable=True)
+    
+    ancestral_prompt = relationship("AncestralPrompt", back_populates="test_runs")
 
+
+AncestralPrompt.test_runs = relationship("TestRun", order_by=TestRun.test_run_id, back_populates="ancestral_prompt")
 
 Base.metadata.create_all(engine)
