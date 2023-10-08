@@ -13,7 +13,6 @@ app = Flask(__name__)
 def post_message():
     message = request.json
     message['timestamp'] = time.time()
-    messages.append(message)
     with open(f"/logs/log_{message['timestamp']}_{message['bus']}_{message['layer']}.yaml", 'w', encoding='utf-8') as file:
         yaml.dump(message, file)
     print(message['bus'], message['layer'], message['message'])

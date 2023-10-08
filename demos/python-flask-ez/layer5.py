@@ -4,7 +4,7 @@ from ace_layers import *
 if __name__ == '__main__':
     openai.api_key = open_file('key_openai.txt').strip()
     response = ''
-    layer_num = 2  ## UPDATE THIS
+    layer_num = 5  ## UPDATE THIS
     while True:
         try:
             # FETCH FROM BUS

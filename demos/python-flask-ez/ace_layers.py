@@ -28,7 +28,7 @@ def open_file(filepath):
 
 
 def send_message(bus, layer, message):
-    url = 'http://0.0.0.0:900/message'
+    url = 'http://127.0.0.1:900/message'
     headers = {'Content-Type': 'application/json'}
     data = {'bus': bus, 'layer': layer, 'message': message}
     response = requests.post(url, headers=headers, data=json.dumps(data))
@@ -40,7 +40,7 @@ def send_message(bus, layer, message):
 
 
 def get_messages(bus, layer):
-    url = f'http://0.0.0.0:900/message?bus={bus}&layer={layer}'
+    url = f'http://127.0.0.1:900/message?bus={bus}&layer={layer}'
     response = requests.get(url)
     if response.status_code == 200:
         messages = response.json()['messages']
