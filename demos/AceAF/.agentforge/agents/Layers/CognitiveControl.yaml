@@ -42,7 +42,7 @@ Prompts:
     
     Input Data:
     
-    {input_data}
+    UserInterface: Chat interface enabled.
 
   Instruction: |+
     ---

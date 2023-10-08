@@ -23,28 +23,44 @@ class AceLayer:
         self.top_layer_message = None
         self.bottom_layer_message = None
 
-        self.events = []
-        self.north_bus_update_event = threading.Event()
-        self.south_bus_update_event = threading.Event()
-        self.input_update_event = threading.Event()
-        self.user_update_event = threading.Event()
-
         self.result = None
         self.agent = None
+        self.event = None
+        self.event_type = None  # variable to store the type of event
 
         LAYER_REGISTRY[self.layer_number] = self
 
     def stand_by(self):
-        # Clear old threads
-        self.events.clear()
+        self.event = threading.Event()
+        self.event_type = None
+        self.create_event_thread()
 
-        # Create new threads for each event
-        self.events.append(
-            self.create_event_thread('North Bus', self.north_bus_update_event, self.handle_north_bus_update))
-        self.events.append(
-            self.create_event_thread('South Bus', self.south_bus_update_event, self.handle_south_bus_update))
-        self.events.append(self.create_event_thread('Input', self.input_update_event, self.handle_input_update))
-        self.events.append(self.create_event_thread('User', self.user_update_event, self.handle_user_update))
+    def create_event_thread(self):
+        def event_loop():
+            while True:
+                self.event.wait()  # Wait for any event to be triggered
+
+                # Depending on the event type, call the appropriate handler
+                if self.event_type == 'NorthBusUpdate':
+                    self.handle_north_bus_update()
+                elif self.event_type == 'SouthBusUpdate':
+                    self.handle_south_bus_update()
+                elif self.event_type == 'InputUpdate':
+                    self.handle_input_update()
+                elif self.event_type == 'UserUpdate':
+                    self.handle_user_update()
+
+                # Reset the event
+                self.event.clear()
+
+        thread = threading.Thread(target=event_loop)
+        thread.daemon = True
+        thread.start()
+
+    def trigger_event(self, event_type):
+        """Trigger the event and set the event type."""
+        self.event_type = event_type
+        self.event.set()
 
     def run(self):
         self.interface.output_message(self.layer_number,
@@ -72,24 +88,9 @@ class AceLayer:
     def initialize_agents(self):
         pass
 
-    @staticmethod
-    def create_event_thread(event_name, event, callback):
-        def event_loop():
-            while True:
-                event.wait()
-                callback()
-                event.clear()
-
-        # self.interface.output_message(self.layer_number, f"{self.layer_name} - Listening to {event_name}!!!")
-
-        thread = threading.Thread(target=event_loop)
-        thread.daemon = True
-        thread.start()
-        return thread
-
     def trigger_next_layer(self):
         if self.south_layer < 7:
-            LAYER_REGISTRY[self.south_layer].input_update_event.set()
+            LAYER_REGISTRY[self.south_layer].trigger_event('SouthBusUpdate')
 
     def parse_results(self):
         result = self.result.__str__()
@@ -154,7 +155,7 @@ class AceLayer:
             index = north_bus['ids'].index(north_layer)
             self.bottom_layer_message = north_bus['documents'][index]
 
-    def handle_north_bus_update(self, text):
+    def handle_north_bus_update(self):
         # Load Data From North Bus and process
         self.run()
 

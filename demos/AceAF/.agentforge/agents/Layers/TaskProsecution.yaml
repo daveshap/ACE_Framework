@@ -68,8 +68,11 @@ Prompts:
   
     RESPONSE FORMAT:
     ---Southbound---
+    OutputToUser:
+      <Communicate a message, ask for information or simply speak to user>
+    
     TaskAction:
-      <Specific action the agent wants to take to proceed with the task, e.g., "Chat: 'Hello User!'".>
+      <Specific action from the available list that the agent wants to take to proceed with the task>
     
     ActuatorCommands:
       <Control signals for physical actuators (e.g., motors, servos) to execute tasks.>
