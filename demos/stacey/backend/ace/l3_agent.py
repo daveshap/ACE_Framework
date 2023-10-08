@@ -89,9 +89,6 @@ class L3AgentLayer(AceLayer):
                 print("Raw LLM response:\n" + llm_response_content)
 
                 actions = self.parse_actions(communication_channel, llm_response_content)
-                if len(actions) == 0:
-                    # The LLM didn't return any actions, but it did return a text response. So respond with that.
-                    actions.append(RespondToUser(communication_channel, llm_response_content))
 
                 # Start all actions in parallell
                 running_actions = []
@@ -114,7 +111,10 @@ class L3AgentLayer(AceLayer):
             print("No response from action")
             return
 
-        print("Got action output, will add to the llm messages and talk to llm again.")
+        print(f"Got action output:\n{action_output}")
+
+        print("I add this to the llm conversation and talk to llm again.")
+
         llm_messages.append({
             "role": "user",
             "name": "action-output",
