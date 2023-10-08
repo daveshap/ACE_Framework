@@ -97,6 +97,7 @@ The following actions are available.
   If anything happens that you think needs to be remembered for the future, use the save_memory action
   and tell the user that you will remember it.
 - get_all_memories(): Returns a list of all memories that have been saved.
+- remove_closest_memory(memory_string): Removes the memory that is closest to the given memory string, if any
 
 Don't make up new actions, only use the ones I've defined above.
 
@@ -137,7 +138,8 @@ For example:
 
 
 memories = """
-I have recalled the following memories related to this, in order of relevance (most relevant first):
+I have recalled the following memories related to this,
+in order of relevance (most relevant first, timestamp in angle brackets):
 [memories]
 """
 

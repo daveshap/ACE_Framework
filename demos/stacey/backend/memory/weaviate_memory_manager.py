@@ -1,3 +1,5 @@
+from typing import Optional
+
 import weaviate
 
 from ace.types import Memory
@@ -49,6 +51,31 @@ class WeaviateMemoryManager:
         )
         return result["data"]["Get"][data_class_name]
 
+    def remove_closest_memory(self, search_text, max_distance) -> Optional[Memory]:
+        result = (
+            self.client.query
+            .get("Memory", ["time_utc", "content"])
+            .with_near_text({
+                "concepts": search_text,
+                "distance": max_distance
+            })
+            .with_limit(1)
+            .with_additional(["distance", "id"])
+            .do()
+        )
+        print("weaviate query result: " + str(result))
+        memories = result["data"]["Get"][data_class_name]
+        if not memories:
+            return None  # No matching memory found
+
+        closest_memory = memories[0]
+        uuid_to_delete = closest_memory['_additional']['id']
+        self.client.data_object.delete(
+            uuid=uuid_to_delete,
+            class_name=data_class_name,
+        )
+        return closest_memory
+
     def find_relevant_memories(self, search_text, limit) -> list[Memory]:
         """
             Ordered by relevance
@@ -60,9 +87,11 @@ class WeaviateMemoryManager:
                 "concepts": search_text
             })
             .with_limit(limit)
-            # .with_additional(["distance"])
+            .with_additional(["distance"])
             .do()
         )
+        print("weaviate query result: " + str(result))
+
         return result["data"]["Get"][data_class_name]
 
     def create_weaviate_class_if_doesnt_already_exist(self, class_definition):

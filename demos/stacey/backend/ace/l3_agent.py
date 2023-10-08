@@ -1,4 +1,5 @@
 import asyncio
+import json
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -15,6 +16,7 @@ from actions.cancel_scheduled_action import CancelScheduledAction
 from actions.get_all_memories import GetAllMemories
 from actions.get_web_content import GetWebContent
 from actions.list_scheduled_actions import GetScheduledActions
+from actions.remove_memory import RemoveClosestMemory
 from actions.respond_to_user import RespondToUser
 from actions.save_memory import SaveMemory
 from actions.schedule_action import ScheduleAction
@@ -29,6 +31,8 @@ chat_history_length = 10
 
 max_memories_to_include = 5
 
+# Used when removing memories. Lower number means we will be more picky about only removing closely matching memories.
+remove_memory_max_distance = 0.1
 
 class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
@@ -58,7 +62,7 @@ class L3AgentLayer(AceLayer):
             max_memories_to_include
         )
 
-        print("Found memories: " + str(memories))
+        print("Found memories:\n" + json.dumps(memories, indent=2))
         system_message = self.create_system_message()
 
         memories_if_any = ""
@@ -115,7 +119,7 @@ class L3AgentLayer(AceLayer):
 
         print(f"Got action output:\n{action_output}")
 
-        print("I add this to the llm conversation and talk to llm again.")
+        print("I will add this to the llm conversation and talk to llm again.")
 
         llm_messages.append({
             "role": "user",
@@ -165,6 +169,8 @@ class L3AgentLayer(AceLayer):
             return SaveMemory(self.memory_manager, action_data["memory_string"])
         elif action_name == "get_all_memories":
             return GetAllMemories(self.memory_manager)
+        elif action_name == "remove_closest_memory":
+            return RemoveClosestMemory(self.memory_manager, action_data["memory_string"], remove_memory_max_distance)
         else:
             print(f"Warning: Unknown action: {action_name}")
             return None
