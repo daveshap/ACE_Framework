@@ -16,6 +16,7 @@ But it is helping us evolve and explore the framework, and she can already do so
 - She has a pretty colorful personality which can be customized
 - She knows what time it is and where she is hosted
 - She can do background tests and scheduled tasks, for example "Stacey, ping me in this channel in 30 seconds"
+- She has long-term memory (via a vector db), can figure out which things are worth remembering, and will recall memories relevant to the context. She can also be asked to forget things.
 
 ## Next steps & test cases
 We are using a test-driven approach to this, working in tiny increments to build up each
