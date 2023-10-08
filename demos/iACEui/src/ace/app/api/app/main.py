@@ -26,7 +26,7 @@ from schema import (
     LlmMessage,
     AncestralPromptAdd,
     AncestralPromptModel,
-    LayerTestHistoryModel
+    LayerTestHistoryModel,
 )
 
 from ai import generate_bus_message
@@ -45,9 +45,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,  # Allow specific origins
     allow_credentials=True,  # Allow cookies, headers, etc.
-    allow_methods=["*"],     # Allow all methods
-    allow_headers=["*"],     # Allow all headers
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
+
 
 @app.options("/{path:path}")
 async def handle_options_request(path: str, response: Response):
@@ -91,36 +92,50 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 
 @app.post("/layer/test", response_model=LayerTestResponseModel)
 async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db)):
-    reasoning_response, data_bus_action, control_bus_action = generate_bus_message(
-        input=req.input,
-        layer_name=req.layer_name,
-        prompts=req.prompts,
-        source_bus=req.source_bus,
-        llm_messages=req.llm_messages if req.llm_messages else [],
-        llm_model_parameters=req.llm_model_parameters,
-        openai_api_key=settings.openai_api_key,
-    )
+    ancestral_prompt_content = None
     with session as db:
+        
+        ancestral_prompt = dao.get_active_ancestral_prompt(db=db)
+        if not ancestral_prompt:
+            raise HTTPException(
+                status_code=status.HTTP_412_PRECONDITION_FAILED,
+                detail="Active Ancestral prompt unavilable. Cannot process this request.",
+            )
+
+        ancestral_prompt_content = ancestral_prompt.prompt
+
+        reasoning_response, data_bus_action, control_bus_action = generate_bus_message(
+            ancestral_prompt=ancestral_prompt_content,
+            input=req.input,
+            layer_name=req.layer_name,
+            prompts=req.prompts,
+            source_bus=req.source_bus,
+            llm_messages=req.llm_messages if req.llm_messages else [],
+            llm_model_parameters=req.llm_model_parameters,
+            openai_api_key=settings.openai_api_key,
+        )
+
         dao.store_test_results(
             **req.model_dump(),
-            reasoning_result=reasoning_response['content'],
-            data_bus_action=data_bus_action['content'],
-            control_bus_action=control_bus_action['content'],
+            reasoning_result=reasoning_response["content"],
+            data_bus_action=data_bus_action["content"],
+            control_bus_action=control_bus_action["content"],
             db=db,
         )
 
-    reasoning_result = LlmMessage(**reasoning_response)
-    data_bus_action = LlmMessage(**data_bus_action)
-    control_bus_action = LlmMessage(**control_bus_action)
+        reasoning_result = LlmMessage(**reasoning_response)
+        data_bus_action = LlmMessage(**data_bus_action)
+        control_bus_action = LlmMessage(**control_bus_action)
 
-    results = LayerTestResponseModel(
-        layer_name=req.layer_name,
-        reasoning_result=reasoning_result,
-        data_bus_action=data_bus_action,
-        control_bus_action=control_bus_action,
-    )
+        results = LayerTestResponseModel(
+            layer_name=req.layer_name,
+            reasoning_result=reasoning_result,
+            data_bus_action=data_bus_action,
+            control_bus_action=control_bus_action,
+        )
 
-    return results
+        return results
+
 
 @app.get("/layer/{layer_name}/test/runs", response_model=List[LayerTestHistoryModel])
 async def get_test_runs(
@@ -131,7 +146,7 @@ async def get_test_runs(
         results = dao.get_all_test_runs(db=db, layer_name=layer_name)
         resp = [LayerTestHistoryModel.model_validate(result) for result in results]
         return resp
-        
+
 
 @app.post("/prompt/ancestral", response_model=AncestralPromptModel)
 def add_ancestral_prompt(
@@ -159,16 +174,22 @@ def set_active_ancestral_prompt(
         return AncestralPromptModel.model_validate(results)
 
 
-@app.get("/prompt/ancestral/{ancestral_prompt_id}", response_model=AncestralPromptAdd)
+@app.get("/prompt/ancestral/active", response_model=AncestralPromptModel)
 def get_active_ancestral_prompt(
-    ancestral_prompt_id: uuid.UUID,
     session: Session = Depends(get_db),
 ):
     with session as db:
-        results = dao.get_ancestral_prompt(
-            db=db, ancestral_prompt_id=ancestral_prompt_id
-        )
+        results = dao.get_active_ancestral_prompt(db=db)
         return AncestralPromptModel.model_validate(results)
+
+
+@app.get("/prompt/ancestral/all", response_model=List[AncestralPromptModel])
+def get_all_ancestral_prompts(
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.get_ancestral_prompts(db=db)
+        return [AncestralPromptModel.model_validate(result) for result in results]
 
 
 @app.get("/layer/config/{layer_name}/all", response_model=List[LayerConfigModel])

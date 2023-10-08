@@ -3,6 +3,7 @@ from typing import List
 from schema import Prompts, OpenAiGPTChatParameters, LlmMessage
 
 def generate_bus_message(
+        ancestral_prompt: str,
         input: str,
         layer_name: str,
         prompts: Prompts,
@@ -14,6 +15,7 @@ def generate_bus_message(
     openai.api_key = openai_api_key
 
     reasoning_result = get_reasoning(
+        ancestral_prompt=ancestral_prompt,
         input=input,
         prompts=prompts,
         source_bus=source_bus,
@@ -22,6 +24,7 @@ def generate_bus_message(
     )
 
     data_bus_action_result = get_bus_action(
+        ancestral_prompt=ancestral_prompt,
         input=input,
         layer_name=layer_name,
         prompts=prompts,
@@ -34,6 +37,7 @@ def generate_bus_message(
     )
 
     control_bus_action_result = get_bus_action(
+        ancestral_prompt=ancestral_prompt,
         input=input,
         layer_name=layer_name,
         prompts=prompts,
@@ -48,6 +52,7 @@ def generate_bus_message(
     return reasoning_result, data_bus_action_result, control_bus_action_result
 
 def get_reasoning(
+    ancestral_prompt: str,
     input: str, 
     prompts: Prompts,
     source_bus: str,
@@ -63,9 +68,9 @@ f"""
 {source_bus}
 """
     )
-
+    system_prompt = f"{ancestral_prompt}\n\n{prompts.identity}\n\n{prompts.reasoning}"
     reasoning_messages = [
-        {"role": "system", "content": f"{prompts.identity}\n\n{prompts.reasoning}"},
+        {"role": "system", "content": system_prompt},
     ] + llm_messages + [
         {"role": "user", "content": reasoning_prompt}
     ]
@@ -78,6 +83,7 @@ f"""
     return reasoning_result
 
 def get_bus_action(
+    ancestral_prompt: str,
     input: str,
     layer_name: str, 
     source_bus: str,
@@ -101,9 +107,9 @@ Input source bus = {source_bus}
 {bus_prompt}
 """
     )
-
+    system_prompt = f"{ancestral_prompt}\n\n{prompts.identity}\n\n{prompts.reasoning}"
     data_bus_action = [
-        {"role": "system", "content": f"{prompts.identity}\n{prompts.reasoning}"},
+        {"role": "system", "content": system_prompt},
     ] + llm_messages + [
         {"role": "user", "content": data_bus_action_prompt}]
 

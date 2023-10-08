@@ -78,6 +78,19 @@ def add_ancestral_prompt(
     
     return new_prompt
 
+def get_active_ancestral_prompt(
+    db: Session,
+):
+    db_prompt = db.query(AncestralPrompt).filter_by(is_active=True).first()
+    return db_prompt
+
+
+def get_ancestral_prompts(
+    db: Session,
+):
+    db_prompt = db.query(AncestralPrompt).all()
+    return db_prompt
+
 
 def set_active_ancestral_prompt(
     db: Session,
