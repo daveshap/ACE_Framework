@@ -135,6 +135,13 @@ class L3AgentLayer(AceLayer):
             if action is not None:
                 print("Adding action: " + str(action))
                 actions.append(action)
+            else:
+                print("Adding action to report unknown action")
+                actions.append(RespondToUser(
+                    communication_channel,
+                    f"OK this is embarrassing. "
+                    f"My brain asked me to do something that I don't know how to do: {action_data}"
+                ))
 
         return actions
 
