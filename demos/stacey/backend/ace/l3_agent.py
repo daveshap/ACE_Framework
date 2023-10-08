@@ -48,14 +48,15 @@ class L3AgentLayer(AceLayer):
             return
 
         chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        if not chat_history:
+            print("Warning: process_incoming_user_message was called with no chat history. That's weird. Ignoring.")
+            return
+        last_chat_message = chat_history[-1]
 
-        memories: [Memory] = []
-        if len(chat_history) > 0:
-            last_chat_message = chat_history[-1]
-            memories: [Memory] = self.memory_manager.find_relevant_memories(
-                self.stringify_chat_message(last_chat_message),
-                max_memories_to_include
-            )
+        memories: [Memory] = self.memory_manager.find_relevant_memories(
+            self.stringify_chat_message(last_chat_message),
+            max_memories_to_include
+        )
 
         print("Found memories: " + str(memories))
         system_message = self.create_system_message()
