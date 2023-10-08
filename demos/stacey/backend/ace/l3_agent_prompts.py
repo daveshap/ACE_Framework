@@ -96,6 +96,7 @@ The following actions are available.
 - save_memory(memory_string): Saves a memory to the vector database, for inclusion in future prompts.
   If anything happens that you think needs to be remembered for the future, use the save_memory action
   and tell the user that you will remember it.
+- get_all_memories(): Returns a list of all memories that have been saved.
 
 Don't make up new actions, only use the ones I've defined above.
 

@@ -12,6 +12,7 @@ from ace.types import ChatMessage, Memory
 from actions.action import Action
 from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
 from actions.cancel_scheduled_action import CancelScheduledAction
+from actions.get_all_memories import GetAllMemories
 from actions.get_web_content import GetWebContent
 from actions.list_scheduled_actions import GetScheduledActions
 from actions.respond_to_user import RespondToUser
@@ -161,6 +162,8 @@ class L3AgentLayer(AceLayer):
             return CancelScheduledAction(self.scheduler, action_data["job_id"])
         elif action_name == "save_memory":
             return SaveMemory(self.memory_manager, action_data["memory_string"])
+        elif action_name == "get_all_memories":
+            return GetAllMemories(self.memory_manager)
         else:
             print(f"Warning: Unknown action: {action_name}")
             return None

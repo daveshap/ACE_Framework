@@ -38,6 +38,17 @@ class WeaviateMemoryManager:
             data_class_name
         )
 
+    def get_all_memories(self) -> list[Memory]:
+        """
+        Ordered by relevance
+        """
+        result = (
+            self.client.query
+            .get("Memory", ["time_utc", "content"])
+            .do()
+        )
+        return result["data"]["Get"][data_class_name]
+
     def find_relevant_memories(self, search_text, limit) -> list[Memory]:
         """
             Ordered by relevance
@@ -52,7 +63,6 @@ class WeaviateMemoryManager:
             # .with_additional(["distance"])
             .do()
         )
-        print("find_relevant_memories response: " + str(result))
         return result["data"]["Get"][data_class_name]
 
     def create_weaviate_class_if_doesnt_already_exist(self, class_definition):
