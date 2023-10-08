@@ -5,6 +5,17 @@ import uuid
 from typing import Optional, List, Dict, Any
 
 
+def get_all_test_runs(db: Session, layer_name: str):
+
+    return (
+        db.query(TestRun)
+        .filter_by(layer_name=layer_name)
+        .order_by(
+            desc(TestRun.created_at),
+        )
+        .all()
+    )
+
 def store_test_results(
     db: Session,
     input: str,

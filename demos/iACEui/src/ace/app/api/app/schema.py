@@ -3,7 +3,7 @@ from typing import List, Optional
 from pydantic import BaseModel, validator
 import uuid
 from datetime import datetime
-from constants import LAYER_NAMES, LLM_MODEL_NAMES, OPENAI_API_ROLES
+from constants import LAYER_NAMES, OPENAI_API_ROLES
 
 
 class LayerNameBase(BaseModel):
@@ -143,6 +143,7 @@ class LayerTestResponseModel(LayerNameBase, BaseModel):
     reasoning_result: LlmMessage
     data_bus_action: LlmMessage
     control_bus_action: LlmMessage
+    
 
 class ConfirmationModel(BaseModel):
     status: str = "success"
@@ -154,6 +155,23 @@ class AncestralPromptModel(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class LayerTestHistoryModel(BaseModel):
+    test_run_id: uuid.UUID
+    input: str
+    layer_name: str
+    prompts: Prompts
+    source_bus: str
+    llm_messages: List[LlmMessage]
+    llm_model_parameters: OpenAiGPTChatParameters
+    reasoning_result: str
+    data_bus_action: str
+    control_bus_action: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

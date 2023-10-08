@@ -26,6 +26,7 @@ from schema import (
     LlmMessage,
     AncestralPromptAdd,
     AncestralPromptModel,
+    LayerTestHistoryModel
 )
 
 from ai import generate_bus_message
@@ -121,6 +122,16 @@ async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db))
 
     return results
 
+@app.get("/layer/{layer_name}/test/runs", response_model=List[LayerTestHistoryModel])
+async def get_test_runs(
+    layer_name: str,
+    session: Session = Depends(get_db),
+):
+    with session as db:
+        results = dao.get_all_test_runs(db=db, layer_name=layer_name)
+        resp = [LayerTestHistoryModel.model_validate(result) for result in results]
+        return resp
+        
 
 @app.post("/prompt/ancestral", response_model=AncestralPromptModel)
 def add_ancestral_prompt(
