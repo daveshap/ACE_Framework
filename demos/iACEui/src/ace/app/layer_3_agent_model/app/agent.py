@@ -1,17 +1,22 @@
 from base.base_layer import BaseLayer
-import aio_pika
 import logging
 from settings import settings
-from base.amqp.exchange import create_exchange
-from identity import primary_directive
+import re
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class Layer3Agent(BaseLayer):
-    def get_primary_directive(self):
-        return primary_directive
+
+
+    def _extract_status(self, input_text):
+        match = re.search(r'\[Status\]\n(complete|incomplete|error)', input_text)
+        
+        if match:
+            return match.group(1).strip().lower()
+        else:
+            return 'error'
 
 
 if __name__ == "__main__":

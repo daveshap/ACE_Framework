@@ -2,8 +2,15 @@ from pydantic import BaseModel, validator
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
-from constants import LAYER_NAMES
 
+LAYER_NAMES = [
+    "Aspirational Layer",
+    "Global Strategy Layer",
+    "Agent Model Layer",
+    "Executive Layer",
+    "Cognitive Control Layer",
+    "Task Prosecution Layer",
+]
 
 class LayerNameBase(BaseModel):
     layer_name: str
@@ -63,7 +70,6 @@ class RabbitMQLogModel(LayerNameBase, BaseModel):
 
 class LayerConfigModel(LayerNameBase, BaseModel):
     config_id: UUID
-    llm_model_name: str = 'gpt-3.5-turbo'
     parent_config_id: Optional[UUID] = None
     layer_name: str
     prompts: Prompts
@@ -76,7 +82,7 @@ class MessageWithLayerConfigModel(BaseModel):
     rabbitmq_log: RabbitMQLogModel
     layer_config: LayerConfigModel
 
-class AncestralPrompt(BaseModel):
+class AncestralPromptModel(BaseModel):
     ancestral_prompt_id: UUID
     parent_ancestral_prompt_id: Optional[UUID]
     prompt: str

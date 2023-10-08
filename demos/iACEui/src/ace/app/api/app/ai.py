@@ -64,11 +64,12 @@ f"""
 # You Received a MESSAGE From the SOURCE BUS
 ## MESSAGE
 {input}
+
 ## SOURCE BUS
 {source_bus}
 """
     )
-    system_prompt = f"{ancestral_prompt}\n\n{prompts.identity}\n\n{prompts.reasoning}"
+    system_prompt = f"{prompts.identity}\n\n{ancestral_prompt}\n\n{prompts.reasoning}"
     reasoning_messages = [
         {"role": "system", "content": system_prompt},
     ] + llm_messages + [
@@ -98,11 +99,14 @@ def get_bus_action(
 f"""
 # Given Your Role as the {layer_name} in the ACE framework
 Consider the INPUT, YOUR REASONING about it, and BUS RULES to decide what, if any, message you should place on the {destination_bus}
+
 ## INPUT
 Input source bus = {source_bus}
 {input}
+
 ## YOUR REASONING
 {reasoning_result}
+
 ## BUS RULES
 {bus_prompt}
 """

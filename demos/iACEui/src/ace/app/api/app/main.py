@@ -16,7 +16,6 @@ from database import dao
 
 from schema import (
     LayerConfigAdd,
-    LayerStateUpdate,
     LayerStateCreate,
     Mission,
     LayerConfigModel,
@@ -101,10 +100,8 @@ async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db))
                 detail="Active Ancestral prompt unavilable. Cannot process this request.",
             )
 
-        ancestral_prompt_content = ancestral_prompt.prompt
-
         reasoning_response, data_bus_action, control_bus_action = generate_bus_message(
-            ancestral_prompt=ancestral_prompt_content,
+            ancestral_prompt=ancestral_prompt.prompt,
             input=req.input,
             layer_name=req.layer_name,
             prompts=req.prompts,
@@ -123,16 +120,12 @@ async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db))
             db=db,
         )
 
-        reasoning_result = LlmMessage(**reasoning_response)
-        data_bus_action = LlmMessage(**data_bus_action)
-        control_bus_action = LlmMessage(**control_bus_action)
-
         results = LayerTestResponseModel(
             layer_name=req.layer_name,
-            reasoning_result=reasoning_result,
-            data_bus_action=data_bus_action,
-            control_bus_action=control_bus_action,
-            ancestral_prompt=ancestral_prompt_content,
+            reasoning_result=LlmMessage(**reasoning_response),
+            data_bus_action=LlmMessage(**data_bus_action),
+            control_bus_action=LlmMessage(**control_bus_action),
+            ancestral_prompt=ancestral_prompt.prompt,
         )
 
         return results
