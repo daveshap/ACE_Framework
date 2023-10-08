@@ -1,7 +1,7 @@
 from agentforge.agent import Agent
 
 
-class L1Default(Agent):
+class Aspirational(Agent):
 
     def load_additional_data(self):
         self.data['mission'] = self.agent_data['settings']['directives'].get('Mission', None)

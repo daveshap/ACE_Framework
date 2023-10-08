@@ -1,5 +1,5 @@
 from agentforge.agent import Agent
 
 
-class TaskCreation(Agent):
+class ExecutiveFunction(Agent):
     pass

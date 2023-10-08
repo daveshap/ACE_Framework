@@ -1,5 +1,5 @@
 from agentforge.agent import Agent
 
 
-class TestAgent(Agent):
+class GlobalStrategy(Agent):
     pass

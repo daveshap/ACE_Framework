@@ -18,20 +18,28 @@ Prompts:
   Mission: |+
     ---
     
+    Mission Statement:
+    
     {mission}
 
   UDHR: |+
     ---
+    
+    Universal Declaration of Human Rights:
     
     {udhr}
 
   Heuristics: |+
     ---
     
+    Heuristic Imperatives:
+    
     {heuristics}
 
   Situation: |+
     ---
+    
+    Current Situation from layer below - Global Strategy Layer:
     
     {bottom_message}
 

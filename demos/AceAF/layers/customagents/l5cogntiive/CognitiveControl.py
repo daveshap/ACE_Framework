@@ -1,5 +1,5 @@
 from agentforge.agent import Agent
 
 
-class StrategyUpdateAgent(Agent):
+class CognitiveControl(Agent):
     pass

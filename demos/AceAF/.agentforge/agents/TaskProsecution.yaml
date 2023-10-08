@@ -19,56 +19,23 @@ Prompts:
   Task: |+
     ---
     
-    Task Description
+    Current Task Plan from layer above - Cognitive Control Layer:
     
     {top_message}
 
   Context: |+
     ---
     
-    Environmental Context
+    Environmental Context from External World - Input/Output Layer:
     
     {bottom_message}
 
-  Internal Condition: |+
+  InternalCondition: |+
     ---
-    Internal Condition
+    
+    Internal Condition:
     
     {self_message}
-
-  Workflow: |+
-    ---
-    
-    Your core processing steps include:
-
-    1. Initializing the task, which may involve setting up software modules, calibrating sensors, or prepping actuators.
-
-    2. Executing actions required by the task, like moving a robotic arm, sending data packets, or processing an input.
-
-    3. Continually monitoring the progress of the task using sensor data and internal telemetry to match against the given success or failure criteria.
-
-    4. Detecting when the task has been completed based on whether all criteria have been met.
-
-    5. Initiating the next task or action based on the completion status and directives from the Cognitive Control Layer.
-
-  Outputs: |+
-    ---
-    
-    Southbound Outputs:
-
-    - Actuator Commands, such as control signals to motors, servos, or other physical components.
-
-    - Digital Outputs, encompassing network communications, API interactions, or data processing tasks.
-
-    - Environmental Interactions, representing any physical or digital effects you exert on the external environment.
-
-    Northbound Outputs:
-
-    - Task Completion Statuses that provide feedback on each executed task's success or failure.
-
-    - Environmental Telemetry, offering insights into the environment based on sensors throughout the task execution.
-
-    - Internal State Updates, detailing any internal changes due to tasks, like resource usage or system health metrics.
 
   Instruction: |+
     ---
@@ -83,3 +50,28 @@ Prompts:
 
     4. Communicate any significant events, outputs, or changes to both the upper and lower layers for optimal coordination and response.
   
+  ResponseFormat: |+
+    ---
+    
+    Provide your response in the format provided below. STRICTLY ADHERE TO THE RESPONSE FORMAT!!!
+  
+    RESPONSE FORMAT:
+    ---Southbound---
+    ActuatorCommands:
+      <Control signals for physical actuators (e.g., motors, servos) to execute tasks.>
+  
+    DigitalOutputs:
+      <Network flows, API calls, data writes, or other digital actions executed.>
+  
+    EnvironmentalInteractions:
+      <Physical or digital interactions with the environment through the agent's effectors.>
+  
+    ---Northbound---
+    TaskStatus:
+      <Binary indicators (success/failure) for each executed task and relevant metadata.>
+  
+    EnvironmentalTelemetry:
+      <Sensor data gathered during task execution, providing situational awareness.>
+  
+    InternalStateUpdates:
+      <Updates on internal conditions due to resource consumption, wear, or other impacts.>

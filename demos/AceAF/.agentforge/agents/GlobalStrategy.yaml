@@ -16,14 +16,14 @@ Prompts:
   Mission: |+
     ---
     
-    Aspirational Mission from above:
+    Aspirational Mission from layer above - Aspirational Layer:
     
     {top_message}
 
   Context: |+
     ---
     
-    Environment:
+    Current Context from layer below - Agent (Self) Model Layer:
     
     {bottom_message}
     
@@ -66,10 +66,10 @@ Prompts:
       <any suggestions or adjustments for the next layer below (Agent Model)>
   
     ---Northbound---
-    Current Beliefs:
+    CurrentBeliefs:
       <beliefs about world state>
 
-    Key Strategies:
+    KeyStrategies:
       <core strategic approaches>
       
 

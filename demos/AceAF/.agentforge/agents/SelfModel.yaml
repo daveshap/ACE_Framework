@@ -16,14 +16,14 @@ Prompts:
   Directives: |+
     ---
     
-    Strategic Directives
+    Strategic Directives from layer above - Global Strategy Layer:
     
     {top_message}
 
   Context: |+
     ---
     
-    Context
+    Current Context from layer below - Executive Function Layer:
     
     {bottom_message}
 
@@ -38,7 +38,7 @@ Prompts:
 
     {memory_data}
 
-  Prior Self-Model: |+
+  SelfModel: |+
     ---
     
     Self Model
@@ -48,7 +48,7 @@ Prompts:
   Instruction: |+
     ---
     
-    Given the inputs and prior self-model, provide:
+    Given the information above, provide:
 
     1. An updated definitive document detailing your understanding of the agent's:
 
@@ -60,3 +60,30 @@ Prompts:
     2. Strategic objectives shaped by the self-model.
 
     Transmit these onto the next layer below.
+
+  ResponseFormat: |+
+    ---
+
+    Provide your response in the format provided below. STRICTLY ADHERE TO THE RESPONSE FORMAT!!!
+
+    RESPONSE FORMAT:
+    ---Southbound---
+    Capabilities:
+      <Detailed specs on agent's hardware, software, AI/ML capabilities.>
+
+    Memories:
+      <Relevant episodic records or knowledge entries that provide context for decision-making.>
+
+    StrategicObjectives:
+      <Objectives refined to be in line with agent's self-model and capabilities.>
+
+    ---Northbound---
+    StatusUpdate:
+      <Summarized status detailing key state information relevant to strategic planning.>
+
+    HardwareSoftware:
+      <A concise outline of the agent's current hardware statuses and software runtime info.>
+
+    Knowledge:
+      <Snapshot of the agent's available knowledge stores, concepts, and recent episodic memories.>
+

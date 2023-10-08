@@ -48,8 +48,7 @@ class AceLayer:
 
     def run(self):
         self.interface.output_message(self.layer_number,
-                                      f"\n-------------Running {self.layer_name}-------------\n")
-
+                                      f"\n--------------------Running {self.layer_name}--------------------")
         self.initialize_agents()
 
         self.load_data_from_bus(bus="SouthBus")
@@ -61,21 +60,14 @@ class AceLayer:
 
         self.update_bus(bus="SouthBus", message=self.my_messages['SouthBus'])
         self.update_bus(bus="NorthBus", message=self.my_messages['NorthBus'])
-        # Load Relevant Data From Input
-        # Load Relevant Data From Chat
-        # Load Relevant Data From Memory
-        # Parse Data
-        # Agent Logic
-        # Parse Results
-        # Update North Bus
-        # Update South Bus
-        # Remove Thread from self.threads
+
+        self.trigger_next_layer()
 
     def run_agents(self):
         # Call individual Agents From Each Layer
         self.result = self.agent.run(top_message=self.top_layer_message,
-                                     bottom_message=self.bottom_layer_message,
-                                     self_message=self.my_messages['SouthBus'])
+                                     bottom_message=self.bottom_layer_message)
+                                     # self_message=self.my_messages['SouthBus'])
 
     def initialize_agents(self):
         pass
@@ -95,23 +87,35 @@ class AceLayer:
         thread.start()
         return thread
 
+    def trigger_next_layer(self):
+        if self.south_layer < 7:
+            LAYER_REGISTRY[self.south_layer].input_update_event.set()
+
     def parse_results(self):
         result = self.result.__str__()
 
         # Splitting the string on "Northbound:" to separate the sections again
         if "---Northbound---" in result:
             southbound_str, northbound_str = result.split("---Northbound---")
-            northbound_str = southbound_str.replace("---Northbound---", "").strip()
+            northbound_str = northbound_str.strip()
         else:
             northbound_str = None
             southbound_str = result
 
+        # northbound_str = northbound_str.replace("---Southbound---", "").strip()
         southbound_str = southbound_str.replace("---Southbound---", "").strip()
 
         self.my_messages['SouthBus'] = southbound_str
         self.my_messages['NorthBus'] = northbound_str
 
+        print(f"SOUTH BUS MESSAGE:\n{self.my_messages['SouthBus']}\n\n")
+        print(f"NORTH BUS MESSAGE:\n{self.my_messages['NorthBus']}\n\n")
+
     def update_bus(self, **kwargs):
+
+        if not kwargs['message']:
+            return
+
         params = {
             'collection_name': kwargs['bus'],
             'ids': [self.layer_number.__str__()],
@@ -119,11 +123,9 @@ class AceLayer:
         }
 
         self.storage.save_memory(params)
-
-        if kwargs['bus'] == 'SouthBus' and self.south_layer < 7:
-            LAYER_REGISTRY[self.south_layer].input_update_event.set()
-
-        self.interface.output_message(self.layer_number, f"\n---{kwargs['bus']}---\n\n{kwargs['message']}\n")
+        self.interface.output_message(self.layer_number,
+                                      f"\n-----------------------{kwargs['bus']}-----------------------\n"
+                                      f"{kwargs['message']}\n")
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
@@ -136,25 +138,21 @@ class AceLayer:
         pass
 
     def process_data_from_buses(self):
-        # self.interface.output_message(0, self.bus.__str__())
-        # print(self.bus.__str__())
-        # north_bus = self.bus.get("NorthBus", None)
+        north_bus = self.bus.get("NorthBus", None)
         south_bus = self.bus.get("SouthBus", None)
 
         north_layer = self.north_layer.__str__()
         south_layer = self.south_layer.__str__()
 
         # North Layer Writes to South Bus, Hence it's a Message from the Top Layer
-        if north_layer in south_bus['ids']:
+        if south_bus and north_layer in south_bus['ids']:
             index = south_bus['ids'].index(north_layer)
             self.top_layer_message = south_bus['documents'][index]
 
-        # self.interface.output_message(self.layer_number, f"North Incoming Message:\n{self.top_layer_message}\n")
-
-        # # North Layer Writes to South Bus, Hence it's a Message from the Bottom Layer
-        # if south_layer in north_bus['ids']:
-        #     index = north_bus['ids'].index(north_layer)
-        #     self.bottom_layer_message = north_bus['documents'][index]
+        # North Layer Writes to South Bus, Hence it's a Message from the Bottom Layer
+        if north_bus and south_layer in north_bus['ids']:
+            index = north_bus['ids'].index(north_layer)
+            self.bottom_layer_message = north_bus['documents'][index]
 
     def handle_north_bus_update(self, text):
         # Load Data From North Bus and process
