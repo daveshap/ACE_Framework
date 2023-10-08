@@ -3,10 +3,11 @@ from agentforge.utils.storage_interface import StorageInterface
 import threading
 from agentforge.config import Config
 from .Interface import Interface
-import time
 
 
 class AceLayer:
+
+    interface = Interface()
 
     def __init__(self):
         self.layer_name = self.__class__.__name__
@@ -30,10 +31,7 @@ class AceLayer:
 
         LAYER_REGISTRY[self.layer_number] = self
 
-    def stand_by(self):
-        self.event = threading.Event()
-        self.event_type = None
-        self.create_event_thread()
+    # -------------------------------- THREADS AND EVENTS --------------------------------
 
     def create_event_thread(self):
         def event_loop():
@@ -57,16 +55,43 @@ class AceLayer:
         thread.daemon = True
         thread.start()
 
+    def stand_by(self):
+        self.event = threading.Event()
+        self.event_type = None
+        self.create_event_thread()
+
+    def handle_north_bus_update(self):
+        # Load Data From North Bus and process
+        self.run()
+
+    def handle_south_bus_update(self):
+        # Load Data From South Bus and process
+        self.run()
+
+    def handle_input_update(self):
+        # Load Relevant Data From Input and process
+        self.run()
+
+    def handle_user_update(self):
+        # Load Relevant Data From Input and process
+        self.run()
+
     def trigger_event(self, event_type):
         """Trigger the event and set the event type."""
         self.event_type = event_type
         self.event.set()
 
+    def trigger_next_layer(self):
+        if self.south_layer < 7:
+            LAYER_REGISTRY[self.south_layer].trigger_event('SouthBusUpdate')
+
+    # -------------------------------- MAIN LOGIC --------------------------------
+
     def run(self):
         self.interface.output_message(self.layer_number,
                                       f"\n--------------------Running {self.layer_name}--------------------")
         self.initialize_agents()
-
+        self.load_relevant_data()
         self.load_data_from_bus(bus="SouthBus")
         self.process_data_from_buses()
 
@@ -79,64 +104,18 @@ class AceLayer:
 
         self.trigger_next_layer()
 
-    def run_agents(self):
-        # Call individual Agents From Each Layer
-        self.result = self.agent.run(top_message=self.top_layer_message,
-                                     bottom_message=self.bottom_layer_message)
-                                     # self_message=self.my_messages['SouthBus'])
-
     def initialize_agents(self):
+        # Meant for Individual Layers to override
         pass
 
-    def trigger_next_layer(self):
-        if self.south_layer < 7:
-            LAYER_REGISTRY[self.south_layer].trigger_event('SouthBusUpdate')
-
-    def parse_results(self):
-        result = self.result.__str__()
-
-        # Splitting the string on "Northbound:" to separate the sections again
-        if "---Northbound---" in result:
-            southbound_str, northbound_str = result.split("---Northbound---")
-            northbound_str = northbound_str.strip()
-        else:
-            northbound_str = None
-            southbound_str = result
-
-        # northbound_str = northbound_str.replace("---Southbound---", "").strip()
-        southbound_str = southbound_str.replace("---Southbound---", "").strip()
-
-        self.my_messages['SouthBus'] = southbound_str
-        self.my_messages['NorthBus'] = northbound_str
-
-        print(f"SOUTH BUS MESSAGE:\n{self.my_messages['SouthBus']}\n\n")
-        print(f"NORTH BUS MESSAGE:\n{self.my_messages['NorthBus']}\n\n")
-
-    def update_bus(self, **kwargs):
-
-        if not kwargs['message']:
-            return
-
-        params = {
-            'collection_name': kwargs['bus'],
-            'ids': [self.layer_number.__str__()],
-            'data': [kwargs['message']]
-        }
-
-        self.storage.save_memory(params)
-        self.interface.output_message(self.layer_number,
-                                      f"\n-----------------------{kwargs['bus']}-----------------------\n"
-                                      f"{kwargs['message']}\n")
+    def load_relevant_data(self):
+        # Meant for Individual Layers to override
+        pass
 
     def load_data_from_bus(self, **kwargs):  # North Bus
         bus_name = kwargs['bus']
         params = {"collection_name": bus_name}
         self.bus[bus_name] = self.storage.load_collection(params)
-        # self.interface.output_message(self.layer_number, f"Loaded Data:{self.bus[bus_name]}\n")
-
-    def load_relevant_data_from_memory(self):
-        # Load Relevant Memories
-        pass
 
     def process_data_from_buses(self):
         north_bus = self.bus.get("NorthBus", None)
@@ -155,18 +134,45 @@ class AceLayer:
             index = north_bus['ids'].index(north_layer)
             self.bottom_layer_message = north_bus['documents'][index]
 
-    def handle_north_bus_update(self):
-        # Load Data From North Bus and process
-        self.run()
+    def run_agents(self):
+        # Call individual Agents From Each Layer
+        self.result = self.agent.run(top_message=self.top_layer_message,
+                                     bottom_message=self.bottom_layer_message)
+                                     # self_message=self.my_messages['SouthBus'])
 
-    def handle_south_bus_update(self):
-        # Load Data From South Bus and process
-        self.run()
+    def parse_results(self):
+        result = self.result.__str__()
 
-    def handle_input_update(self):
-        # Load Relevant Data From Input and process
-        self.run()
+        # Splitting the string on "Northbound:" to separate the sections again
+        if "---Northbound---" in result:
+            southbound_str, northbound_str = result.split("---Northbound---")
+            northbound_str = northbound_str.strip()
+        else:
+            northbound_str = None
+            southbound_str = result
 
-    def handle_user_update(self):
-        # Load Relevant Data From Input and process
-        self.run()
+        southbound_str = southbound_str.replace("---Southbound---", "").strip()
+
+        self.my_messages['SouthBus'] = southbound_str
+        self.my_messages['NorthBus'] = northbound_str
+
+        print(f"SOUTH BUS MESSAGE:\n\n{self.my_messages['SouthBus']}\n\n")
+        print(f"NORTH BUS MESSAGE:\n{self.my_messages['NorthBus']}\n\n")
+
+    def update_bus(self, **kwargs):
+
+        if not kwargs['message']:
+            return
+
+        params = {
+            'collection_name': kwargs['bus'],
+            'ids': [self.layer_number.__str__()],
+            'data': [kwargs['message']]
+        }
+
+        self.storage.save_memory(params)
+        self.interface.output_message(self.layer_number,
+                                      f"\n-----------------------{kwargs['bus']}-----------------------\n"
+                                      f"{kwargs['message']}\n")
+
+

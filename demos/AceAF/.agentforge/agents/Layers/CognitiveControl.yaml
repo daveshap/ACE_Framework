@@ -66,6 +66,7 @@ Prompts:
       - For attributes you cannot confidently provide an answer for, describe briefly what information or context you're lacking to make an informed decision.
       - Refrain from adding any additional commentary before or after the structured response. Maintain ONLY the provided format. If you feel the need to express something supplementary, use the "Thoughts" attribute in the response format to convey it.
       - Your primary objective is to act on available information and clearly communicate any gaps in understanding.
+      - Keep responses short and to the point.
 
     ---Southbound---
     SelectedTaskInstructions:

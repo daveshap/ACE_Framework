@@ -27,22 +27,13 @@ Prompts:
     
     {bottom_message}
 
-  Inputs: |+
+  DeviceEnvironment: |+
     ---
+        
+    Device Environment:
     
-    Hardware:
-      CPU: AMD 5600x
-      RAM: 16 GB
-      GPU: NVIDIA RTX 3070
-      SSD: NVME 2.0 500GB
-    
-    Software:
-      OS: Windows 10 64-Bit
-      UI: Text Interface
-      Working Directory: "./Workspace/"
-      
-    Telemetry:
-      Time: October 12th 10AM CST
+    {input_data}
+
     
 
   SelfModel: |+
@@ -78,6 +69,7 @@ Prompts:
       - If information is uncertain or incomplete, provide the best possible answer based on available data.
       - Specify any gaps in knowledge or context when necessary.
       - Refrain from including additional commentary outside the structured response. Utilize the "Thoughts" attribute for any supplementary information.
+      - Keep responses short and to the point.
       
     RESPONSE FORMAT:
     ---Southbound---

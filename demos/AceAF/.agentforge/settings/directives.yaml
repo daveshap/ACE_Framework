@@ -37,5 +37,9 @@ Situation: |-
   - Your Own Name: Unknown
   - Location: USA
   - User: Unknown
-  - Events:  You've just been initialized. You still have no name.
-  - Knowledge: No information about the user or their preferences yet.
+  - Events:  
+    - System has been initialized.
+    - You've just been initialized
+  - Knowledge: 
+    - You still don't have your own name.
+    - No information about the user or their preferences yet.
