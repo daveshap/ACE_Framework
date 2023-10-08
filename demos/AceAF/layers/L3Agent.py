@@ -11,10 +11,10 @@ class L3Agent(AceLayer):
     def load_relevant_data(self):
         self.interface.refresh_info()
 
-        self.input_data = (f"Operating System Name: {self.interface.os_name} "
-                           f"Operating System Version: {self.interface.os_version}"
-                           f"System: {self.interface.system}"
-                           f"Architecture: {self.interface.architecture}"
+        self.input_data = (f"Operating System Name: {self.interface.os_name}\n"
+                           f"Operating System Version: {self.interface.os_version}\n"
+                           f"System: {self.interface.system}\n"
+                           f"Architecture: {self.interface.architecture}\n"
                            f"Current Date and Time: {self.interface.date_time}")
 
     def run_agents(self):

@@ -34,8 +34,6 @@ Prompts:
     
     {input_data}
 
-    
-
   SelfModel: |+
     ---
     
