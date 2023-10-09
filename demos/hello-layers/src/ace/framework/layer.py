@@ -58,15 +58,17 @@ class Layer(Resource):
                 control_messages = self.get_messages_from_consumer_local_queue('control')
             if self.southern_layer:
                 data_messages = self.get_messages_from_consumer_local_queue('data')
+            request_messages = self.get_messages_from_consumer_local_queue('request')
+            response_messages = self.get_messages_from_consumer_local_queue('response')
             telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
-            messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, telemetry_messages)
+            messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
             if messages_northbound:
                 for m in messages_northbound:
-                    message = self.build_message(self.northern_layer, message={'message': m}, message_type='data')
+                    message = self.build_message(self.northern_layer, message={'message': m}, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
             if messages_southbound:
                 for m in messages_southbound:
-                    message = self.build_message(self.southern_layer, message={'message': m}, message_type='control')
+                    message = self.build_message(self.southern_layer, message={'message': m}, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
@@ -111,6 +113,7 @@ class Layer(Resource):
         except yaml.YAMLError as e:
             self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
             return
+        data['direction'] = direction
         if self.is_pong(data):
             self.log.info(f"[{self.labeled_name}] received a [pong] message from layer: {data['resource']}")
             return
