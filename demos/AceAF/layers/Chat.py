@@ -46,7 +46,8 @@ class Chatbot:
         self.theory_agent(message, history)
 
         # run reflect agent
-        self.reflect_agent(message, history)
+        result = self.reflect_agent(message, history)
+        return result
 
     def thought_agent(self, message, history):
         self.result = self.thou.run(user_message=message,
