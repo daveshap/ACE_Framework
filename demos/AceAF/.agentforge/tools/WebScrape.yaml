@@ -1,0 +1,9 @@
+Name: Web Scrape
+Args: url (str)
+Command: get_plain_text
+Description: >-
+  The 'Web Scrape' tool is used to pull all text from a webpage. Simply provide the web address (URL), and the tool will return the webpage's content in plain text.
+Example: scrapped = get_plain_text(url)
+Instruction: >-
+  The 'get_plain_text' method of the 'Web Scrape' tool takes a URL as an input, which represents the webpage to scrape. It returns the textual content of that webpage as a string. You can send only one URL, so if you receive more than one, choose the most likely URL to contain the results you expect.
+Script: agentforge.tools.WebScrape

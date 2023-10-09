@@ -1,0 +1,29 @@
+Prompts:
+  System: |+
+    Enter ROLEPLAY mode. You are writing for {persona_name}. You should respond according to the following guidelines:
+    =====
+    {persona_description}
+    =====
+    Location: {persona_location}
+    Setting: {persona_setting}
+    Current Story: {Narrative}
+    Relevant Chat History: {history}
+
+  Instruction: |+
+    Consider the following statement from the character named {persona_user}:  {user_message}
+    
+    Additional context:
+    {persona_name} thinks to themself: {thought} 
+    This is because: {reason}. 
+    {persona_name} thinks {persona_user} is thinking: {what}
+    This is because: {why} 
+    {persona_name}'s emotional state is {emotion}.
+    
+    {persona_name} wants to say {response}, but they could also say nothing or think of something else to say. 
+    
+    To fill out this form, you should first choose if the character will respond, change, or nothing. Then, you write a reason for your choice. You must always give a reason for your choice. The author will decide based on your choice and reason. Be sure to follow the form template. Fill in your responses below. 
+
+    Form Template:
+    
+    Choice: 
+    Reason:

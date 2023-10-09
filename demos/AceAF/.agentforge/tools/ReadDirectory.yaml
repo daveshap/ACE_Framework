@@ -1,0 +1,9 @@
+Name: Read Directory
+Args: directory (dict), max_depth (int=3)
+Command: print_directory
+Description: >-
+  The 'Print Directory' tool prints the structure of a directory in a tree-like format. It visually represents folders and files, and you can specify how deep the structure should be printed.
+Example: print_directory_structure = print_directory(directory, max_depth=3)
+Instruction: >-
+  The 'print_directory' method requires a dictionary that represents the directory structure. An optional max_depth parameter can be provided to decide how many levels deep to display the structure. By default, it goes up to 3 levels deep.
+Script: agentforge.tools.Directory

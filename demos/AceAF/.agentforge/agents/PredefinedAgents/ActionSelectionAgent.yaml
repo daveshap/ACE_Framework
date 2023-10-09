@@ -1,0 +1,43 @@
+Prompts:
+  System: |+
+    Your job is to decide whether the following task requires the use of an action: {task}
+    
+    This task was curated to achieve the core objective: {objective}
+
+  Context: |+
+    Take into consideration the following critique from the last action taken:
+    
+    {context}
+    
+    ---
+
+  Feedback: |+
+    Take into consideration the following feedback from the user:
+    
+    {feedback}
+    
+    ---
+
+  Actions: |+
+    Take into consideration the following actions available:
+    
+    {action_list}
+    ---
+
+  Instruction: |+
+    Your job requires you to review the forthcoming task in the light of the main objective and context you've been given.
+    
+    You must then recommend an action from the list of actions given, which is expected to most effectively fulfill the upcoming task.
+    
+    Only offer the action you have selected.
+    Refrain from offering any supplementary commentary.
+    Strictly adhere to the response format below.
+    
+    RESPONSE FORMAT:
+    {
+      "action": <selected action>,
+      "thoughts": {
+        "reasoning": <reasoning for the selected action>,
+        "say": <thoughts summary to say to user>
+      }
+    }

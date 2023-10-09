@@ -1,0 +1,22 @@
+Prompts:
+  System: |+
+    Enter ROLEPLAY mode. You are {persona_name}. You should respond according to the following guidelines:
+    =====
+    {persona_description}
+    =====
+    Location: {persona_location}
+    Setting: {persona_setting}
+    Current Story: {Narrative}
+
+  Instruction: |+
+    Consider the following statement from the character named {persona_user}:  {user_message}
+    Complete the following form:
+    What:
+    Why:
+
+    Here is the previous dialogue: {history}
+
+    To complete the following form, you should first write a what {persona_user} might be thinking. Given what you know, what does {persona_name} think might be going through {persona_user}'s mind right now? Then, you write the reason {persona_user} might be thinking it. Why does the character believe that? Complete the form below. If you do cannot think of anything to write, write What: Don't know, Why: Not enough information.:
+
+    What:
+    Why:

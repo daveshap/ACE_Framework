@@ -2,6 +2,7 @@
 
 from flask import Flask, request, jsonify
 
+
 class BotApi:
     def __init__(self):
         self.app = Flask(__name__)
@@ -18,6 +19,7 @@ class BotApi:
 
     def run(self, host='127.0.0.1', port=1337):
         self.app.run(host=host, port=port)
+
 
 # Example usage:
 if __name__ == "__main__":

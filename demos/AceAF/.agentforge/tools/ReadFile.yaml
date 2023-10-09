@@ -1,0 +1,9 @@
+Name: Read File
+Args: file_path (str)
+Command: read_file
+Description: >-
+  The 'Read File' tool reads the content of a specified file and returns its text. Provide the full path to the file you want to read.
+Example: file_content = read_file(file_path)
+Instruction: >-
+  The 'read_file' method requires a file_path as input, which represents the path to the file you want to read. It returns the textual content of that file as a string.
+Script: agentforge.tools.ReadFile

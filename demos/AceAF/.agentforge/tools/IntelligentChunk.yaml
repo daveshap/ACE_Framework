@@ -1,0 +1,9 @@
+Name: Intelligent Chunk
+Args: text (str), chunk_size (int=0-3)
+Command: intelligent_chunk
+Description: >-
+  The 'Intelligent Chunk' tool splits a provided text into smaller, manageable parts or 'chunks'. The user decides the size of these chunks based on their needs.
+Example: chunks = intelligent_chunk(text, chunk_size)
+Instruction: >-
+  The 'intelligent_chunk' method takes a string of text and a chunk size as inputs. The chunk size is an integer that determines the number of sentences per chunk: 0 for 5 sentences, 1 for 13 sentences, 2 for 34 sentences, and 3 for 55 sentences. The function returns a list of text chunks, each containing a specified number of sentences.
+Script: agentforge.tools.IntelligentChunk
