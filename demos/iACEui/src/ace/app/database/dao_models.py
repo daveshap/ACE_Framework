@@ -31,9 +31,9 @@ class OpenAiGPTChatParameters(BaseModel):
 
 class Prompts(BaseModel):
     identity: str
-    input: str
     reasoning: str
-    bus: str
+    data_bus: str
+    control_bus: str
 
 class LlmMessage(BaseModel):
     role: str

@@ -1,7 +1,6 @@
 from base.base_layer import BaseLayer
 import logging
 from settings import settings
-from base.amqp.exchange import create_exchange
 import re
 
 

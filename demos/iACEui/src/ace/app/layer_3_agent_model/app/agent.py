@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class Layer3Agent(BaseLayer):
 
-
+    # express limitations and capabilities.
     def _extract_status(self, input_text):
         match = re.search(r'\[Status\]\n(complete|incomplete|error)', input_text)
         

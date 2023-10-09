@@ -1,6 +1,7 @@
 import openai
 from typing import List
 from schema import Prompts, OpenAiGPTChatParameters, LlmMessage
+import re
 
 def generate_bus_message(
         ancestral_prompt: str,
@@ -124,3 +125,12 @@ Input source bus = {source_bus}
 
     data_bus_action_result = bus_action_response.choices[0].message
     return data_bus_action_result
+
+
+def determine_none(self, input_text):
+    match = re.search(r"\[Message\]\n(none)", input_text)
+
+    if match:
+        return "none"
+
+    return input_text

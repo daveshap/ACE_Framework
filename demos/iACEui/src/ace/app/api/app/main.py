@@ -30,6 +30,8 @@ from schema import (
 
 from ai import generate_bus_message
 
+from base import ai
+
 import logging
 
 
@@ -47,7 +49,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all methods
     allow_headers=["*"],  # Allow all headers
 )
-
 
 @app.options("/{path:path}")
 async def handle_options_request(path: str, response: Response):
@@ -90,45 +91,41 @@ async def send_mission(data: Mission) -> Dict[str, str]:
 
 
 @app.post("/layer/test", response_model=LayerTestResponseModel)
-async def test_prompt(req: LayerTestRequest, session: Session = Depends(get_db)):
-    ancestral_prompt_content = None
+async def test_layer(
+    req: LayerTestRequest,
+    session: Session = Depends(get_db),
+):
+    ancestral_prompt = None
     with session as db:
-        ancestral_prompt = dao.get_active_ancestral_prompt(db=db)
-        if not ancestral_prompt:
-            raise HTTPException(
-                status_code=status.HTTP_412_PRECONDITION_FAILED,
-                detail="Active Ancestral prompt unavilable. Cannot process this request.",
-            )
+        db_ancestral_prompt = dao.get_active_ancestral_prompt(db=db)
+        ancestral_prompt = AncestralPromptModel.model_validate(db_ancestral_prompt)
 
-        reasoning_response, data_bus_action, control_bus_action = generate_bus_message(
-            ancestral_prompt=ancestral_prompt.prompt,
-            input=req.input,
-            layer_name=req.layer_name,
-            prompts=req.prompts,
-            source_bus=req.source_bus,
-            llm_messages=req.llm_messages if req.llm_messages else [],
-            llm_model_parameters=req.llm_model_parameters,
-            openai_api_key=settings.openai_api_key,
-        )
+    reasoning_completion = ai.reason(
+        ancestral_prompt=ancestral_prompt.prompt,
+        input=req.input,
+        source_bus=req.source_bus,
+        llm_model_parameters=req.llm_model_parameters,
+        prompts=req.prompts,
+        llm_messages=req.llm_messages,
+    )
 
-        dao.store_test_results(
-            **req.model_dump(),
-            reasoning_result=reasoning_response["content"],
-            data_bus_action=data_bus_action["content"],
-            control_bus_action=control_bus_action["content"],
-            ancestral_prompt_id=ancestral_prompt.ancestral_prompt_id,
-            db=db,
-        )
+    data_bus_message, control_bus_message = ai.determine_action(
+        ancestral_prompt=ancestral_prompt.prompt,
+        source_bus=req.source_bus,
+        reasoning_completion=reasoning_completion,
+        prompts=req.prompts,
+        llm_model_parameters=req.llm_model_parameters,
+        role_name=req.layer_name,
+        llm_messages=req.llm_messages,
+    )
 
-        results = LayerTestResponseModel(
-            layer_name=req.layer_name,
-            reasoning_result=LlmMessage(**reasoning_response),
-            data_bus_action=LlmMessage(**data_bus_action),
-            control_bus_action=LlmMessage(**control_bus_action),
-            ancestral_prompt=ancestral_prompt.prompt,
-        )
-
-        return results
+    return LayerTestResponseModel(
+        layer_name=req.layer_name,
+        reasoning_result=reasoning_completion,
+        data_bus_action=data_bus_message,
+        control_bus_action=control_bus_message,
+        ancestral_prompt=ancestral_prompt.prompt,
+    )
 
 
 @app.get("/layer/{layer_name}/test/runs", response_model=List[LayerTestHistoryModel])

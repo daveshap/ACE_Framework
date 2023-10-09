@@ -220,6 +220,7 @@ def get_all_layer_config(db: Session, layer_name: str):
         .all()
     )
 
+
 def get_layer_config(db: Session, layer_name: str):
     return (
         db.query(LayerConfig)

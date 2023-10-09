@@ -5,6 +5,9 @@ from abc import ABC
 from base.settings import Settings
 from base.amqp.connection import get_connection
 from base.amqp.exchange import create_exchange
+from base import ai
+from base import prompts
+
 import openai
 import re
 import tiktoken
@@ -20,6 +23,7 @@ from database.dao_models import LayerConfigModel, AncestralPromptModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 class BaseLayer(ABC):
     def __init__(self, settings: Settings):
@@ -38,9 +42,8 @@ class BaseLayer(ABC):
             if self.settings.debug:
                 self.wait_for_signal()
 
-            with get_db() as session:
-                await self._process_message(message, session, "Data Bus")
-                await message.ack()
+            await self._process_message(message, "Data Bus")
+            await message.ack()
         except:
             await message.nack()
 
@@ -56,21 +59,21 @@ class BaseLayer(ABC):
             await message.nack()
 
     async def wait_for_signal(self):
-            while True:
-                with get_db() as session:
+        while True:
+            with get_db() as session:
+                process_messages = get_layer_state_by_name(
+                    db=session,
+                    layer_name=self.settings.role_name,
+                )
 
-                    process_messages = get_layer_state_by_name(
-                        db=session,
-                        layer_name=self.settings.role_name,
-                    )
-
-                if process_messages:
-                    break
-                await asyncio.sleep(3)
+            if process_messages:
+                break
+            await asyncio.sleep(3)
 
     async def _process_message(
         self, message: aio_pika.IncomingMessage, source_bus: str
     ):
+        # if debug == True
         self._fetch_layer_config()
         self._fetch_ancestral_prompt()
 
@@ -85,40 +88,44 @@ class BaseLayer(ABC):
         input: str,
         source_bus: str,
     ):
-        reasoning_prompt = f"""
-# You Received a MESSAGE From the SOURCE BUS
-## MESSAGE
-{input}
-
-## SOURCE BUS
-{source_bus}
-"""
-        system_message = f"""
-{self.layer_config.prompts.identity}
-
-{self.ancestral_prompt}
-
-{self.layer_config.prompts.reasoning}
-"""
-        reasoning_messages = (
-            [
-                {"role": "system", "content": system_message},
-            ]
-            + self.llm_messages
-            + [{"role": "user", "content": reasoning_prompt}]
+        return ai.reason(
+            ancestral_prompt=self.ancestral_prompt,
+            input=input,
+            source_bus=source_bus,
+            prompts=self.layer_config.prompts,
+            llm_model_parameters=self.layer_config.llm_model_parameters,
+            llm_messages=self.llm_messages,
         )
+        # reasoning_input = prompts.get_reasoning_input(
+        #     input=input,
+        #     source_bus=source_bus,
+        # )
+        # system_message = "\n\n".join(
+        #     [
+        #         self.layer_config.prompts.identity,
+        #         self.ancestral_prompt,
+        #         self.layer_config.prompts.reasoning,
+        #     ]
+        # )
 
-        reasoning_response = openai.ChatCompletion.create(
-            messages=reasoning_messages,
-            **self.layer_config.llm_model_parameters.model_dump(
-                exclude_none=True,
-                exclude_unset=True,
-            ),
-        )
-        results = reasoning_response.choices[0].message
-        return results
+        # reasoning_messages = (
+        #     [{"role": "system", "content": system_message}]
+        #     + self.llm_messages
+        #     + [{"role": "user", "content": reasoning_input}]
+        # )
+
+        # reasoning_response = openai.ChatCompletion.create(
+        #     messages=reasoning_messages,
+        #     **self.layer_config.llm_model_parameters.model_dump(
+        #         exclude_none=True,
+        #         exclude_unset=True,
+        #     ),
+        # )
+        # results = reasoning_response.choices[0].message
+        # return results
 
     async def _handle_bus_message(self, message: aio_pika.IncomingMessage, source_bus):
+
         reasoning_completion = self._reason()
 
         data_bus_message, control_bus_message = self._determine_action(
@@ -126,7 +133,7 @@ class BaseLayer(ABC):
             reasoning_completion,
         )
 
-        if self._determine_none(data_bus_message) != "none":
+        if ai.determine_none(data_bus_message) != "none":
             await self._publish(
                 queue_name=self.settings.data_bus_pub_queue,
                 message=data_bus_message,
@@ -135,9 +142,9 @@ class BaseLayer(ABC):
                 input_message=message,
                 reasoning_message=reasoning_completion,
             )
-            self.llm_messages.append(f"sent {control_bus_message} to control bus")
+            self.llm_messages.append(data_bus_message)
 
-        if self._determine_none(control_bus_message) != "none":
+        if ai.determine_none(control_bus_message) != "none":
             await self._publish(
                 queue_name=self.settings.control_bus_pub_queue,
                 message=control_bus_message,
@@ -146,76 +153,91 @@ class BaseLayer(ABC):
                 input_message=message,
                 reasoning_message=reasoning_completion,
             )
-            self.llm_messages.append(f"sent {control_bus_message} to control bus")
+            # create setting to disable this.
+            self.llm_messages.append(control_bus_message)
+
+        self._compact_llm_messages()
 
     def _determine_action(
         self,
         source_bus,
         reasoning_completion,
     ):
-        data_bus_prompt = self._get_action_prompt(
+        return ai.determine_action(
+            ancestral_prompt=self.ancestral_prompt,
             source_bus=source_bus,
-            destination_bus="Data Bus",
             reasoning_completion=reasoning_completion,
+            prompts=self.layer_config.prompts,
+            llm_model_parameters=self.layer_config.llm_model_parameters,
+            settings=self.settings,
+            llm_messages=self.llm_messages,
         )
-        control_bus_prompt = self._get_action_prompt(
-            source_bus=source_bus,
-            destination_bus="Control Bus",
-            reasoning_completion=reasoning_completion,
-        )
+        # data_bus_prompt = prompts.get_action_prompt(
+        #     role_name=self.settings.role_name,
+        #     source_bus=source_bus,
+        #     destination_bus="Data Bus",
+        #     reasoning_completion=reasoning_completion,
+        #     bus_rules=self.layer_config.prompts.data_bus,
+        # )
 
-        data_bus_action = (
-            [
-                {
-                    "role": "system",
-                    "content": f"{self.layer_config.prompts.identity}\n{self.layer_config.prompts.reasoning}",
-                },
-            ]
-            + self.llm_messages
-            + [{"role": "user", "content": data_bus_prompt}]
-        )
+        # control_bus_prompt = prompts.get_action_prompt(
+        #     role_name=self.settings.role_name,
+        #     source_bus=source_bus,
+        #     destination_bus="Control Bus",
+        #     reasoning_completion=reasoning_completion,
+        #     bus_rules=self.layer_config.prompts.control_bus,
+        # )
 
-        control_bus_action = (
-            [
-                {
-                    "role": "system",
-                    "content": f"{self.layer_config.prompts.identity}\n{self.layer_config.prompts.reasoning}",
-                },
-            ]
-            + self.llm_messages
-            + [{"role": "user", "content": control_bus_prompt}]
-        )
+        # system_message = "\n\n".join(
+        #     [
+        #         self.layer_config.prompts.identity,
+        #         self.ancestral_prompt,
+        #         # self.layer_config.prompts.reasoning, # This is likely going to confuse the LLM layer becaues the first reasoning completion would be better.
+        #     ]
+        # )
 
-        data_bus_action_completion = (
-            openai.ChatCompletion.create(
-                model=self.layer_config.llm_model_name,
-                messages=data_bus_action,
-                **self.layer_config.llm_model_parameters,
-            )
-            .choices[0]
-            .message
-        )
+        # data_bus_action = (
+        #     [{"role": "system","content": system_message}]
+        #     + self.llm_messages
+        #     + [{"role": "user", "content": data_bus_prompt}]
+        # )
 
-        control_bus_action_completion = (
-            openai.ChatCompletion.create(
-                model=self.layer_config.llm_model_name,
-                messages=control_bus_action,
-                **self.layer_config.llm_model_parameters,
-            )
-            .choices[0]
-            .message
-        )
+        # control_bus_action = (
+        #     [{"role": "system","content": system_message}]
+        #     + self.llm_messages
+        #     + [{"role": "user", "content": control_bus_prompt}]
+        # )
 
-        return data_bus_action_completion, control_bus_action_completion
-    
-    def _determine_none(self, input_text):
-        match = re.search(r"\[Message\]\n(none)", input_text)
+        # data_bus_action_completion = (
+        #     openai.ChatCompletion.create(
+        #         model=self.layer_config.llm_model_name,
+        #         messages=data_bus_action,
+        #         **self.layer_config.llm_model_parameters,
+        #     )
+        #     .choices[0]
+        #     .message
+        # )
 
-        if match:
-            return "none"
+        # control_bus_action_completion = (
+        #     openai.ChatCompletion.create(
+        #         model=self.layer_config.llm_model_name,
+        #         messages=control_bus_action,
+        #         **self.layer_config.llm_model_parameters,
+        #     )
+        #     .choices[0]
+        #     .message
+        # )
 
-        return input_text
-    
+        # return data_bus_action_completion, control_bus_action_completion
+
+    # def _determine_none(self, input_text):
+    #     match = re.search(r"\[Message\]\n(none)", input_text)
+
+    #     if match:
+    #         return "none"
+
+    #     return input_text
+
     async def _publish(
         self,
         queue_name,
@@ -242,7 +264,7 @@ class BaseLayer(ABC):
         }
 
         message_body = aio_pika.Message(
-            body=message.encode(),
+            body=message["content"].encode(),
             headers=headers,
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
             content_type="text/plain",
@@ -254,27 +276,6 @@ class BaseLayer(ABC):
             message_body,
             routing_key=queue_name,
         )
-
-    def _get_action_prompt(
-        self,
-        source_bus: str,
-        destination_bus: str,
-        reasoning_completion: str
-    ):
-        action_prompt = f"""
-# Given Your Role as the {self.settings.role_name} in the ACE framework
-Consider the INPUT, YOUR REASONING about it, and BUS RULES to decide what, if any, message you should place on the {destination_bus}
-
-## INPUT
-Input source bus = {source_bus}
-
-## YOUR REASONING
-{reasoning_completion}
-
-## BUS RULES
-{self.layer_config.prompts.bus}
-"""
-        return action_prompt
 
     async def _connect(self):
         self.connection = await get_connection(
@@ -316,7 +317,10 @@ Input source bus = {source_bus}
     def _update_llm_messages(self):
         openai.api_key = self.settings.openai_api_key
         identity = {"role": "system", "content": self.layer_config.prompts.identity}
-        summarization_prompt = {"role": "user", "content": p.memory_compaction_prompt}
+        summarization_prompt = {
+            "role": "user",
+            "content": prompts.memory_compaction_prompt,
+        }
 
         conversation = [identity] + self.llm_messages + [summarization_prompt]
 
