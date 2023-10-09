@@ -53,18 +53,21 @@ class Layer(Resource):
 
     def run_layer(self):
         while True:
+            control_messages, data_messages = None, None
             if self.northern_layer:
                 control_messages = self.get_messages_from_consumer_local_queue('control')
             if self.southern_layer:
                 data_messages = self.get_messages_from_consumer_local_queue('data')
             telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, telemetry_messages)
-            for m in messages_northbound:
-                message = self.build_message(self.northern_layer, message={'message': m}, message_type='data')
-                self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
-            for m in messages_southbound:
-                message = self.build_message(self.southern_layer, message={'message': m}, message_type='control')
-                self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
+            if messages_northbound:
+                for m in messages_northbound:
+                    message = self.build_message(self.northern_layer, message={'message': m}, message_type='data')
+                    self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
+            if messages_southbound:
+                for m in messages_southbound:
+                    message = self.build_message(self.southern_layer, message={'message': m}, message_type='control')
+                    self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
         queue_name = self.build_queue_name(direction, layer)
