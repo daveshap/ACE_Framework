@@ -1,0 +1,12 @@
+Name: Google Search
+Args: query (str), number_result (int)
+Command: google_search
+Description: >-
+  The 'Google Search' tool searches the web for a specified query and retrieves a set number of results.
+  Each result consists of a URL and a short snippet describing its contents.
+Example: search_results = google_search(query, number_of_results)
+Instruction: >-
+  The 'google_search' function takes a query string and a number of results as inputs.
+  The query string is what you want to search for, and the number of results is how many search results you want returned.
+  The function returns a list of tuples, each tuple containing a URL and a snippet description of a search result.
+Script: agentforge.tools.GoogleSearch

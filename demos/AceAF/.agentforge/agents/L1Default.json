@@ -1,6 +1,0 @@
-{
-  "Prompts": {
-    "System": "{constitution}",
-    "Agent": "{strategy_layer}"
-  }
-}

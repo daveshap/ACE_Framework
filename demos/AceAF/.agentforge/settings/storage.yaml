@@ -1,0 +1,13 @@
+StorageAPI: ChromaDB
+
+ChromaDB:
+  chroma_db_impl: duckdb+parquet
+  persist_directory: ./DB/ChromaDB
+  collection_name: collection-test
+  DBFreshStart: "True"
+  embedding: all-distilroberta-v1
+
+Pinecone:
+  environment: us-east4-gcp
+  index_name: test-table
+  dimension: "768"

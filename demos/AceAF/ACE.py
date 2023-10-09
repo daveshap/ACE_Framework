@@ -12,6 +12,7 @@ import time
 from flask import Flask, jsonify, request
 import uuid
 
+
 class ACE:
 
     def __init__(self):
@@ -49,19 +50,13 @@ class ACE:
 
         print("\nAll Layers Initialized, ACE Running...\n")
 
-
     def run(self):
         # Trigger L1
         time.sleep(3)
-        self.layers[1].input_update_event.set()
+        self.layers[1].trigger_event('InputUpdate')
 
         # Main loop
         while True:
-
-            #Thread Count
-            # threadlist = threading.active_count()
-            # self.interface.output_message(0, f"\nAll Layers Initialized, ACE Running...\n{threadlist}")
-
             # Check for 'ESC' key press
             if keyboard.is_pressed('esc'):
                 print("Escape key detected! Exiting...")
@@ -77,17 +72,10 @@ class ACE:
     def init_flask_routes(self):
         @self.flask_app.route('/bot', methods=['POST'])
         def home():
-            data = request.json
-            message = data.get('message', '')
-            params = {
-                'collection_name': 'chat',
-                'ids': [uuid.uuid4().__str__()],
-                'data': [message]
-            }
-
-            self.storage.save_memory(params)
-            print(f"Received message: {message}")
-            self.interface.output_message(0, f"\nUser: {message}")
+            message = request.json.get('message')
+            self.interface.save_chat_message(respondent="User", message=message)
+            # trigger layer 3 to check chat history
+            self.layers[3].trigger_event('UserUpdate')
             return jsonify({"received_message": message})
 
     def run_flask_app(self):
