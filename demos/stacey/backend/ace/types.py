@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
-from typing import TypedDict
+from typing import TypedDict, Dict
+
+
 # Make sure this stays in sync with the client-side version (types.ts)
 
 
@@ -15,6 +17,14 @@ def create_chat_message(sender: str, content: str) -> ChatMessage:
     return {"sender": sender, "content": content, "time_utc": formatted_time}
 
 
+def stringify_chat_message(chat_message: ChatMessage):
+    return f"<{chat_message['time_utc']}> [{chat_message['sender']}] {chat_message['content']}"
+
+
+def stringify_chat_history(conversation: [ChatMessage]):
+    return "\n".join(f"- {stringify_chat_message(message)}" for message in conversation)
+
+
 # If you change this, also update the code in memory/weaviate_memory_manager.py
 class Memory(TypedDict):
     time_utc: str
@@ -26,3 +36,6 @@ def create_memory(content: str) -> Memory:
         "time_utc": datetime.now(timezone.utc).isoformat(),
         "content": content
     }
+
+
+LayerState = Dict[str, str]

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.responses import HTMLResponse
 
-from ace.types import ChatMessage, create_chat_message
+from ace.types import ChatMessage, create_chat_message, LayerState
 from channels.web.web_communication_channel import WebCommunicationChannel
 from channels.web.web_socket_connection_manager import WebSocketConnectionManager
 from media.media_replace import MediaGenerator
@@ -18,7 +18,13 @@ class FastApiApp:
         self.app = FastAPI()
         self.ace = ace_system
         self.media_generators = media_generators
-        self.admin_connection_manager = WebSocketConnectionManager()
+        self.layer_connection_managers = {
+            layer.get_id(): WebSocketConnectionManager() for layer in ace_system.get_layers()
+        }
+        self.bus_connection_managers = {
+            'northbound': WebSocketConnectionManager(),
+            'southbound': WebSocketConnectionManager()
+        }
         self.chatConnectionManager = WebSocketConnectionManager()
         self.app.add_exception_handler(Exception, self.custom_exception_handler)
 
@@ -44,12 +50,23 @@ class FastApiApp:
         return JSONResponse(content={"error": str(exc), "traceback": traceback_str}, status_code=500)
 
     def setup_routes(self):
-        app = self.app  # to shorten the code
+        app = self.app
 
-        @app.websocket("/ws-admin/")
-        async def websocket_endpoint_admin(websocket: WebSocket):
-            print("websocket_endpoint_admin called")
-            await self.admin_connection_manager.connect(websocket)
+        @app.websocket("/ws-layer/{layer_id}/")
+        async def websocket_endpoint_layer(websocket: WebSocket, layer_id: str):
+            if layer_id not in self.layer_connection_managers:
+                raise HTTPException(status_code=404, detail="Layer not found")
+            print(f"websocket_endpoint_layer for {layer_id} called")
+            await self.layer_connection_managers[layer_id].connect(websocket)
+
+        @app.websocket("/ws-bus/{bus_name}/")
+        async def websocket_endpoint_bus(websocket: WebSocket, bus_name: str):
+            print("Blaj")
+            if bus_name not in self.bus_connection_managers:
+                print(f"Bus not found: {bus_name}")
+                raise HTTPException(status_code=404, detail="Bus not found")
+            print(f"websocket_endpoint_bus for {bus_name} called")
+            await self.bus_connection_managers[bus_name].connect(websocket)
 
         @app.websocket("/ws-chat/")
         async def websocket_endpoint_chat(websocket: WebSocket):
@@ -108,6 +125,17 @@ class FastApiApp:
             else:
                 raise HTTPException(status_code=400, detail="Invalid bus name. Choose 'northbound' or 'southbound'.")
 
+        @app.get("/layer_state/{layer_id}/")
+        async def get_layer_state(layer_id: str):
+            if layer_id not in self.layer_connection_managers:
+                raise HTTPException(status_code=404, detail="Layer not found")
+            layer = self.ace.get_layer(layer_id)
+            if not layer:
+                raise HTTPException(status_code=404, detail="Layer not found: " + layer_id)
+
+            layer_state: LayerState = layer.get_layer_state()  # assuming get_current_state() is a method
+            return layer_state
+
         @app.post("/publish_message/")
         async def publish_message(request: Request):
             print("publish_message called")
@@ -158,13 +186,13 @@ class FastApiApp:
             bus.subscribe(self.create_bus_listener(bus))
 
         for layer in self.ace.get_layers():
-            layer.add_status_listener(self.create_layer_status_listener(layer))
+            layer.add_layer_state_listener(self.create_layer_state_listener(layer))
 
     def create_bus_listener(self, bus):
         async def listener(sender, message):
             try:
-                print(f"flask_app detected message on bus from {sender}: {message}")
-                await self.admin_connection_manager.send_message({
+                print(f"flask_app detected message on {bus.name} from {sender}: {message}")
+                await self.bus_connection_managers[bus.name].send_message({
                     'eventType': 'busMessage',
                     'data': {
                         'bus': bus.name,
@@ -176,17 +204,11 @@ class FastApiApp:
                 print(f"Error in bus listener: {e}")
         return listener
 
-    def create_layer_status_listener(self, layer):
-        async def listener(status):
+    def create_layer_state_listener(self, layer):
+        async def listener(layer_state: LayerState):
             try:
-                print(f"flask_app detected status change in layer {layer.get_id}: {status}")
-                await self.admin_connection_manager.send_message({
-                        'eventType': 'layerStatus',
-                        'data': {
-                            'layerId': layer.get_id(),
-                            'status': status.name
-                        }
-                })
+                print(f"flask_app detected state change in layer {layer.get_id()}: {layer_state}")
+                await self.layer_connection_managers[layer.get_id()].send_message(layer_state)
             except Exception as e:
                 print(f"Error in layer status listener: {e}")
         return listener
