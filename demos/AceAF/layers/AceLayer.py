@@ -74,6 +74,7 @@ class AceLayer:
 
     def handle_user_update(self):
         # Load Relevant Data From Input and process
+        LAYER_REGISTRY[self.layer_number].get_proposed_response()
         self.run()
 
     def trigger_event(self, event_type):

@@ -1,18 +1,18 @@
-from customagents.GenerateAgent import GenerateAgent
-from customagents.ReflectAgent import ReflectAgent
-from customagents.TheoryAgent import TheoryAgent
-from customagents.ThoughtAgent import ThoughtAgent
+from .customagents.GenerateAgent import GenerateAgent
+from .customagents.ReflectAgent import ReflectAgent
+from .customagents.TheoryAgent import TheoryAgent
+from .customagents.ThoughtAgent import ThoughtAgent
+from .Interface import Interface
 from agentforge.utils.guiutils.listenforui import BotApi as ListenForUI
 from agentforge.utils.guiutils.sendtoui import ApiClient
 from agentforge.utils.storage_interface import StorageInterface
 import re
-from Interface import Interface
 
 
 class Chatbot:
 
     storage = StorageInterface().storage_utils
-    gethistory = Interface().get_chat_history
+    gethistory = Interface().get_chat_messages
     send = Interface().save_chat_message
     log = Interface().output_message
     thou = ThoughtAgent()
@@ -33,8 +33,8 @@ class Chatbot:
         print(message)
         self.message = message
 
-        # save message to chat history
-        history = self.gethistory()
+        # get chat history
+        history = self.gethistory(10)
 
         # run thought agent
         self.thought_agent(message, history)

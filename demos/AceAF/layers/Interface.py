@@ -43,10 +43,10 @@ class Interface:
         self.get_device_info()
         self.get_current_data_time()
 
-    def get_chat_history(self):
+    def get_chat_messages(self, number_messages):
 
         size = self.storage.count_collection("chat_history")
-        qsize = max(size - 10, 1)
+        qsize = max(size - number_messages, 1)
         params = {
             "collection_name": "chat_history",
             "filter": {"id": {"$gte": qsize}}

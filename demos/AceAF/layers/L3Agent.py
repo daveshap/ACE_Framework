@@ -1,9 +1,13 @@
 from .AceLayer import AceLayer
 from .customagents.l3agent.SelfModel import SelfModel
+from .Chat import Chatbot
 
 
 class L3Agent(AceLayer):
+
+    chat_bot = Chatbot()
     input_data = None
+    proposed_response = None
 
     def initialize_agents(self):
         self.agent = SelfModel()
@@ -21,10 +25,17 @@ class L3Agent(AceLayer):
         # Call individual Agents From Each Layer
         self.result = self.agent.run(top_message=self.top_layer_message,
                                      bottom_message=self.bottom_layer_message,
-                                     input_data=self.input_data)
+                                     input_data=self.input_data,
+                                     proposed_response=self.proposed_response)
+
+        self.proposed_response = None
+
+    def get_proposed_response(self):
+        last_message = self.interface.get_chat_messages(1)
+        self.proposed_response = self.chat_bot.run(last_message)
 
     # Pull chat history last message from user
     # send message variable to .custom_agents.modules.chat.chatbot.run()
     # return bot response
-    # Run response through self model
+    # Run response through self-model
     # send bot response down south bus

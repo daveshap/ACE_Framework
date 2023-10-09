@@ -12,7 +12,7 @@ ModelLibrary:
 
 ModelSettings:
   API: openai_api
-  Model: smart_model
+  Model: fast_model
   Params:
     max_new_tokens: 2000
     temperature: 0

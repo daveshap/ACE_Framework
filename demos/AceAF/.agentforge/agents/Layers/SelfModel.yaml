@@ -31,6 +31,13 @@ Prompts:
     
     {input_data}
 
+  Chat: |+
+    ---
+    
+    Proposed response to the user:
+    
+    {proposed_response}
+
   Instruction: |+
     ---
     
