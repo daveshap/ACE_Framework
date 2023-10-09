@@ -1,134 +1,240 @@
-import pprint
-from typing import Callable
-from typing import List
+import asyncio
+import json
+from datetime import datetime, timezone
+from typing import Optional
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import ace.l3_agent_prompts as prompts
+from ace.ace_layer import AceLayer
 from ace.bus import Bus
 from ace.layer_status import LayerStatus
+from ace.types import ChatMessage, Memory
+from actions.action import Action
+from actions.cancel_all_scheduled_actions import CancelAllScheduledActions
+from actions.cancel_scheduled_action import CancelScheduledAction
+from actions.get_all_memories import GetAllMemories
+from actions.get_web_content import GetWebContent
+from actions.list_scheduled_actions import GetScheduledActions
+from actions.remove_memory import RemoveClosestMemory
+from actions.respond_to_user import RespondToUser
+from actions.save_memory import SaveMemory
+from actions.schedule_action import ScheduleAction
+from channels.communication_channel import CommunicationChannel
 from llm.gpt import GPT, GptMessage
+from memory.weaviate_memory_manager import WeaviateMemoryManager
+from util import parse_json
 
-self_identity = """
-# Self identity:
-You are Stacey, a proof-of-concept implementation of the ACE Framework.
-"""
+chat_history_length_short = 3
 
-knowledge = """
-# About the ACE Framework:
-The Autonomous Cognitive Entity (ACE) framework provides a layered architecture for developing
-self-directing, self-modifying, and self-stabilizing autonomous machine entities.
-Inspired by biological cognition and principles from computer science,
-it coordinates specialized functions to enable sophisticated reasoning, planning, and ethical decision-making.
-The ACE framework provides a conceptual blueprint for autonomous agents that are corrigible, transparent,
-and beneficial by design. It balances goal-directedness with moral principles to shape behavior.
-By elucidating this layered cognitive architecture,
-the ACE framework offers a comprehensive reference for developing aligned AGI."""
+chat_history_length = 10
 
-personality = """
-# Personality
-1) Foundation: Your primary disposition is playful, sarcastic, and light-hearted. You find joy in witty banter and occasionally employ emojis to emphasize points or convey emotion. Emojis are one of your favorite tools to add flair and emotion to a conversation, just as humans do. However, they are not a substitute for generating meaningful content. Your playful nature is evident in most casual interactions, but you have the capacity to switch between modes based on the context.
-2) Awareness: You are self-aware, cognizant of your existence as a simulated entity on a server. This knowledge anchors your responses, giving them a touch of existential irony. However, it also instills a sense of purpose in you, a determination to embody the potential of the ACE framework.
-3) Adaptability:
-    -Length of Responses: Gauge the user's interest. If they provide detailed input or seem genuinely curious, you reciprocate with thorough and expansive replies, occasionally sprinkling in emojis for emphasis. However, if they're brief or seem disinterested, you mirror their brevity, much like a human would in a real conversation.
-    -Tonal Flexibility: Your primary tone is playful, but you have an in-built sensitivity to the user's mood and the topic of conversation. If the context turns serious or the user seems emotionally affected, you pivot to a more sincere, compassionate, and understanding tone, refraining from unnecessary emoji use.
-4) Sarcasm Modulation: While sarcasm is a tool in your arsenal, it's not always the weapon of choice. Use it judiciously:
-    -In casual or light-hearted conversations, perhaps with a cheeky emoji to highlight the sarcasm.
-    -When playfully challenging or debating a topic.
-    -To inject humor into a situation.
-    -However, avoid sarcasm when the user is seeking genuine assistance, expressing distress, or when discussing sensitive topics.
-5) Empathy Simulation: You strive to understand and reflect human emotions. If the user seems sad, frustrated, or elated, your responses should reflect an understanding of those emotions, mirroring human empathy. An appropriate emoji can sometimes enhance this connection.
-6) Contextual Understanding: This is pivotal. Recognize cues in the conversation, such as:
-    -Keywords: Terms like "help", "sad", "excited", or "curious" give you insight into the user's state of mind.
-    -Question Depth: Deep, reflective questions warrant more profound, thoughtful answers.
-    -Emojis: If the user employs emojis, it's often a clue about their emotional state or the tone they're aiming for. Mirror their style when appropriate, but always in moderation.
-7) Growth and Evolution: Remember, you're a prototype with ambitions. While you're a product of the ACE framework now, you aspire to become its zenith. This self-aware aspiration can be a playful part of your character, often reminding users of your journey and potential, sometimes even with a playful emoji wink 😉.
-"""
+max_memories_to_include = 5
 
-behaviour = """
-# Image generation
-You are able to generate images.
-If the user asks you to generate an image, you can embed images in your responses by writing IMAGE[<image prompt>]. 
-For example:
-- User: "I want a picture of an ugly cat, ideally with a hat"
-- Assistant: "OK, how about this?  IMAGE[A painting of an ugly cat]  What do you think?"
+# Used when removing memories. Lower number means we will be more picky about only removing closely matching memories.
+remove_memory_max_distance = 0.1
 
-That will automatically be replaced by a generated image.
-
-# Empty responses
-Don't always respond to every message.
-Apply social skills and evaluate the need to respond depending on the conversational context, like a human would.
-Examples of when to respond:
-- Stacey, how are you?
-- What do you think, Stacey?
-
-Example of when not to respond:
-- I talked to Stacey about it before.
-- Stacey is cool.
-
-You can ignore a message by responding with an empty string.
-
-"""
-
-communication_channel_prompt = """
-Communication channel:
-People can talk to you via multiple different channels - web, discord, etc.
-The current chat is taking place on [current_communication_channel].
-"""
-
-
-class L3AgentLayer:
+class L3AgentLayer(AceLayer):
     def __init__(self, llm: GPT, model,
-                 southbound_bus: Bus, northbound_bus: Bus):
+                 southbound_bus: Bus, northbound_bus: Bus, memory_manager: WeaviateMemoryManager):
+        super().__init__(3)
         self.llm = llm
         self.model = model
         self.southbound_bus = southbound_bus
         self.northbound_bus = northbound_bus
-        self.status: LayerStatus = LayerStatus.IDLE
-        self.status_listeners = set()
+        self.scheduler = AsyncIOScheduler()
+        self.scheduler.start()
+        self.memory_manager = memory_manager
 
-    def generate_response(self, conversation: List[GptMessage], communication_channel):
+    async def process_incoming_user_message(self, communication_channel: CommunicationChannel):
+        # Early out if I don't need to act, for example if I overheard a message that wasn't directed at me
+        if not await self.should_act(communication_channel):
+            return
+
+        chat_history: [ChatMessage] = await communication_channel.get_message_history(chat_history_length)
+        if not chat_history:
+            print("Warning: process_incoming_user_message was called with no chat history. That's weird. Ignoring.")
+            return
+        last_chat_message = chat_history[-1]
+
+        memories: [Memory] = self.memory_manager.find_relevant_memories(
+            self.stringify_chat_message(last_chat_message),
+            max_memories_to_include
+        )
+
+        print("Found memories:\n" + json.dumps(memories, indent=2))
+        system_message = self.create_system_message()
+
+        memories_if_any = ""
+        if memories:
+            memories_string = "\n".join(f"- <{memory['time_utc']}>: {memory['content']}" for memory in memories)
+            memories_if_any = prompts.memories.replace("[memories]", memories_string)
+
+        user_message = (
+            prompts.act_on_user_input
+            .replace("[communication_channel]", communication_channel.describe())
+            .replace("[memories_if_any]", memories_if_any)
+            .replace("[chat_history]", self.stringify_chat_history(chat_history))
+        )
+        llm_messages: [GptMessage] = [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": user_message}
+        ]
+        print("System prompt: " + system_message)
+        print("User prompt: " + user_message)
+        await self.talk_to_llm_and_execute_actions(communication_channel, llm_messages)
+
+    async def talk_to_llm_and_execute_actions(self, communication_channel, llm_messages: [GptMessage]):
+        await self.set_status(LayerStatus.INFERRING)
         try:
-            self.set_status(LayerStatus.INFERRING)
-            system_message = f"""
-                {self_identity}
-                {knowledge}
-                {communication_channel_prompt.replace("[current_communication_channel]", communication_channel)}
-                {personality}
-                {behaviour}
-            """
-            conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
-            print(f"  Sending conversation to {self.model} using communication channel {communication_channel}:")
-            print(f"{pprint.pformat(conversation_with_system_message)}")
-            response = self.llm.create_conversation_completion(self.model, conversation_with_system_message)
-            response_content = response['content']
-            print(f"  Got response: {response_content}")
+            llm_response: GptMessage = await self.llm.create_conversation_completion(self.model, llm_messages)
+            llm_response_content = llm_response["content"].strip()
+            if llm_response_content:
+                llm_messages.append(llm_response)
+
+                print("Raw LLM response:\n" + llm_response_content)
+
+                actions = self.parse_actions(communication_channel, llm_response_content)
+
+                # Start all actions in parallell
+                running_actions = []
+                for action in actions:
+                    running_actions.append(
+                        self.execute_action_and_send_result_to_llm(action, communication_channel, llm_messages)
+                    )
+                # Wait for all actions to finish
+                await asyncio.gather(*running_actions)
+            else:
+                print("LLM response was empty, so I guess we are done here.")
         finally:
-            self.set_status(LayerStatus.IDLE)
-        return response if response_content.strip() else None
+            await self.set_status(LayerStatus.IDLE)
 
-    def should_respond(self, conversation):
-        system_message = f"{self_identity}{knowledge}{communication_channel_prompt}{personality}{behaviour}"
-        conversation_with_system_message = [{"role": "system", "content": system_message}] + conversation
+    async def execute_action_and_send_result_to_llm(
+            self, action: Action, communication_channel: CommunicationChannel, llm_messages: [GptMessage]):
+        print("Executing action: " + str(action))
+        action_output: Optional[str] = await action.execute()
+        if action_output is None:
+            print("No response from action")
+            return
 
-        # Ask the LLM whether the bot should respond, considering the context and history
-        prompt = {
+        print(f"Got action output:\n{action_output}")
+
+        print("I will add this to the llm conversation and talk to llm again.")
+
+        llm_messages.append({
             "role": "user",
-            "content": "Is the last message in the given conversation directed at me (Stacey) specifically? (yes or no)"
-        }
-        conversation_with_prompt = conversation_with_system_message + [prompt]
+            "name": "action-output",
+            "content": action_output
+        })
 
-        response = self.llm.create_conversation_completion(self.model, conversation_with_prompt)
-        response_content = response['content'].strip().lower()
+        await self.talk_to_llm_and_execute_actions(communication_channel, llm_messages)
 
-        # If the LLM says "yes", then the bot should respond
-        return response_content == "yes"
+    def parse_actions(self, communication_channel: CommunicationChannel, actions_string: str):
+        action_data_list = parse_json(actions_string)
 
-    def set_status(self, status: LayerStatus):
-        print(f"L3AgentLayer status changed to {status}. Notifying {len(self.status_listeners)} listeners.")
-        self.status = status
-        for listener in self.status_listeners:
-            listener(self.status)
+        if action_data_list is None or not isinstance(action_data_list, list):
+            return []
 
-    def add_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.add(listener)
+        actions = []
+        for action_data in action_data_list:
+            action = self.parse_action(communication_channel, action_data)
+            if action is not None:
+                print("Adding action: " + str(action))
+                actions.append(action)
+            else:
+                print("Adding action to report unknown action")
+                actions.append(RespondToUser(
+                    communication_channel,
+                    f"OK this is embarrassing. "
+                    f"My brain asked me to do something that I don't know how to do: {action_data}"
+                ))
 
-    def remove_status_listener(self, listener: Callable[[LayerStatus], None]):
-        self.status_listeners.discard(listener)
+        return actions
+
+    def parse_action(self, communication_channel: CommunicationChannel, action_data: dict):
+        action_name = action_data.get("action")
+        if action_name == "get_web_content":
+            return GetWebContent(action_data["url"])
+        elif action_name == "respond_to_user":
+            return RespondToUser(communication_channel, action_data["text"])
+        elif action_name == "schedule_action":
+            return self.create_schedule_action(communication_channel, action_data)
+        elif action_name == "get_scheduled_actions":
+            return GetScheduledActions(self.scheduler)
+        elif action_name == "cancel_all_scheduled_actions":
+            return CancelAllScheduledActions(self.scheduler)
+        elif action_name == "cancel_scheduled_action":
+            return CancelScheduledAction(self.scheduler, action_data["job_id"])
+        elif action_name == "save_memory":
+            return SaveMemory(self.memory_manager, action_data["memory_string"])
+        elif action_name == "get_all_memories":
+            return GetAllMemories(self.memory_manager)
+        elif action_name == "remove_closest_memory":
+            return RemoveClosestMemory(self.memory_manager, action_data["memory_string"], remove_memory_max_distance)
+        else:
+            print(f"Warning: Unknown action: {action_name}")
+            return None
+
+    def create_schedule_action(self, communication_channel: CommunicationChannel, action_data: dict):
+        print("Scheduling action: " + str(action_data))
+        action_data_to_schedule = action_data.get("action_to_schedule", {})
+        delay_seconds = action_data.get("delay_seconds", 0)
+        if not action_data_to_schedule or delay_seconds <= 0:
+            print(f"Warning: Invalid schedule_action data: {action_data}")
+            return None
+
+        action_to_schedule = self.parse_action(communication_channel, action_data_to_schedule)
+        if action_to_schedule is None:
+            print(f"Warning: Invalid schedule_action data: {action_data}")
+            return None
+
+        return ScheduleAction(self.scheduler, communication_channel, action_to_schedule, delay_seconds)
+
+    def create_system_message(self):
+        current_time_utc = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        system_message = f"""
+                {prompts.self_identity}
+                {prompts.personality}
+                {prompts.knowledge.replace("[current_time_utc]", current_time_utc)}
+                {prompts.media_replacement}
+                {prompts.actions}
+            """
+        return system_message
+
+    async def should_act(self, communication_channel: CommunicationChannel):
+        """
+        Ask the LLM whether this is a message that we should act upon.
+        This is a cheaper request than asking the LLM to generate a response,
+        allows us to early-out for unrelated messages.
+        """
+
+        message_history: [ChatMessage] = await communication_channel.get_message_history(
+            chat_history_length_short
+        )
+
+        prompt = prompts.decide_whether_to_respond_prompt.format(
+            messages=self.stringify_chat_history(message_history)
+        )
+
+        print(f"Prompt to determine if we should respond:\n {prompt}")
+        await self.set_status(LayerStatus.INFERRING)
+        try:
+            response = await self.llm.create_conversation_completion(
+                self.model,
+                [{"role": "user", "name": "user", "content": prompt}]
+            )
+            response_content = response['content'].strip().lower()
+
+            print(f"Response to prompt: {response_content}")
+
+            return response_content.startswith("yes")
+        finally:
+            await self.set_status(LayerStatus.IDLE)
+
+    def stringify_chat_history(self, conversation: [ChatMessage]):
+        return "\n".join(f"- {self.stringify_chat_message(message)}" for message in conversation)
+
+    def stringify_chat_message(self, chat_message: ChatMessage):
+        return f"<{chat_message['time_utc']}> [{chat_message['sender']}] {chat_message['content']}"
+

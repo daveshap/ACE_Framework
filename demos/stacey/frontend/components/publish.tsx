@@ -1,5 +1,6 @@
 import {FormControl, Textarea} from '@chakra-ui/react';
 import React, {useState} from "react";
+import axios from "axios";
 
 interface PublishMessageFormProps {
     busType: string;
@@ -12,19 +13,12 @@ export const PublishMessageForm: React.FC<PublishMessageFormProps> = ({ busType 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault(); // Prevent the default form submission behaviour
         try {
-            const response = await fetch(backendUrl + '/publish_message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sender: 'admin web',
-                    message: message,
-                    bus: busType,
-                }),
+            await axios.post(backendUrl + '/publish_message', {
+                sender: 'admin web',
+                message: message,
+                bus: busType,
             });
-            const data = await response.json();
-            console.log('Message published:', data);
+            console.log('Message published');
         } catch (error) {
             console.error('Error publishing the message:', error);
         } finally {
@@ -35,6 +29,7 @@ export const PublishMessageForm: React.FC<PublishMessageFormProps> = ({ busType 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault(); // Prevent new line
+            // noinspection JSIgnoredPromiseFromCall
             handleSubmit(e as any); // Trigger form submission
         }
     };
