@@ -51,7 +51,12 @@ class KivyApp(App):
                       'L4 Executive', 'L5 Cognitive', 'L6 Prosecution']
 
         for i, title in enumerate(tab_titles):
-            self.history[i] = "Listening to Messages...\n"
+            self.history[i] = (f"---- {tab_titles[i]} Initialized ----\n"
+                               f"-------------------------------------\n\n")
+            if i == 0:
+                self.history[i] = (f"Initializing ACE ... Please Wait ...\n"
+                                   f"------------------------------------\n\n")
+
             view = ScrollView()
             label = Label(
                 text=self.history[i],

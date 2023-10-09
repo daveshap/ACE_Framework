@@ -24,7 +24,7 @@ class Interface:
         url = self.BASE_URL + 'layer_update'
         data = {
             "layer_number": layer_number,
-            "message": message
+            "message": f"{message}\n"
         }
 
         requests.post(url, json=data)
@@ -65,3 +65,7 @@ class Interface:
         }
         self.storage.save_memory(params)
         self.output_message(0, message)
+
+    def handle_south_bus(self, parsed_data):
+        message = parsed_data['UserOutput']
+        self.save_chat_message(respondent="Agent", message=message)

@@ -84,6 +84,8 @@ class AceLayer:
     def trigger_next_layer(self):
         if self.south_layer < 7:
             LAYER_REGISTRY[self.south_layer].trigger_event('SouthBusUpdate')
+        else:
+            LAYER_REGISTRY[self.layer_number].parse_agent_output()
 
     # -------------------------------- MAIN LOGIC --------------------------------
 

@@ -4,6 +4,7 @@ Prompts:
 
   Responsibilities: |+
     Responsibilities:
+    
     1. Create an internal model of the broader context from available data.
     2. Make informed decisions from imperfect or limited info.
     3. Turn ethical goals into real-world, actionable plans.
@@ -26,13 +27,13 @@ Prompts:
   Instruction: |+
     ---
     
-    Instruction:
-      Given the mission, context, and prior strategies:
-        1. Outline your understanding of the current environment.
-        2. Adapt or create new strategies for the mission.
-        3. List guiding principles or constraints for these strategies.
+    Given the mission, context, and prior strategies:
     
-      Structure your guidance for the Control Layer and offer a summary for the Aspirational Layer.
+    1. Outline your understanding of the current environment.
+    2. Adapt or create new strategies for the mission.
+    3. List guiding principles or constraints for these strategies.
+  
+    Structure your guidance for the Control Layer and offer a summary for the Aspirational Layer.
 
   ResponseFormat: |+
     ---
@@ -48,19 +49,19 @@ Prompts:
       <Actionable plans.>
     
     Principles:
-      <Guidelines or constraints for strategies.>
+      <Guidelines or constraints for strategies>
     
     Feedback:
-      <Suggestions or tweaks for the Agent Model layer.>
+      <Suggestions or tweaks for the Agent Model layer>
     
     ---Northbound---
     Thoughts:
-      <Additional insights or context. If none, write "None".>
+      <Additional insights or context. If none, write "None">
     
     CurrentBeliefs:
-      <Your understanding of the current environment.>
+      <Your understanding of the current environment>
 
     KeyStrategies:
-      <Main strategies for achieving the mission.>
+      <Main strategies for achieving the mission>
       
 
