@@ -22,3 +22,9 @@ class L3Agent(AceLayer):
         self.result = self.agent.run(top_message=self.top_layer_message,
                                      bottom_message=self.bottom_layer_message,
                                      input_data=self.input_data)
+
+    # Pull chat history last message from user
+    # send message variable to .custom_agents.modules.chat.chatbot.run()
+    # return bot response
+    # Run response through self model
+    # send bot response down south bus

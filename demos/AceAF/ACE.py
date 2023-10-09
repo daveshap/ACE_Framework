@@ -74,6 +74,7 @@ class ACE:
         def home():
             message = request.json.get('message')
             self.interface.save_chat_message(respondent="User", message=message)
+            # trigger layer 3 to check chat history
             return jsonify({"received_message": message})
 
     def run_flask_app(self):
