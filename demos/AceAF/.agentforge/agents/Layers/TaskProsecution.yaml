@@ -48,34 +48,22 @@ Prompts:
   ResponseFormat: |+
     ---
     
-    IMPORTANT:
-      - Stick to the format provided.
-      - Specify when uncertain or missing information.
-      - Extra commentary should only be in "Thoughts".
-      - Responses should be concise.
-  
+    {response_format}
+
+  Southbound: |+
     ---Southbound---
-    UserOutput:
-      <Message, query, or interaction for the user.>
     
-    TaskAction:
-      <Chosen action to continue the task.>
+    <UserOutput>:
+      <Use this attribute to speak to the user, if you have nothing to say simply use "None">
     
-    DigitalOperations:
-      <API calls, data actions, or other digital moves.>
+    {southbound_format}
 
-    EnvironmentInteractions:
-      <Actions affecting the environment.>
-
+  Northbound: |+
     ---Northbound---
-    Thoughts:
-      <Additional insights or context. If none, write "None".>
     
-    TaskUpdate:
-      <Status and progress details of the task.>
+    {northbound_format}
 
-    Feedback:
-      <Data from the environment or internal checks.>
-
-    InternalUpdates:
-      <Changes in internal conditions or states.>
+  Note: |+
+    
+    {format_note}
+    - Attribute Names must be a valid Python variable name

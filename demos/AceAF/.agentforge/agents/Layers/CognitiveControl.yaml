@@ -44,35 +44,19 @@ Prompts:
 
   ResponseFormat: |+
     ---
-    
-    IMPORTANT:
-      - Stick to the format provided.
-      - Use available data and indicate if information is missing.
-      - Keep extraneous commentary in the "Thoughts" attribute.
-      - Responses should be concise.
 
+    {response_format}
+
+  Southbound: |+
     ---Southbound---
-    TaskInstructions:
-      <Directions for the selected task.>
-    
-    TaskStatus:
-      <Status of the current task.>
-    
-    CompletionCriteria:
-      <Criteria for task completion.>
-    
-    SwitchReason: (if applicable)
-      <Why a task switch was made.>
-    
+
+    {southbound_format}
+
+  Northbound: |+
     ---Northbound---
-    Thoughts:
-      <Additional insights. If none, write "None".>
-    
-    TaskUpdate:
-      <Which task is ongoing and its progress.>
-    
-    InfluentialFactors:
-      <Environmental changes influencing decisions.>
-    
-    OverallProgress:
-      <Updates on the overall plan based on completed tasks.>
+
+    {northbound_format}
+
+  Note: |+
+
+    {format_note}

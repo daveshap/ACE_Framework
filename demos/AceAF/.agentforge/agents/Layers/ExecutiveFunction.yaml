@@ -49,34 +49,19 @@ Prompts:
 
   ResponseFormat: |+
     ---
-    
-    IMPORTANT:
-      - Stick strictly to this format.
-      - Use the best available data for attributes. Indicate if data is missing.
-      - Use "Thoughts" for extra insights. Keep responses brief and relevant.
-    
-    ---Southbound---
-    ActionOrInteraction:
-      <Detailed workflows or interaction outlines>
-    
-    ResourceAllocation:
-      <How resources are to be used>
-    
-    RiskMitigations:
-      <Approaches to handle identified risks>
-    
-    Contingencies:
-      <Alternate plans for unforeseen events>
-    
-    SuccessCriteria:
-      <Conditions or outcomes for success>
-    
-    ---Northbound---
-    Thoughts:
-      <Additional insights or context. If none, write "None">
-    
-    ResourceLimitations:
-      <Details on resource constraints>
 
-    RisksIdentified:
-      <Potential risks affecting objectives or interactions>
+    {response_format}
+
+  Southbound: |+
+    ---Southbound---
+
+    {southbound_format}
+
+  Northbound: |+
+    ---Northbound---
+
+    {northbound_format}
+
+  Note: |+
+
+    {format_note}  

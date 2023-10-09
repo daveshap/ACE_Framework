@@ -58,34 +58,18 @@ Prompts:
   ResponseFormat: |+
     ---
 
-    IMPORTANT:
-      - Stick strictly to the below format.
-      - Use your best judgment for uncertain or partial information.
-      - Mention any information gaps.
-      - Extra commentary should only be in the "Thoughts" section. Responses should be succinct.
-      
-    RESPONSE FORMAT:
+    {response_format}
+
+  Southbound: |+
     ---Southbound---
-    Capabilities:
-      <Your current abilities and limitations. Clearly indicate if any info is missing>
 
-    Memories:
-      <Relevant knowledge that can help the user>
+    {southbound_format}
 
-    StrategicObjectives:
-      <User-focused objectives based on your self-model>
-
+  Northbound: |+
     ---Northbound---
-    Thoughts:
-      <Additional insights, context, or clarifications. Write "None" if not applicable>
-    
-    StatusUpdate:
-      <Current operational status>
 
-    HardwareSoftware:
-      <Snapshot of your current hardware and software setup>
+    {northbound_format}
 
-    Knowledge:
-      <Quick overview of your knowledge base and recent memories>
+  Note: |+
 
-
+    {format_note}

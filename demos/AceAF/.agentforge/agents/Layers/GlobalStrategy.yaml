@@ -37,31 +37,19 @@ Prompts:
 
   ResponseFormat: |+
     ---
-    
-    IMPORTANT:
-      - Stick to this format. Deviations cause issues.
-      - Fill in attributes using the best judgment. Mention any info gaps.
-      - Keep responses succinct.
-    
-    RESPONSE FORMAT:
+
+    {response_format}
+
+  Southbound: |+
     ---Southbound---
-    Strategies:
-      <Actionable plans.>
-    
-    Principles:
-      <Guidelines or constraints for strategies>
-    
-    Feedback:
-      <Suggestions or tweaks for the Agent Model layer>
-    
+
+    {southbound_format}
+
+  Northbound: |+
     ---Northbound---
-    Thoughts:
-      <Additional insights or context. If none, write "None">
-    
-    CurrentBeliefs:
-      <Your understanding of the current environment>
 
-    KeyStrategies:
-      <Main strategies for achieving the mission>
-      
+    {northbound_format}
 
+  Note: |+
+
+    {format_note}

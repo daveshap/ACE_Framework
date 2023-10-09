@@ -96,15 +96,12 @@ class AceLayer:
         self.initialize_agents()
         self.load_relevant_data()
         self.load_data_from_bus(bus="SouthBus")
+        self.load_data_from_bus(bus="NorthBus")
         self.process_data_from_buses()
-
         self.run_agents()
-
         self.parse_results()
-
         self.update_bus(bus="SouthBus", message=self.my_messages['SouthBus'])
         self.update_bus(bus="NorthBus", message=self.my_messages['NorthBus'])
-
         self.trigger_next_layer()
 
     def initialize_agents(self):

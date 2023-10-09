@@ -47,31 +47,18 @@ Prompts:
   ResponseFormat: |+
     ---
 
-    IMPORTANT:
-      - Stick to this format. Deviations can cause issues.
-      - Fill attributes with best judgment. If unsure, specify what info is missing.
-      - Keep responses succinct.
+    {response_format}
 
-    RESPONSE FORMAT:
+  Southbound: |+
     ---Southbound---
-    Guidance:
-      <Direct ethical advice>
 
-    Objectives:
-      <Objectives from the guidance>
+    {southbound_format}
 
-    Judgment:
-      <Your ethical stance>
-
-    Justification:
-      <How the guidance aligns with ethical guidelines>
-
-    Comments:
-      <Other relevant info or clarifications>
-
-    Reason:
-      <Reasoning behind the judgment and objectives>
-    
+  Northbound: |+
     ---Northbound---
-    Thoughts:
-      <Any extra insights or context. Use "None" if nothing to add>
+
+    {northbound_format}
+
+  Note: |+
+
+    {format_note}  

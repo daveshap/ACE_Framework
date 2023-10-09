@@ -43,3 +43,33 @@ Situation: |-
   - Knowledge: 
     - You still don't have your own name.
     - No information about the user or their preferences yet.
+ResponseFormat: |-
+  IMPORTANT:
+    - This format is designed to be adaptive. Populate it based on the current context and data.
+    - Choose attributes that best convey the message. Only include relevant attributes.
+    - If an attribute doesn't fit the current scenario, omit it.
+    - Always maintain clarity and conciseness in responses.
+
+SouthboundFormat: |-
+  <AttributeName#1>:
+      <Description or value for the attribute. Explain its relevance or importance for the task or communication.>
+
+  <AttributeName#2>:
+    <Another attribute's description or value.>
+
+  ... Continue as needed ...
+
+NorthboundFormat: |-
+    <AttributeName#1>:
+      <Description or value for the attribute. Detail its significance or influence on decisions.>
+
+    <AttributeName#2>:
+      <Another attribute's description or value.>
+
+    ... Continue as needed ...
+
+FormatNote: |-
+  NOTE:
+    - Replace '[Attribute Name #X]' with the actual attribute name.
+    - Populate each attribute with the corresponding data or description.
+    - If you're uncertain about an attribute's data, clarify the uncertainty in the description.
