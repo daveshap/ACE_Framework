@@ -3,7 +3,9 @@ from llm.gpt import GPT
 from memory.weaviate_memory_manager import WeaviateMemoryManager
 from .bus import Bus
 from .l1_aspirational import L1AspirationalLayer
+from .l2_global_strategy import L2GlobalStrategyLayer
 from .l3_agent import L3AgentLayer
+from .receptionist import Receptionist
 
 
 class AceSystem:
@@ -11,19 +13,20 @@ class AceSystem:
         self.northbound_bus = Bus('northbound')
         self.southbound_bus = Bus('southbound')
 
-        self.l1_aspirational_layer: L1AspirationalLayer = L1AspirationalLayer(
+        self.l1_aspirational_layer: L1AspirationalLayer = L1AspirationalLayer()
+
+        self.l2_global_strategy_layer: L2GlobalStrategyLayer = L2GlobalStrategyLayer(
             llm,
             model,
-            self.southbound_bus,
-            self.northbound_bus
+            memory_manager,
+            self.l1_aspirational_layer
         )
 
         self.l3_agent: L3AgentLayer = L3AgentLayer(
             llm,
             model,
-            self.southbound_bus,
-            self.northbound_bus,
-            memory_manager
+            memory_manager,
+            self.l2_global_strategy_layer
         )
 
         self.layers = [
@@ -31,8 +34,19 @@ class AceSystem:
             self.l3_agent
         ]
 
+        self.receptionist: Receptionist = Receptionist(
+            llm,
+            model,
+            memory_manager,
+            self.l1_aspirational_layer,
+            self.l2_global_strategy_layer
+        )
+
     def get_layers(self):
         return self.layers
 
     async def start(self):
-        self.northbound_bus.subscribe(self.l1_aspirational_layer.on_northbound_message)
+        # This would be the place for things like this:
+        # self.northbound_bus.subscribe(self.l1_aspirational_layer.on_northbound_message)
+        pass
+

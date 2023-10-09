@@ -73,7 +73,7 @@ class FastApiApp:
             communication_channel = WebCommunicationChannel(messages, self.chatConnectionManager, self.media_generators)
 
             try:
-                await self.ace.l3_agent.process_incoming_user_message(communication_channel)
+                await self.ace.receptionist.process_incoming_user_message(communication_channel)
                 return JSONResponse(content={"success": True}, status_code=200)
             except Exception as e:
                 print("Damn, something went wrong while processing incoming user message!")
@@ -92,7 +92,7 @@ class FastApiApp:
             communication_channel = WebCommunicationChannel(messages, self.chatConnectionManager, self.media_generators)
 
             try:
-                await self.ace.l3_agent.process_incoming_user_message(communication_channel)
+                await self.ace.receptionist.process_incoming_user_message(communication_channel)
                 return "Message sent to Stacey"
             except Exception as e:
                 traceback_str = traceback.format_exc()

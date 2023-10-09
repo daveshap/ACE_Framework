@@ -16,6 +16,7 @@ function Chat() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const chatSocketUrl = process.env.NEXT_PUBLIC_CHAT_SOCKET_URL;
     const webSocketRef = useRef<WebSocket | null>(null);
+    const [userName, setUserName] = useState('web-user');
 
 
     if (!backendUrl) {
@@ -115,6 +116,15 @@ function Chat() {
                             h="60px"
                             placeholder="Say something..."
                         />
+                        <Flex mt={2} align="center">
+                            <Text mr={2}>User Name:</Text>
+                            <input
+                                type="text"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                placeholder="web-user"
+                            />
+                        </Flex>
                         <Select
                                 mb={4}
                             placeholder="Select model"

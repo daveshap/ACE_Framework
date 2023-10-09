@@ -3,10 +3,13 @@ from typing import Callable
 
 from ace.layer_status import LayerStatus
 
+# Used when removing memories. Lower number means we will be more picky about only removing closely matching memories.
+remove_memory_max_distance = 0.1
+
 
 class AceLayer(ABC):
     """Superclass for all layers"""
-    def __init__(self, layer_id):
+    def __init__(self, layer_id: str):
         self.layer_id = layer_id
         self.status: LayerStatus = LayerStatus.IDLE
         self.status_listeners = set()
