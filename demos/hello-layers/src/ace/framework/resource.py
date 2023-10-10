@@ -4,7 +4,6 @@ import time
 import yaml
 import asyncio
 import aio_pika
-from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from queue import Queue
 
@@ -21,7 +20,6 @@ class Resource(ABC):
         self.log = Logger(self.__class__.__name__)
         self.api_endpoint = ApiEndpoint(self.api_callbacks)
         self.bus_loop = asyncio.new_event_loop()
-        self.executor = ThreadPoolExecutor(max_workers=1)
         self.connection = None
         self.consumer_channel = None
         self.publisher_channel = None

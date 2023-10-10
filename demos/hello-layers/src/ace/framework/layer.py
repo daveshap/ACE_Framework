@@ -1,6 +1,8 @@
 import yaml
 import aio_pika
-from abc import ABC, abstractmethod
+from abc import abstractmethod
+import asyncio
+from threading import Thread
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
@@ -12,9 +14,6 @@ class LayerSettings(Settings):
 
 
 class Layer(Resource):
-
-    def post_start(self):
-        self.run_layer()
 
     async def post_connect(self):
         self.set_adjacent_layers()
@@ -59,6 +58,9 @@ class Layer(Resource):
         pass
 
     def run_layer(self):
+        Thread(target=self.run_layer_in_thread).start()
+
+    def run_layer_in_thread(self):
         while True:
             control_messages, data_messages = None, None
             if self.northern_layer:
@@ -109,6 +111,10 @@ class Layer(Resource):
             message = self.build_message(layer, message_type='pong')
             await self.send_message(response_direction, layer, message)
 
+    def schedule_post(self):
+        asyncio.set_event_loop(self.bus_loop)
+        self.bus_loop.create_task(self.post())
+
     async def post(self):
         self.log.info(f"{self.labeled_name} received POST request")
         if self.northern_layer:
@@ -145,7 +151,7 @@ class Layer(Resource):
         self.log.debug(f"[{self.labeled_name}] received a [System Integrity] command, method: {method_name}, args: {kwargs}")
         try:
             method = getattr(self, method_name)
-            await method(**kwargs)
+            method(**kwargs)
         except Exception as e:
             self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
 

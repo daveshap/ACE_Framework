@@ -50,11 +50,21 @@ class SystemIntegrity(Resource):
         for layer in self.settings.layers:
             await self.post_layer(layer)
 
-    async def post_layer(self, layer):
-        self.log.debug(f"[{self.labeled_name}] sending POST command to layer: {layer}")
+    async def execute_layer_command(self, layer, command, kwargs=None):
+        kwargs = kwargs or {}
+        self.log.debug(f"[{self.labeled_name}] sending command '{command}' to layer: {layer}")
         queue_name = self.build_system_integrity_queue_name(layer)
-        message = self.build_message(layer, message={'method': 'post'}, message_type='command')
+        message = self.build_message(layer, message={'method': command, 'kwargs': kwargs}, message_type='command')
         await self.publish_message(queue_name, message)
+
+    async def post_layer(self, layer):
+        self.log.info(f"[{self.labeled_name}] sending POST command to layer: {layer}")
+        await self.execute_layer_command(layer, 'schedule_post')
+
+    async def run_layers(self):
+        for layer in self.settings.layers:
+            self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
+            await self.execute_layer_command(layer, 'run_layer')
 
     async def message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
@@ -66,12 +76,13 @@ class SystemIntegrity(Resource):
             self.log.error(f"[{self.labeled_name}] could not parse message: {e}")
             return
         if not self.post_complete:
-            self.check_post_complete(data)
+            await self.check_post_complete(data)
 
-    def check_post_complete(self, data):
+    async def check_post_complete(self, data):
         if data['type'] in ['ping', 'pong']:
             if self.verify_ping_pong_sequence_complete(f"{data['type']}.{data['resource']['source']}.{data['resource']['destination']}"):
                 self.log.info(f"[{self.labeled_name}] verified POST complete for all layers")
+                await self.run_layers()
 
     async def subscribe_system_integrity(self):
         self.log.debug(f"{self.labeled_name} subscribing to system integrity queue...")
