@@ -1,3 +1,5 @@
+import time
+
 from ace.framework.layer import Layer, LayerSettings
 from ace.framework.prompts.identities import l2_identity
 from ace.framework.prompts.templates.layer_instructions import layer_instructions
@@ -22,8 +24,8 @@ class Layer2(Layer):
         return self.return_status(True)
 
     def set_identity(self):
-        self.identity=l2_identity
-    
+        self.identity = l2_identity
+
     def parse_req_resp_messages(self, messages):
         data_messages = list(filter(lambda m: m.direction == "northbound"), messages)
         control_messages = list(filter(lambda m: m.direction == "southbound"), messages)
@@ -40,7 +42,7 @@ class Layer2(Layer):
         #   If classification is TAKE_ACTION, select appropriate southbound output message from outputs.py to render operations prompt
         #   Render appropraite operations prompt from operation_descriptions.py
         # Create layer instruction prompt using layer_instructions.py
-        # Parse output messages into message types 
+        # Parse output messages into message types
         # Return messages
         time.sleep(5)
         messages_northbound = [

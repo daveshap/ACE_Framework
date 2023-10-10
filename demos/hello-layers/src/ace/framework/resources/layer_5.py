@@ -1,5 +1,8 @@
+import time
+
 from ace.framework.layer import Layer, LayerSettings
 from ace.framework.prompts.identities import l5_identity
+
 
 class Layer5(Layer):
 
@@ -16,7 +19,7 @@ class Layer5(Layer):
         return self.return_status(True)
 
     def set_identity(self):
-        self.identity=l5_identity
+        self.identity = l5_identity
 
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
         time.sleep(5)
