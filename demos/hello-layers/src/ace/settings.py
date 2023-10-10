@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     amqp_username: str = "rabbit"
     amqp_password: str = "carrot"
     logging_queue: str = "logging-queue"
+    log_dir: str = "/var/log/ace"
     system_integrity_queue: str = "system-integrity-queue"
     system_integrity_data_queue: str = "system-integrity-data-queue"
     layers: List[str] = [

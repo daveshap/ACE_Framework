@@ -5,6 +5,9 @@ x-shared-volumes: &shared-volumes
 
 services:
 
+  logging_layer:
+    volumes: *shared-volumes
+
   aspirational_layer:
     volumes: *shared-volumes
 

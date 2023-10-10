@@ -47,6 +47,18 @@ services:
       timeout: 10s
       retries: 3
 
+  logging_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+      ACE_RESOURCE_NAME: logging
+    command: *default_command
+    networks: *default_networks
+    healthcheck: *healthcheck
+
   # db:
   #   image: postgres:15.1-bullseye
   #   environment:

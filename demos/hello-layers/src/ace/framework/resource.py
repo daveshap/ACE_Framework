@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
 import time
+from datetime import datetime
 import yaml
 import asyncio
 import aio_pika
 from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
 
 from ace import constants
@@ -19,6 +21,7 @@ class Resource(ABC):
     def __init__(self):
         self.log = Logger(self.__class__.__name__)
         self.api_endpoint = ApiEndpoint(self.api_callbacks)
+        self.executor = ThreadPoolExecutor(max_workers=5)
         self.bus_loop = asyncio.new_event_loop()
         self.connection = None
         self.consumer_channel = None
@@ -179,6 +182,7 @@ class Resource(ABC):
             'source': self.settings.name,
             'destination': destination,
         }
+        message['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return yaml.dump(message, default_flow_style=False).encode()
 
     async def publish_message(self, exchange_name, message, delivery_mode=2):
