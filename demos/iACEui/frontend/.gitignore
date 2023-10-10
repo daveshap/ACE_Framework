@@ -1,4 +1,5 @@
-.DS_Store
+!svelte.config.js
+
 node_modules
 /build
 /.svelte-kit
