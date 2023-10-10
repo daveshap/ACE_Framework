@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
+import openai
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
@@ -73,11 +74,11 @@ class Layer(Resource):
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
             if messages_northbound:
                 for m in messages_northbound:
-                    message = self.build_message(self.northern_layer, message={'message': m}, message_type=m['type'])
+                    message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
             if messages_southbound:
                 for m in messages_southbound:
-                    message = self.build_message(self.southern_layer, message={'message': m}, message_type=m['type'])
+                    message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):

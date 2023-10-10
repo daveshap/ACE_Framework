@@ -19,4 +19,17 @@ class Layer4(Layer):
         self.identity=l4_identity
 
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
-        pass
+        time.sleep(5)
+        messages_northbound = [
+            {
+                "type": "data",
+                "message": "hello data"
+            }
+        ]
+        messages_southbound = [
+            {
+                "type": "control",
+                "message": "hello control"
+            }
+        ]
+        return messages_northbound, messages_southbound

@@ -44,8 +44,8 @@ operation_classifier = Template(
 
     ### EXAMPLE 1
 
-    Based on the CONTROL and CONTROL_RESPONSE messages, you decide to send a CONTROL message along the the SOUTH bus to communicate this information to the layer below you.
-    Based on the DATA and DATA_RESPONSE messages, you decide to send a DATA message along the the NORTH bus to communicate this information to the layer above you.
+    Based on all incoming messages, you decide to send a CONTROL message along the the SOUTH bus to communicate this information to the layer below you
+    and send a DATA message along the the NORTH bus to communicate this information to the layer above you.
 
     Your response should be:
     {
@@ -55,8 +55,8 @@ operation_classifier = Template(
 
     ## EXAMPLE 2
 
-    Based on the CONTROL and CONTROL_RESPONSE messages, you need more information from the layer above before you can send information further along the SOUTH bus. Therefore, you decide to send a DATA_REQUEST message along the NORTH bus to the layer above.
-    Based on the DATA and DATA_RESPONSE messages, you do not need to propogate the information further along the NORTH bus, nor do you need to request any more information from the layer below. You decide to store the message in context.
+    Based on all incoming messages, you need more information from the layer above before you can send information further along the SOUTH bus. Therefore, you decide to send a DATA_REQUEST message along the NORTH bus to the layer above.
+    You decide you do not need to propogate any other the information further along the NORTH bus, nor do you need to request any more information from the layer below. You decide to store the message in context.
 
     Your response should be:
     {
@@ -66,8 +66,8 @@ operation_classifier = Template(
 
     ## EXAMPLE 2
 
-    Based on the CONTROL and CONTROL_RESPONSE messages, you decide to send a CONTROL message along the the SOUTH bus to communicate this information to the layer below you.
-    Based on the DATA and DATA_RESPONSE messages, you need more information from the layer below before you can send information further along the NORTH bus. Therefore, you decide to send a CONTROL_REQUEST message along the SOUTH bus to the layer below.
+    Based on all incoming messages, you decide to send a CONTROL message along the the SOUTH bus to communicate this information to the layer below you.
+    You need more information from the layer below before you can send information further along the NORTH bus. Therefore, you decide to send a CONTROL_REQUEST message along the SOUTH bus to the layer below.
 
     Your response should be:
     {
