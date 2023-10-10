@@ -1,9 +1,9 @@
 import yaml
 import aio_pika
+from abc import ABC, abstractmethod
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
-
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
@@ -18,6 +18,7 @@ class Layer(Resource):
 
     async def post_connect(self):
         self.set_adjacent_layers()
+        self.set_identity()
         await self.register_busses()
 
     async def pre_disconnect(self):
@@ -50,6 +51,14 @@ class Layer(Resource):
         # TODO: Need this?
         # await self.unsubscribe_system_integrity_queue()
         self.log.debug("Deregistered busses...")
+
+    @abstractmethod
+    def set_identity(self):
+        pass
+
+    @abstractmethod
+    def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
+        pass
 
     def run_layer(self):
         while True:
