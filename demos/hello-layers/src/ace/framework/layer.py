@@ -6,7 +6,7 @@ from threading import Thread
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
-import openai
+
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
@@ -180,24 +180,29 @@ class Layer(Resource):
             self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue}...")
             self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
 
+    async def unsubscribe_adjacent_layers(self):
+        northbound_queue = self.build_layer_queue_name('northbound', self.settings.name)
+        southbound_queue = self.build_layer_queue_name('southbound', self.settings.name)
+        if self.northern_layer and northbound_queue in self.consumers:
+            queue, consumer_tag = self.consumers[northbound_queue]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {northbound_queue}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue}")
+        if self.southern_layer and southbound_queue in self.consumers:
+            queue, consumer_tag = self.consumers[southbound_queue]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {southbound_queue}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {southbound_queue}")
+
     async def subscribe_system_integrity_queue(self):
         queue_name = self.build_system_integrity_queue_name(self.settings.name)
         self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
         self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
 
-    async def unsubscribe_adjacent_layers(self):
-        northbound_queue = self.build_layer_queue_name('northbound', self.northern_layer)
-        southbound_queue = self.build_layer_queue_name('southbound', self.southern_layer)
-        self.log.debug(f"{self.labeled_name} unsubscribing from {northbound_queue} and {southbound_queue}...")
-        if self.northern_layer and northbound_queue in self.consumers:
-            await self.consumers[northbound_queue].cancel()
-        if self.southern_layer and southbound_queue in self.consumers:
-            await self.consumers[southbound_queue].cancel()
-        self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue} and {southbound_queue}")
-
     async def unsubscribe_system_integrity_queue(self):
         queue_name = self.build_system_integrity_queue_name(self.settings.name)
-        self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
         if queue_name in self.consumers:
-            await self.consumers[queue_name].cancel()
-        self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")

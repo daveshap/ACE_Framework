@@ -35,11 +35,12 @@ class Busses(Resource):
             await self.create_exchange(queue_name)
         self.log.debug(f"{self.labeled_name} queues created")
 
-    async def create_exchange(self, queue_name):
+    async def create_exchange(self, queue_name, durable=True):
         await setup_exchange(
             settings=self.settings,
             channel=self.publisher_channel,
             queue_name=queue_name,
+            durable=durable,
         )
         self.log.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
 
@@ -49,11 +50,12 @@ class Busses(Resource):
             await self.destroy_exchange(queue_name)
         self.log.debug(f"{self.labeled_name} exchanges destroyed")
 
-    async def destroy_exchange(self, queue_name):
+    async def destroy_exchange(self, queue_name, durable=True):
         await teardown_exchange(
             settings=self.settings,
             channel=self.publisher_channel,
             queue_name=queue_name,
+            durable=durable,
         )
         self.log.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
 
@@ -61,8 +63,10 @@ class Busses(Resource):
         for layer in self.settings.layers:
             queue_name = self.build_system_integrity_queue_name(layer)
             await self.consumer_channel.declare_queue(queue_name, durable=True)
+        await self.create_exchange(self.settings.system_integrity_data_queue, durable=False)
 
     async def destroy_system_integrity_queues(self):
         for layer in self.settings.layers:
             queue_name = self.build_system_integrity_queue_name(layer)
             await self.consumer_channel.queue_delete(queue_name)
+        await self.destroy_exchange(self.settings.system_integrity_data_queue, durable=False)

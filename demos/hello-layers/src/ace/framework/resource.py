@@ -26,6 +26,7 @@ class Resource(ABC):
         self.consumers = {}
         self.consumer_local_queues = {}
         self.publisher_local_queue = None
+        self.publish_messages = False
 
     @property
     @abstractmethod
@@ -70,13 +71,19 @@ class Resource(ABC):
         self.log.info(f"{self.labeled_name} busses connection established...")
 
     def disconnect_busses(self):
-        self.log.debug(f"{self.labeled_name} disconnecting from busses...")
-        self.bus_loop.run_until_complete(self.pre_disconnect())
-        self.bus_loop.run_until_complete(self.publisher_channel.close())
-        self.bus_loop.run_until_complete(self.consumer_channel.close())
-        self.bus_loop.run_until_complete(self.connection.close())
-        self.bus_loop.call_soon_threadsafe(self.bus_loop.stop)
-        self.log.info(f"{self.labeled_name} busses connection closed...")
+        self.log.info(f"{self.labeled_name} disconnecting from busses...")
+        self.stop_publisher_local_queue()
+
+        async def close_connections():
+            await asyncio.sleep(1)
+            await self.pre_disconnect()
+            await self.publisher_channel.close()
+            await self.consumer_channel.close()
+            await self.connection.close()
+            self.log.info(f"{self.labeled_name} busses connection closed...")
+            self.bus_loop.stop()
+
+        self.bus_loop.create_task(close_connections())
 
     async def post_connect(self):
         pass
@@ -131,17 +138,24 @@ class Resource(ABC):
             messages.append(queue.get())
         return messages
 
+    def stop_publisher_local_queue(self):
+        self.publish_messages = False
+        # Kick the queue to break the loop.
+        self.push_exchange_message_to_publisher_local_queue(None, None)
+
     def push_exchange_message_to_publisher_local_queue(self, queue_name, message):
         data = (queue_name, message)
         self.bus_loop.call_soon_threadsafe(self.publisher_local_queue.put_nowait, data)
 
     async def process_publisher_messages_to_exchanges(self):
         self.publisher_local_queue = asyncio.Queue()
-        while True:
+        self.publish_messages = True
+        while self.publish_messages:
             try:
                 data = await self.publisher_local_queue.get()
                 queue_name, message = data
-                await self.publish_message(self.build_exchange_name(queue_name), message)
+                if queue_name:
+                    await self.publish_message(self.build_exchange_name(queue_name), message)
             except Exception as e:
                 self.log.error(f"Publishing message from local publisher queue failed: {e}")
                 continue
@@ -200,9 +214,9 @@ class Resource(ABC):
                     self.log.info("Previous channel was closed, creating new channel...")
                     self.consumer_channel = await self.connection.channel()
                 queue = await self.consumer_channel.get_queue(queue_name)
-                await queue.consume(callback)
+                consumer_tag = await queue.consume(callback)
                 self.log.info(f"Subscribed to queue: {queue_name}")
-                return
+                return queue, consumer_tag
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)

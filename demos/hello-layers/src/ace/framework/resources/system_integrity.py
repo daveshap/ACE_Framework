@@ -15,6 +15,7 @@ class SystemIntegrity(Resource):
     def __init__(self):
         super().__init__()
         self.post_complete = False
+        self.shutdown_complete = False
         self.post_verification_matrix = self.compute_ping_pong_combinations()
 
     @property
@@ -31,6 +32,7 @@ class SystemIntegrity(Resource):
 
     async def post_connect(self):
         await self.subscribe_system_integrity()
+        await self.subscribe_system_integrity_data()
 
     def post_start(self):
         asyncio.set_event_loop(self.bus_loop)
@@ -38,6 +40,7 @@ class SystemIntegrity(Resource):
 
     async def pre_disconnect(self):
         await self.unsubscribe_system_integrity()
+        await self.unsubscribe_system_integrity_data()
 
     async def publish_message(self, queue_name, message, delivery_mode=2):
         message = aio_pika.Message(
@@ -66,6 +69,12 @@ class SystemIntegrity(Resource):
             self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
             await self.execute_layer_command(layer, 'run_layer')
 
+    async def stop_layers(self):
+        for layer in reversed(self.settings.layers):
+            self.log.info(f"[{self.labeled_name}] Stopping layer: {layer}")
+            await self.execute_layer_command(layer, 'stop_resource')
+        self.shutdown_complete = True
+
     async def message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
             body = message.body.decode()
@@ -78,11 +87,28 @@ class SystemIntegrity(Resource):
         if not self.post_complete:
             await self.check_post_complete(data)
 
+    async def message_data_handler(self, message: aio_pika.IncomingMessage):
+        async with message.process():
+            body = message.body.decode()
+        self.log.debug(f"[{self.labeled_name}] received a data message: {body}")
+        try:
+            data = yaml.safe_load(body)
+        except yaml.YAMLError as e:
+            self.log.error(f"[{self.labeled_name}] could not parse data message: {e}")
+            return
+        if not self.shutdown_complete:
+            await self.check_done(data)
+
     async def check_post_complete(self, data):
         if data['type'] in ['ping', 'pong']:
             if self.verify_ping_pong_sequence_complete(f"{data['type']}.{data['resource']['source']}.{data['resource']['destination']}"):
                 self.log.info(f"[{self.labeled_name}] verified POST complete for all layers")
                 await self.run_layers()
+
+    async def check_done(self, data):
+        if data['type'] == 'done':
+            self.log.info(f"[{self.labeled_name}] ACE mission done, initiating shutdown of all layers")
+            await self.stop_layers()
 
     async def subscribe_system_integrity(self):
         self.log.debug(f"{self.labeled_name} subscribing to system integrity queue...")
@@ -90,11 +116,27 @@ class SystemIntegrity(Resource):
         self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
         self.log.info(f"{self.labeled_name} Subscribed to system integrity queue")
 
+    async def subscribe_system_integrity_data(self):
+        self.log.debug(f"{self.labeled_name} subscribing to system integrity data queue...")
+        queue_name = self.settings.system_integrity_data_queue
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_data_handler)
+        self.log.info(f"{self.labeled_name} Subscribed to system integrity data queue")
+
     async def unsubscribe_system_integrity(self):
-        self.log.debug(f"{self.labeled_name} unsubscribing from system integrity queue...")
         queue_name = self.settings.system_integrity_queue
-        await self.consumers[queue_name].cancel()
-        self.log.info(f"{self.labeled_name} Unsubscribed from system integrity queue")
+        if queue_name in self.consumers:
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from system integrity queue...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} Unsubscribed from system integrity queue")
+
+    async def unsubscribe_system_integrity_data(self):
+        queue_name = self.settings.system_integrity_data_queue
+        if queue_name in self.consumers:
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from system integrity data queue...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} Unsubscribed from system integrity data queue")
 
     def compute_ping_pong_combinations(self):
         layers = self.settings.layers
