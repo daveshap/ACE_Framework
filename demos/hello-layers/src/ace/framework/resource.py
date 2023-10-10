@@ -115,7 +115,7 @@ class Resource(ABC):
         # TODO: Would be nice if this was cleaner, but we need to wait on the
         # messaging thread to call post_start().
         while not self.publisher_local_queue:
-            self.log.info(f"[{self.labeled_name}] waiting for publisher local queue...")
+            self.log.debug(f"[{self.labeled_name}] waiting for publisher local queue...")
             time.sleep(1)
 
     def get_consumer_local_queue(self, queue_name):
@@ -148,11 +148,14 @@ class Resource(ABC):
                 self.log.error(f"Publishing message from local publisher queue failed: {e}")
                 continue
 
-    def build_queue_name(self, direction, layer):
+    def build_layer_queue_name(self, direction, layer):
         queue = None
         if layer and direction in constants.LAYER_ORIENTATIONS:
             queue = f"{direction}.{layer}"
         return queue
+
+    def build_system_integrity_queue_name(self, layer):
+        return f"system_integrity.{layer}"
 
     def build_exchange_name(self, queue_name):
         return f"exchange.{queue_name}"
@@ -172,6 +175,7 @@ class Resource(ABC):
             body=message,
             delivery_mode=delivery_mode
         )
+        self.log.debug(f"Publishing message, exchange {exchange.name}")
         await exchange.publish(message, routing_key="")
 
     def is_existant_layer_queue(self, orientation, idx):
@@ -187,7 +191,7 @@ class Resource(ABC):
         for orientation in constants.LAYER_ORIENTATIONS:
             for idx, layer in enumerate(self.settings.layers):
                 if self.is_existant_layer_queue(orientation, idx):
-                    queue_names.append(self.build_queue_name(orientation, layer))
+                    queue_names.append(self.build_layer_queue_name(orientation, layer))
         return queue_names
 
     async def try_queue_subscribe(self, queue_name, callback):
