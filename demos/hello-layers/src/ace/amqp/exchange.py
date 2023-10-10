@@ -6,16 +6,16 @@ from ace.logger import Logger
 logger = Logger(__name__)
 
 
-async def setup_exchange(settings: Settings, channel: aio_pika.Channel, queue_name: str):
+async def setup_exchange(settings: Settings, channel: aio_pika.Channel, queue_name: str, durable=True):
     exchange_name = f"exchange.{queue_name}"
     logger.debug(f"Setup exchange: {exchange_name}")
     await channel.declare_exchange(exchange_name, aio_pika.ExchangeType.FANOUT)
 
-    queue = await channel.declare_queue(queue_name, durable=True)
+    queue = await channel.declare_queue(queue_name, durable=durable)
     await queue.bind(exchange_name)
     logger.debug(f"Bound {queue_name} to exchange {exchange_name}")
 
-    if settings.system_integrity_queue:
+    if settings.system_integrity_queue and queue_name != settings.system_integrity_data_queue:
         system_integrity_queue = await channel.declare_queue(settings.system_integrity_queue, durable=True)
         await system_integrity_queue.bind(exchange_name)
         logger.debug(f"Bound {settings.system_integrity_queue} to exchange {exchange_name}")
@@ -26,11 +26,11 @@ async def setup_exchange(settings: Settings, channel: aio_pika.Channel, queue_na
         logger.debug(f"Bound {settings.logging_queue} to exchange {exchange_name}")
 
 
-async def teardown_exchange(settings: Settings, channel: aio_pika.Channel, queue_name: str):
+async def teardown_exchange(settings: Settings, channel: aio_pika.Channel, queue_name: str, durable=True):
     exchange_name = f"exchange.{queue_name}"
     logger.debug(f"Teardown exchange: {exchange_name}")
 
-    if settings.system_integrity_queue:
+    if settings.system_integrity_queue and queue_name != settings.system_integrity_data_queue:
         system_integrity_queue = await channel.declare_queue(settings.system_integrity_queue, durable=True)
         await system_integrity_queue.unbind(exchange_name)
         await system_integrity_queue.delete()
@@ -42,7 +42,7 @@ async def teardown_exchange(settings: Settings, channel: aio_pika.Channel, queue
         await logging_queue.delete()
         logger.debug(f"Removed {settings.logging_queue}")
 
-    queue = await channel.declare_queue(queue_name, durable=True)
+    queue = await channel.declare_queue(queue_name, durable=durable)
     await queue.unbind(exchange_name)
     await queue.delete()
     logger.debug(f"Removed {queue_name}")
