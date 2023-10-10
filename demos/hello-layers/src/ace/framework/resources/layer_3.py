@@ -1,3 +1,5 @@
+import time
+
 from ace.framework.layer import Layer, LayerSettings
 from ace.framework.prompts.identities import l3_identity
 
@@ -17,8 +19,8 @@ class Layer3(Layer):
         return self.return_status(True)
 
     def set_identity(self):
-        self.identity=l3_identity
-    
+        self.identity = l3_identity
+
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
         time.sleep(5)
         messages_northbound = [
