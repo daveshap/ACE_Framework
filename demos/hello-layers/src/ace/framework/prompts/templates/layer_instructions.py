@@ -51,12 +51,12 @@ layer_instructions = Template(
         {
             "type": "DATA_RESPONSE",
             "direction": "NORTH",
-            "text": "Please clarify the mission"
+            "message": "Please clarify the mission"
         },
         {
             "type": "DATA",
             "direction": "NORTH",
-            "text": "We received the following input from the user: How can I live a healthier lifestyle?"
+            "message": "We received the following input from the user: How can I live a healthier lifestyle?"
         }
     ]
 

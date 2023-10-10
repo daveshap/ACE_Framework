@@ -29,5 +29,13 @@ class Layer1(Layer):
         # Create layer instruction prompt using l1_layer_instructions.py
         # Parse output messages into message types 
         # Return messages
-        pass
+        time.sleep(5)
+        messages_northbound = []
+        messages_southbound = [
+            {
+                "type": "control",
+                "message": "hello control"
+            }
+        ]
+        return messages_northbound, messages_southbound
 
