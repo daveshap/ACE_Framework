@@ -7,5 +7,5 @@ settings = Settings(
     data_bus_pub_queue="bus.data.L1",
     control_bus_pub_queue="bus.control.L2",
     data_bus_sub_queue="bus.data.L2",
-    debug = False,
+    debug = True,
 )

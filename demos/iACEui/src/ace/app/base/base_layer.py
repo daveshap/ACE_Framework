@@ -17,6 +17,7 @@ from database.dao import (
     get_layer_state_by_name,
     get_layer_config,
     get_active_ancestral_prompt,
+    update_layer_state,
 )
 from database.dao_models import LayerConfigModel, AncestralPromptModel
 
@@ -41,7 +42,15 @@ class BaseLayer(ABC):
         logger.info("data_bus_message_handler")
         # try:
         if self.settings.debug:
-            self.wait_for_signal()
+            await self.wait_for_signal()
+
+            with get_db() as db:
+                update_layer_state(
+                    db=db,
+                    layer_name=self.settings.role_name,
+                    process_messages=False,
+                )
+
         await self._process_message(
             message=message, 
             source_bus="Data Bus",
@@ -66,11 +75,13 @@ class BaseLayer(ABC):
 
     async def wait_for_signal(self):
         while True:
+            logger.info("wait_for_signal")
             with get_db() as session:
                 process_messages = get_layer_state_by_name(
                     db=session,
                     layer_name=self.settings.role_name,
-                )
+                ).process_messages
+                logger.info(f"{process_messages=}")
 
             if process_messages:
                 break
