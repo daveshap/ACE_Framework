@@ -38,25 +38,31 @@ class BaseLayer(ABC):
         self._fetch_ancestral_prompt()
 
     async def data_bus_message_handler(self, message: aio_pika.IncomingMessage):
-        try:
-            if self.settings.debug:
-                self.wait_for_signal()
-
-            await self._process_message(message, "Data Bus")
-            await message.ack()
-        except:
-            await message.nack()
+        logger.info("data_bus_message_handler")
+        # try:
+        if self.settings.debug:
+            self.wait_for_signal()
+        await self._process_message(
+            message=message, 
+            source_bus="Data Bus",
+        )
+        await message.ack()
+    # except:
+        # await message.nack()
 
     async def control_bus_message_handler(self, message: aio_pika.IncomingMessage):
-        try:
-            if self.settings.debug:
-                await self.wait_for_signal()
+        logger.info("control_bus_message_handler")
+    # try:
+        if self.settings.debug:
+            await self.wait_for_signal()
 
-            with get_db() as session:
-                await self._process_message(message, session, "Control Bus")
-                await message.ack()
-        except:
-            await message.nack()
+        await self._process_message(
+            message=message, 
+            source_bus="Control Bus",
+        )
+        await message.ack()
+    # except:
+        # await message.nack()
 
     async def wait_for_signal(self):
         while True:
@@ -73,12 +79,12 @@ class BaseLayer(ABC):
     async def _process_message(
         self, message: aio_pika.IncomingMessage, source_bus: str
     ):
+        logger.info(f"Processing message from {source_bus}")
         # if debug == True
         self._fetch_layer_config()
         self._fetch_ancestral_prompt()
 
         await self._handle_bus_message(
-            layer_config=self.layer_config,
             message=message,
             source_bus=source_bus,
         )
@@ -89,7 +95,7 @@ class BaseLayer(ABC):
         source_bus: str,
     ):
         return ai.reason(
-            ancestral_prompt=self.ancestral_prompt,
+            ancestral_prompt=self.ancestral_prompt.prompt,
             input=input,
             source_bus=source_bus,
             prompts=self.layer_config.prompts,
@@ -99,14 +105,28 @@ class BaseLayer(ABC):
 
     async def _handle_bus_message(self, message: aio_pika.IncomingMessage, source_bus):
 
-        reasoning_completion = self._reason()
+        logger.info(f"handling message from {source_bus}")
+
+        reasoning_completion = self._reason(
+            input=input,
+            source_bus=source_bus,
+        )
+
+        logger.info(f"{reasoning_completion=}")
+
 
         data_bus_message, control_bus_message = self._determine_action(
             source_bus,
             reasoning_completion,
         )
 
-        if ai.determine_none(data_bus_message) != "none":
+        logger.info(f"{data_bus_message=}")
+        logger.info(f"{control_bus_message=}")
+
+        logger.info(f"{ai.determine_none(data_bus_message['content'])=}")
+        logger.info(f"{ai.determine_none(control_bus_message['content'])=}")
+
+        if ai.determine_none(data_bus_message['content']) != "none":
             await self._publish(
                 queue_name=self.settings.data_bus_pub_queue,
                 message=data_bus_message,
@@ -117,7 +137,7 @@ class BaseLayer(ABC):
             )
             self.llm_messages.append(data_bus_message)
 
-        if ai.determine_none(control_bus_message) != "none":
+        if ai.determine_none(control_bus_message['content']) != "none":
             await self._publish(
                 queue_name=self.settings.control_bus_pub_queue,
                 message=control_bus_message,
@@ -137,12 +157,12 @@ class BaseLayer(ABC):
         reasoning_completion,
     ):
         return ai.determine_action(
-            ancestral_prompt=self.ancestral_prompt,
+            ancestral_prompt=self.ancestral_prompt.prompt,
             source_bus=source_bus,
             reasoning_completion=reasoning_completion,
             prompts=self.layer_config.prompts,
             llm_model_parameters=self.layer_config.llm_model_parameters,
-            settings=self.settings,
+            role_name=self.settings.role_name,
             llm_messages=self.llm_messages,
         )
 
@@ -162,13 +182,13 @@ class BaseLayer(ABC):
 
         headers = {
             "source_bus": source_bus,
-            "parent_message_id": input_message.message_id,
+            "parent_message_id": str(input_message.message_id),
             "destination_bus": destination_bus,
             "layer_name": self.settings.role_name or "user input",
-            "llm_messages": json.dump(self.llm_messages),
-            "config_id": self.layer_config.config_id,
+            "llm_messages": json.dumps(self.llm_messages),
+            "config_id": str(self.layer_config.config_id),
             "input": input_message.body.decode(),
-            "reasoning": json.dump(reasoning_message),
+            "reasoning": json.dumps(reasoning_message),
         }
 
         logger.info(f"message {headers=}")
@@ -251,14 +271,17 @@ class BaseLayer(ABC):
 
     def _fetch_layer_config(self):
         with get_db() as db:
-            self.layer_config = get_layer_config(
+            config = get_layer_config(
                 db=db,
                 layer_name=self.settings.role_name,
             )
+            self.layer_config = LayerConfigModel.model_validate(config)
+
 
     def _fetch_ancestral_prompt(self):
         with get_db() as db:
-            self.ancestral_prompt = get_active_ancestral_prompt(db=db)
+            prompt = get_active_ancestral_prompt(db=db)
+            self.ancestral_prompt = AncestralPromptModel.model_validate(prompt)
 
     async def _run_layer(self):
         logger.info(f"Running {self.settings.role_name}")

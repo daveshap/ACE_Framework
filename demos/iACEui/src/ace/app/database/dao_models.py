@@ -85,6 +85,10 @@ class LayerConfigModel(LayerNameBase, BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    class Config:
+        from_attributes = True
+
+
 class MessageWithLayerConfigModel(BaseModel):
     rabbitmq_log: RabbitMQLogModel
     layer_config: LayerConfigModel
@@ -96,3 +100,6 @@ class AncestralPromptModel(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
