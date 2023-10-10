@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 def callback(ch, method, properties, body):
-    logger.info("try log message")
     with get_db() as session:
         log_entry = RabbitMQLog.from_message(method, properties, body)
         session.add(log_entry)

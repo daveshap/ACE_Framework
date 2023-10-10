@@ -4,6 +4,7 @@ from pydantic import BaseModel, validator
 import uuid
 from datetime import datetime
 from constants import LAYER_NAMES, OPENAI_API_ROLES
+import json
 
 
 class LayerNameBase(BaseModel):
@@ -110,13 +111,12 @@ class LayerStateModel(LayerNameBase,BaseModel):
         from_attributes = True
 
 
-class RabbitMQLogModel(BaseModel):
+class RabbitMQLogModel(LayerNameBase, BaseModel):
     id: uuid.UUID
     message_content: Optional[str] = None
     queue: Optional[str] = None
     source_bus: Optional[str] = None
     destination_bus: Optional[str] = None
-    layer_name: Optional[str] = None
     llm_messages: Optional[List[LlmMessage]] = None
     config_id: Optional[uuid.UUID] = None
     input: Optional[str] = None
@@ -129,7 +129,7 @@ class RabbitMQLogModel(BaseModel):
     reply_to: Optional[str] = None
     expiration: Optional[str] = None
     message_id: Optional[str] = None
-    parent_message_id: Optional[str] = None
+    parent_message_id: Optional[uuid.UUID] = None  # Adjusted to uuid type
     type: Optional[str] = None
     user_id: Optional[str] = None
     app_id: Optional[str] = None
@@ -137,6 +137,15 @@ class RabbitMQLogModel(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def from_string(cls, record_str: str):
+        try:
+            record_json = json.loads(record_str)
+            return cls.model_validate(record_json)
+        except Exception as e:
+            raise ValueError("Invalid record string") from e
+
 
 
 class LayerTestResponseModel(LayerNameBase, BaseModel):

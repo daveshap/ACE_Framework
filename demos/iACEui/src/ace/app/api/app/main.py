@@ -1,6 +1,8 @@
 import asyncio
+import asyncpg
 from typing import Dict, List
 import uuid
+import json
 
 import aio_pika
 from fastapi import FastAPI, Response
@@ -9,10 +11,11 @@ from settings import settings
 from base.amqp.connection import get_connection
 from base.amqp.exchange import create_exchange
 
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from database.connection import get_db
 from database import dao
+from database.asyncpg_connection import get_asyncpg_db
 
 from schema import (
     LayerConfigAdd,
@@ -22,13 +25,11 @@ from schema import (
     LayerStateModel,
     LayerTestRequest,
     LayerTestResponseModel,
-    LlmMessage,
     AncestralPromptAdd,
     AncestralPromptModel,
     LayerTestHistoryModel,
+    RabbitMQLogModel,
 )
-
-from ai import generate_bus_message
 
 from base import ai
 
@@ -88,6 +89,33 @@ async def send_mission(data: Mission) -> Dict[str, str]:
     )
 
     return {"status": "mission sent"}
+
+
+@app.websocket("/logs")
+async def websocket_endpoint(websocket: WebSocket, db: asyncpg.Connection = Depends(get_asyncpg_db)):
+    await websocket.accept()
+    await db.add_listener(
+        "new_record", 
+        lambda c, p, t, m: asyncio.create_task(send_update(m, websocket))
+    )
+    
+    try:
+        while True:
+            data = await websocket.receive_text()  # Here for handling messages from the client, if needed.
+            logger.info(f"received {data=}")
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await db.remove_listener(
+            "new_record", 
+            lambda c, p, t, m: asyncio.create_task(send_update(m, websocket))
+        )
+
+async def send_update(message: str, websocket: WebSocket):
+    logger.info(f"parsing {message=}")
+    record = json.loads(message)
+
+    await websocket.send_json(record)
 
 
 @app.post("/layer/test", response_model=LayerTestResponseModel)

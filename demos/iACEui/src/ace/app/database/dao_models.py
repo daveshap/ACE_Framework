@@ -2,6 +2,7 @@ from pydantic import BaseModel, validator
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
+import json
 
 LAYER_NAMES = [
     "Aspirational Layer",
@@ -67,6 +68,12 @@ class RabbitMQLogModel(LayerNameBase, BaseModel):
     user_id: Optional[str]
     app_id: Optional[str]
     cluster_id: Optional[str]
+
+    @classmethod
+    def from_string(cls, record: str):
+        # Assuming the record string is a serialized JSON
+        data = json.loads(record)
+        return cls(**data)
 
 class LayerConfigModel(LayerNameBase, BaseModel):
     config_id: UUID

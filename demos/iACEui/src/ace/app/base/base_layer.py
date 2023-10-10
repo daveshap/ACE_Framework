@@ -96,33 +96,6 @@ class BaseLayer(ABC):
             llm_model_parameters=self.layer_config.llm_model_parameters,
             llm_messages=self.llm_messages,
         )
-        # reasoning_input = prompts.get_reasoning_input(
-        #     input=input,
-        #     source_bus=source_bus,
-        # )
-        # system_message = "\n\n".join(
-        #     [
-        #         self.layer_config.prompts.identity,
-        #         self.ancestral_prompt,
-        #         self.layer_config.prompts.reasoning,
-        #     ]
-        # )
-
-        # reasoning_messages = (
-        #     [{"role": "system", "content": system_message}]
-        #     + self.llm_messages
-        #     + [{"role": "user", "content": reasoning_input}]
-        # )
-
-        # reasoning_response = openai.ChatCompletion.create(
-        #     messages=reasoning_messages,
-        #     **self.layer_config.llm_model_parameters.model_dump(
-        #         exclude_none=True,
-        #         exclude_unset=True,
-        #     ),
-        # )
-        # results = reasoning_response.choices[0].message
-        # return results
 
     async def _handle_bus_message(self, message: aio_pika.IncomingMessage, source_bus):
 
@@ -172,71 +145,6 @@ class BaseLayer(ABC):
             settings=self.settings,
             llm_messages=self.llm_messages,
         )
-        # data_bus_prompt = prompts.get_action_prompt(
-        #     role_name=self.settings.role_name,
-        #     source_bus=source_bus,
-        #     destination_bus="Data Bus",
-        #     reasoning_completion=reasoning_completion,
-        #     bus_rules=self.layer_config.prompts.data_bus,
-        # )
-
-        # control_bus_prompt = prompts.get_action_prompt(
-        #     role_name=self.settings.role_name,
-        #     source_bus=source_bus,
-        #     destination_bus="Control Bus",
-        #     reasoning_completion=reasoning_completion,
-        #     bus_rules=self.layer_config.prompts.control_bus,
-        # )
-
-        # system_message = "\n\n".join(
-        #     [
-        #         self.layer_config.prompts.identity,
-        #         self.ancestral_prompt,
-        #         # self.layer_config.prompts.reasoning, # This is likely going to confuse the LLM layer becaues the first reasoning completion would be better.
-        #     ]
-        # )
-
-        # data_bus_action = (
-        #     [{"role": "system","content": system_message}]
-        #     + self.llm_messages
-        #     + [{"role": "user", "content": data_bus_prompt}]
-        # )
-
-        # control_bus_action = (
-        #     [{"role": "system","content": system_message}]
-        #     + self.llm_messages
-        #     + [{"role": "user", "content": control_bus_prompt}]
-        # )
-
-        # data_bus_action_completion = (
-        #     openai.ChatCompletion.create(
-        #         model=self.layer_config.llm_model_name,
-        #         messages=data_bus_action,
-        #         **self.layer_config.llm_model_parameters,
-        #     )
-        #     .choices[0]
-        #     .message
-        # )
-
-        # control_bus_action_completion = (
-        #     openai.ChatCompletion.create(
-        #         model=self.layer_config.llm_model_name,
-        #         messages=control_bus_action,
-        #         **self.layer_config.llm_model_parameters,
-        #     )
-        #     .choices[0]
-        #     .message
-        # )
-
-        # return data_bus_action_completion, control_bus_action_completion
-
-    # def _determine_none(self, input_text):
-    #     match = re.search(r"\[Message\]\n(none)", input_text)
-
-    #     if match:
-    #         return "none"
-
-    #     return input_text
 
     async def _publish(
         self,
@@ -256,12 +164,14 @@ class BaseLayer(ABC):
             "source_bus": source_bus,
             "parent_message_id": input_message.message_id,
             "destination_bus": destination_bus,
-            "layer_name": self.settings.role_name,
+            "layer_name": self.settings.role_name or "user input",
             "llm_messages": json.dump(self.llm_messages),
             "config_id": self.layer_config.config_id,
             "input": input_message.body.decode(),
             "reasoning": json.dump(reasoning_message),
         }
+
+        logger.info(f"message {headers=}")
 
         message_body = aio_pika.Message(
             body=message["content"].encode(),
