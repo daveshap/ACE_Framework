@@ -3,7 +3,7 @@ from jinja2 import Template
 layer_instructions = Template(
     """
     {{ace_context}}
-    {{identitiy}}
+    {{identity}}
 
     Below is a list of your incoming messages.
     
@@ -46,16 +46,16 @@ layer_instructions = Template(
 
     ## FORMAT 
 
-    Your response should be an array of messages with type, direction and text attributes. For example:
+    Your response should be an array of messages with type, direction and text attributes. Include only this array and no other text. For example if you want to send one DATA_REQUEST message and one DATA message:
     [
         {
             "type": "DATA_RESPONSE",
-            "direction": "NORTH",
+            "direction": "northbound",
             "message": "Please clarify the mission"
         },
         {
             "type": "DATA",
-            "direction": "NORTH",
+            "direction": "northbound",
             "message": "We received the following input from the user: How can I live a healthier lifestyle?"
         }
     ]

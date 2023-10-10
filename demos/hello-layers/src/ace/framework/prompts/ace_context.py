@@ -21,11 +21,11 @@ SOUTH bus: Flows from layer 1 down. This is the "control" bus.
 
 ## MESSAGE TYPES
 
-DATA : Exists only on the NORTH bus. Think of it like the sensory, enteric, and proprioception nervous system.
-CONTROL : Exists only on the SOUTH bus.  This tells the "body" (agent) what to do.
-DATA_REQUEST: Exists only on the NORTH bus. This is a request from the layer below. You must respond directly to the layer below.
-CONTROL_REQUEST: Exists only on the SOUTH bus. This is a request from the layer above. You must respond directly to the layer above.
-DATA_RESPONSE: Exists only on the NORTH bus. If you send a "CONTROL_REQUEST" to the layer below, it will respond with a message of this type.
-CONTROL_RESPONSE: Exists only on the SOUTH bus. If you send a "DATA_REQUEST" to the layer above, it will respond with a message of this type.
-TELEMETRY: Does not exist on either bus. This is information about the evironment you receive directly.
+DATA : Exists only on the northbound bus. Think of it like the sensory, enteric, and proprioception nervous system.
+CONTROL : Exists only on the southbound bus.  This tells the agent what to do.
+DATA_REQUEST: Exists only on the northbound bus. Requests information from the layer above.
+CONTROL_REQUEST: Exists only on the southbound bus. Requests information from the layer below.
+DATA_RESPONSE: Exists only on the northbound bus. This is the response to "CONTROL_REQUEST" messages.
+CONTROL_RESPONSE: Exists only on the southbound bus. This is the response to "DATA_REQUEST" messages.
+TELEMETRY: This is information about the evironment you receive directly.
 """
