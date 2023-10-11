@@ -61,12 +61,12 @@
 
 </script>
 
-<div class=" p-3 space-y-3 {position} border-2 rounded-[20px] {borderColor} font-['Goldman'] w-[250px]">
+<div class=" p-3 space-y-3 {position} border-2 rounded-[20px] {borderColor} font-['Goldman'] w-[300px]">
     <label class="label">
         <span>Model</span>
         <select class="select" bind:value={model}>
             <option value="gpt-4-0613">gpt-4</option>
-            <option value="gpt-3.5-turbo-16k-0613">gpt-3.5-turbo</option>
+            <option value="gpt-3.5-turbo-16k-0613">gpt-3.5-turbo-16k</option>
             <option value="gpt-3.5-turbo-instruct">gpt-3.5-turbo-instruct</option>
             <option value="gpt-3.5-turbo-0613">gpt-3.5-turbo</option>
         </select>
