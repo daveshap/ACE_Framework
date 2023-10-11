@@ -137,7 +137,7 @@ async def test_layer(
         llm_messages=req.llm_messages,
     )
 
-    data_bus_message, control_bus_message = ai.determine_action(
+    data_bus_message, control_bus_message = await ai.determine_action(
         ancestral_prompt=ancestral_prompt.prompt,
         source_bus=req.source_bus,
         reasoning_completion=reasoning_completion,
