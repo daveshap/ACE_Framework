@@ -53,18 +53,16 @@ def get_action_prompt(
         role_name=role_name,
         source_bus=source_bus,
         destination_bus=destination_bus,
-        reasoning_completion=reasoning_completion,
+        reasoning_completion=reasoning_completion['content'],
         bus_rules=bus_rules,
     )
 
 
 reasoning_prompt_format = Template("""
-# You Received a MESSAGE From the SOURCE BUS
+# You Received a MESSAGE From the {{source_bus}}
+                                   
 ## MESSAGE
 {{input}}
-
-## SOURCE BUS
-{{source_bus}}
 """)
 
 def get_reasoning_input(

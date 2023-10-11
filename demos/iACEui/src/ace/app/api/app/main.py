@@ -123,6 +123,7 @@ async def test_layer(
     req: LayerTestRequest,
     session: Session = Depends(get_db),
 ):
+    
     ancestral_prompt = None
     with session as db:
         db_ancestral_prompt = dao.get_active_ancestral_prompt(db=db)

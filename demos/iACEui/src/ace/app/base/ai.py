@@ -32,6 +32,7 @@ def reason(
         input=input,
         source_bus=source_bus,
     )
+    logger.info(f"{reasoning_input=}")
     system_message = "\n\n".join(
         [
             prompts.identity,
@@ -82,6 +83,8 @@ async def determine_action(
         reasoning_completion=reasoning_completion,
         bus_rules=prompts.data_bus,
     )
+    logger.info(f"{data_bus_prompt=}")
+
     control_bus_prompt = get_action_prompt(
         role_name=role_name,
         source_bus=source_bus,
@@ -89,6 +92,8 @@ async def determine_action(
         reasoning_completion=reasoning_completion,
         bus_rules=prompts.control_bus,
     )
+    logger.info(f"{control_bus_prompt=}")
+
     system_message = "\n\n".join(
         [
             prompts.identity,
