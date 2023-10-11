@@ -38,6 +38,8 @@ def save_response(layer_num, response):
         north_out = response.splitlines()[1].replace('NORTH:','').strip()
         ace.post_message('south', layer_num, south_out)
         ace.post_message('north', layer_num, north_out)
+
+        return "response saved successfully"
         
     except Exception as oops:
         print(f'\n\nError in SAVE_RESPONSE of LAYER {layer_num}: "{oops}"')

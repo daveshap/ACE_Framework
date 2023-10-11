@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge"
 
-function Spin({ className }: { className?: string }) {
+export default function Spin({ className }: { className?: string }) {
   return (
     <div role="status">
       <svg
@@ -23,5 +23,3 @@ function Spin({ className }: { className?: string }) {
     </div>
   )
 }
-
-export default Spin

@@ -3,6 +3,7 @@ import top_layer
 import layer
 import os
 import openai
+from flask_cors import CORS, cross_origin
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -10,6 +11,7 @@ openai.api_key = os.getenv('OPENAI_API_KEY_1')
 
 app = Flask(__name__)
 
+CORS(app)
 
 @app.route('/get_messages', methods=['GET'])
 def get_messages():
