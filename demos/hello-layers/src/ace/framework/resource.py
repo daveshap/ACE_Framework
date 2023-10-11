@@ -172,6 +172,9 @@ class Resource(ABC):
     def build_system_integrity_queue_name(self, layer):
         return f"system_integrity.{layer}"
 
+    def build_telemetry_queue_name(self, name):
+        return f"telemetry.{name}"
+
     def build_exchange_name(self, queue_name):
         return f"exchange.{queue_name}"
 
@@ -237,3 +240,18 @@ class Resource(ABC):
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
+
+    def resource_log(self, message):
+        message = self.build_message('logging', message={'message': message}, message_type='log')
+        self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, message)
+
+    def telemetry_subscribe_to_namespace(self, namespace):
+        self.telemetry_subscribe_unsubscribe_namespace('subscribe', namespace)
+
+    def telemetry_unsubscribe_from_namespace(self, namespace):
+        self.telemetry_subscribe_unsubscribe_namespace('unsubscribe', namespace)
+
+    def telemetry_subscribe_unsubscribe_namespace(self, message_type, namespace):
+        self.log.info(f"{self.labeled_name} '{message_type}' telemetry namespace: {namespace}")
+        message = self.build_message('telemetry', message={'queue': self.build_telemetry_queue_name(self.settings.name), 'namespace': namespace}, message_type=message_type)
+        self.push_exchange_message_to_publisher_local_queue(self.settings.telemetry_subscribe_queue, message)

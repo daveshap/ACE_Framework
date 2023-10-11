@@ -20,7 +20,7 @@ async def setup_exchange(settings: Settings, channel: aio_pika.Channel, queue_na
         await system_integrity_queue.bind(exchange_name)
         logger.debug(f"Bound {settings.system_integrity_queue} to exchange {exchange_name}")
 
-    if settings.logging_queue:
+    if settings.logging_queue and queue_name != settings.resource_log_queue:
         logging_queue = await channel.declare_queue(settings.logging_queue, durable=True)
         await logging_queue.bind(exchange_name)
         logger.debug(f"Bound {settings.logging_queue} to exchange {exchange_name}")

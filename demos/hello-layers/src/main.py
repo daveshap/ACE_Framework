@@ -2,6 +2,7 @@ import os
 import time
 import importlib
 
+from ace import util
 from ace.logger import Logger
 
 logger = Logger(os.path.basename(__file__))
@@ -9,7 +10,7 @@ logger = Logger(os.path.basename(__file__))
 
 def loader(resource_name):
     try:
-        resource_class_name = ''.join(word.title() for word in resource_name.split('_'))
+        resource_class_name = util.snake_to_class(resource_name)
         logger.debug(f"Converted resource_name to resource_class: {resource_class_name}")
         module = importlib.import_module(f'ace.framework.resources.{resource_name}')
         resource_class = getattr(module, resource_class_name)

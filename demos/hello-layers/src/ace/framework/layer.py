@@ -19,9 +19,15 @@ class Layer(Resource):
     async def post_connect(self):
         self.set_adjacent_layers()
         self.set_identity()
+        await self.subscribe_telemetry()
         await self.register_busses()
 
+    def post_start(self):
+        self.subscribe_to_all_telemetry_namespaces()
+
     async def pre_disconnect(self):
+        await self.unsubscribe_telemetry()
+        self.unsubscribe_from_all_telemetry_namespaces()
         await self.deregister_busses()
 
     def set_adjacent_layers(self):
@@ -72,6 +78,7 @@ class Layer(Resource):
             response_messages = self.get_messages_from_consumer_local_queue('response')
             telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
+            self.resource_log("This is a resource log test")
             if messages_northbound:
                 for m in messages_northbound:
                     message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
@@ -139,6 +146,10 @@ class Layer(Resource):
             return await self.handle_ping(direction, source_layer)
         self.push_message_to_consumer_local_queue(data['type'], (data, message))
 
+    async def telemetry_message_handler(self, message: aio_pika.IncomingMessage):
+        async with message.process():
+            await self.route_message('telemetry', message)
+
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
             await self.route_message('northbound', message)
@@ -169,6 +180,27 @@ class Layer(Resource):
             method = data.get('method')
             kwargs = data.get('kwargs')
             await self.system_integrity_run_command(method, kwargs)
+
+    def subscribe_to_all_telemetry_namespaces(self):
+        for namespace in self.settings.telemetry_subscriptions:
+            self.telemetry_subscribe_to_namespace(namespace)
+
+    def unsubscribe_from_all_telemetry_namespaces(self):
+        for namespace in self.settings.telemetry_subscriptions:
+            self.telemetry_unsubscribe_from_namespace(namespace)
+
+    async def subscribe_telemetry(self):
+        queue_name = self.build_telemetry_queue_name(self.settings.name)
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.telemetry_message_handler)
+
+    async def unsubscribe_telemetry(self):
+        queue_name = self.build_telemetry_queue_name(self.settings.name)
+        if queue_name in self.consumers:
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
 
     async def subscribe_adjacent_layers(self):
         if self.northern_layer:

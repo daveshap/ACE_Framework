@@ -5,6 +5,9 @@ x-shared-volumes: &shared-volumes
 
 services:
 
+  telemetry_manager_layer:
+    volumes: *shared-volumes
+
   logging_layer:
     volumes: *shared-volumes
 

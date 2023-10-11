@@ -9,9 +9,12 @@ class Settings(BaseSettings):
     amqp_username: str = "rabbit"
     amqp_password: str = "carrot"
     logging_queue: str = "logging-queue"
+    resource_log_queue: str = "resource-log-queue"
     log_dir: str = "/var/log/ace"
     system_integrity_queue: str = "system-integrity-queue"
     system_integrity_data_queue: str = "system-integrity-data-queue"
+    telemetry_subscribe_queue: str = "telemetry-subscribe-queue"
+    telemetry_subscriptions: List[str] = []
     layers: List[str] = [
         'layer_1',
         'layer_2',

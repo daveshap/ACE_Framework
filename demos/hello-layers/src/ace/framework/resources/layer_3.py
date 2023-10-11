@@ -11,6 +11,10 @@ class Layer3(Layer):
         return LayerSettings(
             name="layer_3",
             label="Agent Model",
+            telemetry_subscriptions=[
+                "environment.os.distribution.*",
+                "environment.os.shell",
+            ],
         )
 
     # TODO: Add valid status checks.
