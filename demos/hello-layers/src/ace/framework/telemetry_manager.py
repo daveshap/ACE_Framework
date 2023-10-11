@@ -39,7 +39,9 @@ class TelemetryManager(Resource):
             if file.startswith('telemetry_') and file.endswith('.py'):
                 name = os.path.splitext(file)[0]
                 class_name = util.snake_to_class(name)
+                self.log.debug(f"Found Telemetry file {file}: name={name}, class_name={class_name}")
                 try:
+                    self.log.debug(f"Loading Telemetry class: {class_name}")
                     module = importlib.import_module(f'ace.framework.telemetry.{name}')
                     class_ = getattr(module, class_name)
                     instance = class_()
@@ -68,30 +70,33 @@ class TelemetryManager(Resource):
             await exchange.publish(message, routing_key=namespace)
             self.log.debug(f"Published telemetry data to: {namespace}")
         except Exception as e:
-            self.log.error(f"Failed to publish telemetry data {namespace}: {e}", exc_info=True)
+            self.log.error(f"Failed to publish telemetry data to {namespace}: {e}", exc_info=True)
             raise
 
     async def subscribe(self, queue_name, namespace):
         root = self.namespace_root(namespace)
         try:
+            self.log.debug(f"Subscribing queue {queue_name} to telemetry namespace: {namespace}")
             queue = await self.channel.declare_queue(queue_name)
             await queue.bind(root)
             namespaces = [ns for ns in self.namespace_map if fnmatch.fnmatch(ns, namespace)]
-            for namespace in namespaces:
-                telemetry = self.namespace_map[namespace]
+            for ns in namespaces:
+                telemetry = self.namespace_map[ns]
                 data = telemetry.get_data(namespace)
                 message = self.build_telemetry_message(namespace, data)
+                self.log.debug(f"Publishing initial telemetry for namespace {namespace} to queue: {queue_name}")
                 await queue.publish(message, routing_key=namespace)
-            self.log.info(f"Subscribed to telemetry namespace: {namespace}")
+            self.log.info(f"Subscribed queue {queue_name} to telemetry namespace: {namespace}")
         except Exception as e:
-            self.log.error(f"Failed to subscribe to telemetry namespace {namespace}: {e}", exc_info=True)
+            self.log.error(f"Failed to subscribe queue {queue_name} to telemetry namespace {namespace}: {e}", exc_info=True)
             raise
 
     async def unsubscribe(self, queue_name, namespace):
         try:
+            self.log.debug(f"Unsubscribing queue {queue_name} from telemetry namespace: {namespace}")
             queue = await self.channel.declare_queue(queue_name)
             await queue.unbind(namespace)
-            self.log.info(f"Unsubscribed from telemetry namespace: {namespace}")
+            self.log.info(f"Unsubscribed queue {queue_name} from telemetry namespace: {namespace}")
         except Exception as e:
-            self.log.error(f"Failed to unsubscribe from telemetry namespace {namespace}: {e}", exc_info=True)
+            self.log.error(f"Failed to unsubscribe queue {queue_name} from telemetry namespace {namespace}: {e}", exc_info=True)
             raise
