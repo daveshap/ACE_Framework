@@ -11,6 +11,9 @@ class Layer4(Layer):
         return LayerSettings(
             name="layer_4",
             label="Executive Function",
+            telemetry_subscriptions=[
+                "environment.os.packages.console",
+            ],
         )
 
     # TODO: Add valid status checks.

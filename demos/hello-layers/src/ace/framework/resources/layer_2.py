@@ -16,6 +16,11 @@ class Layer2(Layer):
         return LayerSettings(
             name="layer_2",
             label="Global Strategy",
+            telemetry_subscriptions=[
+                "environment.type",
+                "environment.interface",
+                "environment.os.uptime",
+            ],
         )
 
     # TODO: Add valid status checks.

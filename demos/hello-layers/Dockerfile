@@ -4,6 +4,7 @@ FROM $BASE_IMAGE
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends vim
+RUN apt-get update && apt-get install -y --no-install-recommends figlet toilet cowsay
 
 COPY src/ .
 

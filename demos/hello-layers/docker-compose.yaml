@@ -62,6 +62,18 @@ services:
     networks: *default_networks
     healthcheck: *healthcheck
 
+  telemetry_manager_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+      ACE_RESOURCE_NAME: telemetry_manager
+    command: *default_command
+    networks: *default_networks
+    healthcheck: *healthcheck
+
   # db:
   #   image: postgres:15.1-bullseye
   #   environment:
