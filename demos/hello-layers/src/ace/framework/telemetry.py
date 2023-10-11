@@ -2,21 +2,23 @@ import time
 import threading
 from datetime import datetime
 
-from ace import constants
-from ace.amqp.connection import get_connection
-
-from ace.logger import Logger
-
 
 class Telemetry:
     def __init__(self):
-        self.log = Logger(self.__class__.__name__)
         self.data = []
         self.event_listeners = {}
         self.scheduler = None
 
     def collect_data(self):
         raise NotImplementedError
+
+    # TODO: Implement this.
+    def get_data(self, namespace):
+        pass
+
+    # TODO: Implement this.
+    def get_namespaces(self):
+        pass
 
     def ingest_data(self, data):
         try:
