@@ -10,6 +10,9 @@ x-build: &default_build
   args:
     BASE_IMAGE: *default_python_image
 
+x-secrets-environment: &secrets_environment
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+
 x-logging-environment: &logging_environment
   ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
   ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
@@ -109,6 +112,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_1
@@ -121,6 +125,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_2
@@ -135,6 +140,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_3
@@ -149,6 +155,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_4
@@ -163,6 +170,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_5
@@ -177,6 +185,7 @@ services:
       <<: *default_build
     environment:
       <<:
+        - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
       ACE_RESOURCE_NAME: layer_6
