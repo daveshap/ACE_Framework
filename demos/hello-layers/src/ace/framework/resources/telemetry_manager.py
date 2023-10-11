@@ -191,7 +191,7 @@ class TelemetryManager(Resource):
         self.log.debug(f"{self.labeled_name} subscribing to telemetry subscribe queue...")
         queue_name = self.settings.telemetry_subscribe_queue
         self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
-        self.log.info(f"{self.labeled_name} Subscribed to telemetry subscribe queue")
+        self.log.info(f"{self.labeled_name} subscribed to telemetry subscribe queue")
 
     async def unsubscribe_telemetry_subscribe(self):
         queue_name = self.settings.telemetry_subscribe_queue
@@ -199,4 +199,4 @@ class TelemetryManager(Resource):
             queue, consumer_tag = self.consumers[queue_name]
             self.log.debug(f"{self.labeled_name} unsubscribing from telemetry subscribe queue...")
             await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} Unsubscribed from telemetry subscribe queue")
+            self.log.info(f"{self.labeled_name} unsubscribed from telemetry subscribe queue")

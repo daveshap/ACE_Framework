@@ -78,6 +78,7 @@ class Layer(Resource):
             response_messages = self.get_messages_from_consumer_local_queue('response')
             telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
+            self.resource_log("This is a resource log test")
             if messages_northbound:
                 for m in messages_northbound:
                     message = self.build_message(self.northern_layer, message=m, message_type=m['type'])

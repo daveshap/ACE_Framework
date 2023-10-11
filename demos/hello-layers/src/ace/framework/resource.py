@@ -241,6 +241,10 @@ class Resource(ABC):
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
 
+    def resource_log(self, message):
+        message = self.build_message('logging', message={'message': message}, message_type='log')
+        self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, message)
+
     def telemetry_subscribe_to_namespace(self, namespace):
         self.telemetry_subscribe_unsubscribe_namespace('subscribe', namespace)
 
