@@ -17,9 +17,11 @@
     "chakra-ui-markdown-renderer": "^4.1.0",
     "date-fns": "^2.30.0",
     "date-fns-tz": "^2.0.0",
+    "framer-motion": "^10.16.4",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-icons": "^4.11.0",
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {

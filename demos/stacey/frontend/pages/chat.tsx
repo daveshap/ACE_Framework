@@ -6,16 +6,15 @@ import ChakraUIRenderer from "chakra-ui-markdown-renderer";
 import ReactMarkdown from "react-markdown";
 import {ChatMessage, createChatMessage} from "@/lib/types";
 
-const userName = 'web-user'
-
 function Chat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState('gpt-4');
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const chatSocketUrl = process.env.NEXT_PUBLIC_CHAT_SOCKET_URL;
+    const chatSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     const webSocketRef = useRef<WebSocket | null>(null);
+    const [userName, setUserName] = useState('MrHenrik');
 
 
     if (!backendUrl) {
@@ -31,7 +30,7 @@ function Chat() {
 
     useEffect(() => {
         // Initialize WebSocket connection
-        webSocketRef.current = new WebSocket(chatSocketUrl);
+        webSocketRef.current = new WebSocket(chatSocketUrl + "/ws-chat/");
 
         // Define event handlers
         webSocketRef.current.onopen = (event) => {
@@ -76,7 +75,7 @@ function Chat() {
                 });
                 console.log('Response from backend:', response)
                 if (response.data?.content) {
-                   add_message(response.data)
+                    add_message(response.data)
                 }
 
             } catch (error) {
@@ -88,9 +87,9 @@ function Chat() {
     };
 
     return (
-        <Container maxW="container.md" p={4}>
+        <Container p={4} backgroundColor="white">
             <VStack spacing={4} align="stretch" h="full">
-                <Heading mb={4}>Stacey</Heading>
+                <Heading mb={4}>Stacey chat</Heading>
                 <Box flex="1" overflowY="auto" p={3}>
                     {messages.map((msg, index) => (
                         <Flex key={index} mb={2} direction="column" align={msg.sender === userName ? 'flex-end' : 'flex-start'}>
@@ -115,8 +114,17 @@ function Chat() {
                             h="60px"
                             placeholder="Say something..."
                         />
+                        <Flex mt={2} align="center">
+                            <Text mr={2}>User Name:</Text>
+                            <input
+                                type="text"
+                                value={userName}
+                                onChange={(e) => setUserName(e.target.value)}
+                                placeholder="web-user"
+                            />
+                        </Flex>
                         <Select
-                                mb={4}
+                            mb={4}
                             placeholder="Select model"
                             value={model}
                             onChange={(e) => setModel(e.target.value)}
