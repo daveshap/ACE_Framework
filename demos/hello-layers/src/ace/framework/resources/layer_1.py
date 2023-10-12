@@ -37,10 +37,10 @@ class Layer1(Layer):
         time.sleep(5)
         self.message_count += 1
         self.log.info(f"{self.labeled_name} message count: {self.message_count}")
-        if self.message_count >= DECLARE_DONE_MESSAGE_COUNT:
-            if not self.done:
-                self.declare_done()
-            return [], []
+        # if self.message_count >= DECLARE_DONE_MESSAGE_COUNT:
+        #     if not self.done:
+        #         self.declare_done()
+        #     return [], []
 
         # Create operation classifier prompt
         # Get operation classification
