@@ -33,18 +33,18 @@ async def teardown_exchange(settings: Settings, channel: aio_pika.Channel, queue
     if settings.system_integrity_queue and queue_name != settings.system_integrity_data_queue:
         system_integrity_queue = await channel.declare_queue(settings.system_integrity_queue, durable=True)
         await system_integrity_queue.unbind(exchange_name)
-        await system_integrity_queue.delete()
+        await system_integrity_queue.delete(if_empty=False, if_unused=False)
         logger.debug(f"Removed {settings.system_integrity_queue}")
 
     if settings.logging_queue:
         logging_queue = await channel.declare_queue(settings.logging_queue, durable=True)
         await logging_queue.unbind(exchange_name)
-        await logging_queue.delete()
+        await logging_queue.delete(if_empty=False, if_unused=False)
         logger.debug(f"Removed {settings.logging_queue}")
 
     queue = await channel.declare_queue(queue_name, durable=durable)
     await queue.unbind(exchange_name)
-    await queue.delete()
+    await queue.delete(if_empty=False, if_unused=False)
     logger.debug(f"Removed {queue_name}")
 
     exchange = await channel.get_exchange(exchange_name)

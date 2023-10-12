@@ -16,7 +16,12 @@ class LayerSettings(Settings):
 
 class Layer(Resource):
 
+    def __init__(self):
+        super().__init__()
+        self.layer_running = False
+
     async def post_connect(self):
+        await super().post_connect()
         self.set_adjacent_layers()
         self.set_identity()
         await self.subscribe_telemetry()
@@ -25,7 +30,11 @@ class Layer(Resource):
     def post_start(self):
         self.subscribe_to_all_telemetry_namespaces()
 
+    def pre_stop(self):
+        self.layer_running = False
+
     async def pre_disconnect(self):
+        await super().pre_disconnect()
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
         await self.deregister_busses()
@@ -47,13 +56,11 @@ class Layer(Resource):
     async def register_busses(self):
         self.log.debug("Registering busses...")
         await self.subscribe_adjacent_layers()
-        await self.subscribe_system_integrity_queue()
         self.log.debug("Registered busses...")
 
     async def deregister_busses(self):
         self.log.debug("Deregistering busses...")
         await self.unsubscribe_adjacent_layers()
-        await self.unsubscribe_system_integrity_queue()
         self.log.debug("Deregistered busses...")
 
     @abstractmethod
@@ -65,6 +72,7 @@ class Layer(Resource):
         pass
 
     def run_layer(self):
+        self.layer_running = True
         Thread(target=self.run_layer_in_thread).start()
 
     def run_layers_debug_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
@@ -80,7 +88,7 @@ class Layer(Resource):
             self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
 
     def run_layer_in_thread(self):
-        while True:
+        while True and self.layer_running:
             control_messages, data_messages = None, None
             if self.northern_layer:
                 control_messages = self.get_messages_from_consumer_local_queue('control')
@@ -179,29 +187,6 @@ class Layer(Resource):
         async with message.process():
             await self.route_message('southbound', message)
 
-    async def system_integrity_run_command(self, method_name: str, kwargs: dict = None):
-        kwargs = kwargs or {}
-        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] command, method: {method_name}, args: {kwargs}")
-        try:
-            method = getattr(self, method_name)
-            method(**kwargs)
-        except Exception as e:
-            self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
-
-    async def system_integrity_message_handler(self, message: aio_pika.IncomingMessage):
-        async with message.process():
-            decoded_message = message.body.decode()
-        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] message: {message}")
-        try:
-            data = yaml.safe_load(decoded_message)
-        except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}")
-            return
-        if data['type'] == 'command':
-            method = data.get('method')
-            kwargs = data.get('kwargs')
-            await self.system_integrity_run_command(method, kwargs)
-
     def subscribe_to_all_telemetry_namespaces(self):
         for namespace in self.settings.telemetry_subscriptions:
             self.telemetry_subscribe_to_namespace(namespace)
@@ -246,16 +231,3 @@ class Layer(Resource):
             self.log.debug(f"{self.labeled_name} unsubscribing from {southbound_queue}...")
             await queue.cancel(consumer_tag)
             self.log.info(f"{self.labeled_name} unsubscribed from {southbound_queue}")
-
-    async def subscribe_system_integrity_queue(self):
-        queue_name = self.build_system_integrity_queue_name(self.settings.name)
-        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
-
-    async def unsubscribe_system_integrity_queue(self):
-        queue_name = self.build_system_integrity_queue_name(self.settings.name)
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")

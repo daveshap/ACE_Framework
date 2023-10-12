@@ -38,7 +38,7 @@ class SystemIntegrity(Resource):
         asyncio.set_event_loop(self.bus_loop)
         self.bus_loop.create_task(self.post_layers())
 
-    async def pre_disconnect(self):
+    async def system_integrity_pre_disconnect(self):
         await self.unsubscribe_system_integrity()
         await self.unsubscribe_system_integrity_data()
 
@@ -53,32 +53,40 @@ class SystemIntegrity(Resource):
         for layer in self.settings.layers:
             await self.post_layer(layer)
 
-    async def execute_layer_command(self, layer, command, kwargs=None):
+    async def execute_resource_command(self, resource, command, kwargs=None):
         kwargs = kwargs or {}
-        self.log.debug(f"[{self.labeled_name}] sending command '{command}' to layer: {layer}")
-        queue_name = self.build_system_integrity_queue_name(layer)
-        message = self.build_message(layer, message={'method': command, 'kwargs': kwargs}, message_type='command')
+        self.log.debug(f"[{self.labeled_name}] sending command '{command}' to resource: {resource}")
+        queue_name = self.build_system_integrity_queue_name(resource)
+        message = self.build_message(resource, message={'method': command, 'kwargs': kwargs}, message_type='command')
         await self.publish_message(queue_name, message)
 
     async def post_layer(self, layer):
         self.log.info(f"[{self.labeled_name}] sending POST command to layer: {layer}")
-        await self.execute_layer_command(layer, 'schedule_post')
+        await self.execute_resource_command(layer, 'schedule_post')
 
     async def run_layers(self):
         for layer in self.settings.layers:
             self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
-            await self.execute_layer_command(layer, 'run_layer')
+            await self.execute_resource_command(layer, 'run_layer')
 
     async def stop_layers(self):
         for layer in reversed(self.settings.layers):
             self.log.info(f"[{self.labeled_name}] Stopping layer: {layer}")
-            await self.execute_layer_command(layer, 'stop_resource')
+            await self.execute_resource_command(layer, 'stop_resource')
+        for resource in self.settings.other_resources:
+            if resource != 'busses':
+                self.log.info(f"[{self.labeled_name}] Stopping resource: {resource}")
+                await self.execute_resource_command(resource, 'stop_resource')
+        await self.system_integrity_pre_disconnect()
+        self.log.info(f"[{self.labeled_name}] Stopping resource: 'busses'")
+        await self.execute_resource_command('busses', 'stop_resource')
+        self.stop_resource()
         self.shutdown_complete = True
 
     async def begin_work(self):
         top_layer = self.settings.layers[0]
         self.log.info(f"[{self.labeled_name}] Beginning work from top layer: {top_layer}")
-        await self.execute_layer_command(top_layer, 'begin_work')
+        await self.execute_resource_command(top_layer, 'begin_work')
 
     async def message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
