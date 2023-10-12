@@ -48,23 +48,23 @@ class Layer1(Layer):
         self.log.info(f"{self.labeled_name} received command to begin work")
         self.work_begun = True
         layer1_instructions = l1_starting_instructions.render(
-            ace_context = ace_context,
-            identity = self.identity
+            ace_context=ace_context,
+            identity=self.identity
         )
 
         llm_messages: [GptMessage] = [
             {"role": "user", "content": layer1_instructions},
         ]
-        
+
         llm_response: GptMessage = self.llm._create_conversation_completion('gpt-3.5-turbo', llm_messages)
         llm_response_content = llm_response["content"].strip()
         log_message = layer_messages_log.render(
-            llm_req = layer1_instructions,
-            llm_resp = llm_response_content
+            llm_req=layer1_instructions,
+            llm_resp=llm_response_content
         )
         self.resource_log(log_message)
         llm_messages = parse_json(llm_response_content)
-        #There will never be northbound messages
+        # There will never be northbound messages
         messages_northbound, messages_southbound = self.parse_req_resp_messages(llm_messages)
 
         if messages_northbound:
@@ -77,6 +77,7 @@ class Layer1(Layer):
                 self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
 
     def declare_done(self):
+        self.log.info(f"{self.labeled_name} declaring work done")
         message = self.build_message('system_integrity', message_type='done')
         self.push_exchange_message_to_publisher_local_queue(self.settings.system_integrity_data_queue, message)
 
@@ -86,27 +87,32 @@ class Layer1(Layer):
                 op_description = create_request_data
             case "TAKE_ACTION":
                 op_description = take_action_data_l1.render(layer_outputs=l1_southbound_outputs)
-            case default:
+            case _:
                 op_description = do_nothing_data
-        
+
         return op_description
 
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
         self.message_count += 1
         self.log.info(f"{self.labeled_name} message count: {self.message_count}")
+        if self.message_count >= DECLARE_DONE_MESSAGE_COUNT:
+            if not self.done:
+                self.declare_done()
+                self.done = True
+            return [], []
         data_req_messages, control_req_messages = self.parse_req_resp_messages(request_messages)
         data_resp_messages, control_resp_messages = self.parse_req_resp_messages(response_messages)
         prompt_messages = {
-            "data" : self.get_messages_for_prompt(data_messages),
-            "data_resp" : self.get_messages_for_prompt(data_resp_messages),
-            "data_req" : self.get_messages_for_prompt(data_req_messages),
-            "telemetry" : self.get_messages_for_prompt(telemetry_messages)
+            "data": self.get_messages_for_prompt(data_messages),
+            "data_resp": self.get_messages_for_prompt(data_resp_messages),
+            "data_req": self.get_messages_for_prompt(data_req_messages),
+            "telemetry": self.get_messages_for_prompt(telemetry_messages)
         }
         op_classifier_prompt = l1_operation_classifier.render(
-            ace_context = ace_context,
-            identity = self.identity,
-            data = prompt_messages["data"],
-            data_resp = prompt_messages["data_resp"],
+            ace_context=ace_context,
+            identity=self.identity,
+            data=prompt_messages["data"],
+            data_resp=prompt_messages["data_resp"],
         )
 
         llm_op_messages: [GptMessage] = [
@@ -116,42 +122,40 @@ class Layer1(Layer):
         llm_op_response: GptMessage = self.llm._create_conversation_completion('gpt-3.5-turbo', llm_op_messages)
         llm_op_response_content = llm_op_response["content"].strip()
         op_log_message = op_classifier_log.render(
-            op_classifier_req = op_classifier_prompt,
-            op_classifier_resp = llm_op_response_content
+            op_classifier_req=op_classifier_prompt,
+            op_classifier_resp=llm_op_response_content
         )
         self.resource_log(op_log_message)
         op_prompt = self.get_op_description(llm_op_response_content)
 
-        #If operation classifier says to do nothing, do not bother asking llm for a response
+        # If operation classifier says to do nothing, do not bother asking llm for a response
         if op_prompt == do_nothing_data:
             return [], []
 
         layer1_instructions = l1_layer_instructions.render(
-            ace_context = ace_context,
-            identity = self.identity,
-            data = prompt_messages["data"],
-            data_resp = prompt_messages["data_resp"],
-            data_req = prompt_messages["data_req"],
-            telemetry = prompt_messages["telemetry"],
-            operation_prompt =  op_prompt
+            ace_context=ace_context,
+            identity=self.identity,
+            data=prompt_messages["data"],
+            data_resp=prompt_messages["data_resp"],
+            data_req=prompt_messages["data_req"],
+            telemetry=prompt_messages["telemetry"],
+            operation_prompt=op_prompt
         )
 
         llm_messages: [GptMessage] = [
             {"role": "user", "content": layer1_instructions},
         ]
-        
+
         llm_response: GptMessage = self.llm._create_conversation_completion('gpt-3.5-turbo', llm_messages)
         llm_response_content = llm_response["content"].strip()
         log_message = layer_messages_log.render(
-            llm_req = layer1_instructions,
-            llm_resp = llm_response_content
+            llm_req=layer1_instructions,
+            llm_resp=llm_response_content
         )
         self.resource_log(log_message)
         llm_messages = parse_json(llm_response_content)
-        #There will never be northbound messages
+        # There will never be northbound messages
         messages_northbound, messages_southbound = self.parse_req_resp_messages(llm_messages)
         self.resource_log(messages_southbound)
 
         return messages_northbound, messages_southbound
-
-

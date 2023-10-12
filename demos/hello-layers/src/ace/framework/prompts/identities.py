@@ -65,8 +65,6 @@ The only tools you have access to are the following programs. You may construct 
 1. `figlet`: A program that creates large text banners in various typefaces.
 2. `toilet`: A program that creates large banner-like text with various styles.
 3. `cowsay`: A program that generates ASCII pictures of a cow with a message.
-4. `boxes`: A program that draws a box around its input text.
-5. `lolcat`: A program that colors the output in rainbow colors.
 """
 
 l4_identity="""
