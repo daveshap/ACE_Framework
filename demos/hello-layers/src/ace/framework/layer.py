@@ -67,6 +67,18 @@ class Layer(Resource):
     def run_layer(self):
         Thread(target=self.run_layer_in_thread).start()
 
+    def run_layers_debug_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
+        if control_messages:
+            self.log.debug(f"[{self.labeled_name}] RUN LAYER CONTROL MESSAGES: {control_messages}")
+        if data_messages:
+            self.log.debug(f"[{self.labeled_name}] RUN LAYER DATA MESSAGES: {data_messages}")
+        if request_messages:
+            self.log.debug(f"[{self.labeled_name}] RUN LAYER REQUEST MESSAGES: {request_messages}")
+        if response_messages:
+            self.log.debug(f"[{self.labeled_name}] RUN LAYER RESPONSE MESSAGES: {response_messages}")
+        if telemetry_messages:
+            self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
+
     def run_layer_in_thread(self):
         while True:
             control_messages, data_messages = None, None
@@ -77,6 +89,12 @@ class Layer(Resource):
             request_messages = self.get_messages_from_consumer_local_queue('request')
             response_messages = self.get_messages_from_consumer_local_queue('response')
             telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
+            self.run_layers_debug_messages(control_messages,
+                                           data_messages,
+                                           request_messages,
+                                           response_messages,
+                                           telemetry_messages,
+                                           )
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
             self.resource_log("This is a resource log test")
             if messages_northbound:
@@ -144,17 +162,20 @@ class Layer(Resource):
         elif self.is_ping(data):
             self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {source_layer}, bus direction: {direction}")
             return await self.handle_ping(direction, source_layer)
-        self.push_message_to_consumer_local_queue(data['type'], (data, message))
+        self.push_message_to_consumer_local_queue(data['type'], data)
 
     async def telemetry_message_handler(self, message: aio_pika.IncomingMessage):
+        self.log.debug(f"[{self.labeled_name}] received a [Telemetry] message")
         async with message.process():
             await self.route_message('telemetry', message)
 
     async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
+        self.log.debug(f"[{self.labeled_name}] received a [Northbound] message")
         async with message.process():
             await self.route_message('northbound', message)
 
     async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
+        self.log.debug(f"[{self.labeled_name}] received a [Southbound] message")
         async with message.process():
             await self.route_message('southbound', message)
 
