@@ -12,6 +12,7 @@ class Layer1(Layer):
     def __init__(self):
         super().__init__()
         self.message_count = 0
+        self.work_begun = False
         self.done = False
 
     @property
@@ -28,6 +29,10 @@ class Layer1(Layer):
 
     def set_identity(self):
         self.identity = l1_identity
+
+    def begin_work(self):
+        self.log.info(f"{self.labeled_name} received command to begin work")
+        self.work_begun = True
 
     def declare_done(self):
         message = self.build_message('system_integrity', message_type='done')
