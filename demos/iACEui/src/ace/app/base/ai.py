@@ -5,6 +5,16 @@ from database.dao_models import LlmMessage, LayerConfigModel, Prompts, OpenAiGPT
 from typing import List
 import re
 
+import time
+from datetime import datetime, timezone
+import time
+
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def reason(
     ancestral_prompt: str,
@@ -14,10 +24,15 @@ def reason(
     llm_model_parameters: OpenAiGPTChatParameters,
     llm_messages: List[LlmMessage],
 ):
+    start_time = time.time()
+    start_time_fmt = datetime.fromtimestamp(start_time, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
+    logger.info(f"Starting function reason() at {start_time_fmt}")
+
     reasoning_input = get_reasoning_input(
         input=input,
         source_bus=source_bus,
     )
+    logger.info(f"{reasoning_input=}")
     system_message = "\n\n".join(
         [
             prompts.identity,
@@ -40,9 +55,15 @@ def reason(
         ),
     )
     results = reasoning_response.choices[0].message
+
+    end_time = time.time()
+    end_time_fmt =  datetime.fromtimestamp(end_time, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
+    elapsed_time = end_time - start_time
+    logger.info(f"Function reason() ended at {end_time_fmt} and took {elapsed_time:.2f} seconds")
+
     return results
 
-def determine_action(
+async def determine_action(
     ancestral_prompt: str,
     source_bus: str,
     reasoning_completion: LlmMessage,
@@ -51,6 +72,10 @@ def determine_action(
     role_name: str,
     llm_messages: List[LlmMessage],
 ):
+    start_time = time.time()
+    start_time_fmt = datetime.fromtimestamp(start_time, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
+    logger.info(f"Starting function determine_action() at {start_time_fmt}")
+
     data_bus_prompt = get_action_prompt(
         role_name=role_name,
         source_bus=source_bus,
@@ -58,6 +83,8 @@ def determine_action(
         reasoning_completion=reasoning_completion,
         bus_rules=prompts.data_bus,
     )
+    logger.info(f"{data_bus_prompt=}")
+
     control_bus_prompt = get_action_prompt(
         role_name=role_name,
         source_bus=source_bus,
@@ -65,6 +92,8 @@ def determine_action(
         reasoning_completion=reasoning_completion,
         bus_rules=prompts.control_bus,
     )
+    logger.info(f"{control_bus_prompt=}")
+
     system_message = "\n\n".join(
         [
             prompts.identity,
@@ -82,19 +111,46 @@ def determine_action(
         + llm_messages
         + [{"role": "user", "content": control_bus_prompt}]
     )
-    data_bus_action_completion = (
-        openai.ChatCompletion.create(
-            messages=data_bus_action,
-            **llm_model_parameters.model_dump(),
-        ).choices[0].message
+    logger.info(f"request data bus completion from chatgpt {datetime.fromtimestamp(time.time(), tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    
+    data_bus_action_completion = await get_completion(
+        messages=data_bus_action,
+        params=llm_model_parameters,
     )
-    control_bus_action_completion = (
-        openai.ChatCompletion.create(
-            messages=control_bus_action,
-            **llm_model_parameters.model_dump(),
-        ).choices[0].message
+    # data_bus_action_completion = (
+    #     openai.ChatCompletion.create(
+    #         messages=data_bus_action,
+    #         **llm_model_parameters.model_dump(),
+    #     ).choices[0].message
+    # )
+    logger.info(f"request contorl bus completion from chatgpt {datetime.fromtimestamp(time.time(), tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    
+    control_bus_action_completion = await get_completion(
+        messages=control_bus_action,
+        params=llm_model_parameters,
     )
+    # control_bus_action_completion = (
+    #     openai.ChatCompletion.create(
+    #         messages=control_bus_action,
+    #         **llm_model_parameters.model_dump(),
+    #     ).choices[0].message
+    # )
+
+    end_time = time.time()
+    end_time_fmt =  datetime.fromtimestamp(end_time, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')
+    elapsed_time = end_time - start_time
+    logger.info(f"Function determine_action() ended at {end_time_fmt} and took {elapsed_time:.2f} seconds")
+
+
     return data_bus_action_completion, control_bus_action_completion
+
+
+async def get_completion(messages, params):
+
+    return openai.ChatCompletion.create(
+        messages=messages,
+        **params.model_dump(),
+    ).choices[0].message
 
 
 def determine_none(input_text):
