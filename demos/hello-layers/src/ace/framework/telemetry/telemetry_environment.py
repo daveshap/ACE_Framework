@@ -1,6 +1,5 @@
-import time
-
 from ace.framework.telemetry import Telemetry, TelemetrySettings
+from ace.util import get_system_resource_usage
 
 CONSOLE_PROGRAMS = """
 1. /usr/bin/figlet: A program that creates large text banners in various typefaces.
@@ -31,18 +30,12 @@ class TelemetryEnvironment(Telemetry):
                 'environment.os.distribution.version': 0,
                 'environment.os.shell': 0,
                 'environment.os.packages.console': 0,
-                'environment.os.uptime': 10,
+                'environment.os.resource_usage': 30,
             }
         )
 
     async def collect_data_sample(self, namespace):
         if namespace in ENVIRONMENT_CONSTANTS:
             return ENVIRONMENT_CONSTANTS[namespace]
-        elif namespace == 'environment.os.uptime':
-            return self.get_uptime()
-
-    def get_uptime(self):
-        with open('/proc/uptime', 'r') as f:
-            uptime_seconds = float(f.readline().split()[0])
-            uptime_string = str(time.strftime("%H:%M:%S", time.gmtime(uptime_seconds)))
-        return uptime_string
+        elif namespace == 'environment.os.resource_usage':
+            return get_system_resource_usage()
