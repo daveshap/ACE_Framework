@@ -7,6 +7,7 @@ import time
 from functools import wraps
 import glob
 import os
+from pathlib import Path
 
 ###      util functions
 
@@ -30,9 +31,9 @@ def retry(wait_time=360, max_retries=3):
 
 
 def save_file(filepath, content):
-    with open(filepath, 'w+', encoding='utf-8') as outfile:
-        outfile.write(content)
-
+    output_file = Path(filepath)
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+    output_file.write_text(content)
 
 
 def open_file(filepath):
@@ -56,8 +57,9 @@ def get_response(layer_num):
     try:
         return open_file(f"logs/layer{layer_num}/response.txt")
     except Exception as oops:
-        print(f'\n\nError in GET_RESPONSE in LAYER {layer_num}: "{oops}"')
-        return ''
+        print(f'\n\nfile does not exist yet, proceed to return empty string')
+        return ""
+
 
 def set_response(layer_num, content):
     return save_file(f"logs/layer{layer_num}/response.txt", content)

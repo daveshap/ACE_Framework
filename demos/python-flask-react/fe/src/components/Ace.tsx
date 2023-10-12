@@ -20,7 +20,7 @@ export default function Ace() {
   }
 
   return (
-    <section className="relative flex-grow flex flex-col gap-y-6 py-6 max-h-[50vh] lg:max-w-[50vw] lg:max-h-full order-first lg:order-last border-b-2 border-b-gray-500 lg:border-b-0 lg:border-l-2 lg:border-l-gray-500 overflow-y-scroll">
+    <section className="relative flex-grow flex flex-col py-6 max-h-[50vh] lg:max-w-[50vw] lg:max-h-full order-first lg:order-last border-b-2 border-b-gray-500 lg:border-b-0 lg:border-l-2 lg:border-l-gray-500 overflow-y-scroll">
       <Button variant="default" size="icon" className="fixed top-0 right-0 m-4" onClick={() => next()}>
         <TriangleRightIcon className="h-8 w-8" />
       </Button>

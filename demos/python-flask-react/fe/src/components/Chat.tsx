@@ -16,7 +16,7 @@ export default function Chat() {
   const { messages, addMessage } = useChat((state) => state)
   const ace = useAce((state) => state)
   const [inputValue, setInputValue] = useState("")
-  const acePrint = { layer: ace.layerNum, bus: ace.bus, direction: ace.direction, type: ace.type, step: ace.layerStep }
+  const acePrint = { layer: ace.layerNum, bus: ace.bus, direction: ace.direction, step: ace.layerStep }
 
   console.log(JSON.stringify(acePrint))
 

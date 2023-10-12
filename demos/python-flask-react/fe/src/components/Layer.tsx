@@ -14,10 +14,10 @@ import { layers, sleep } from "@/lib/utils"
 import { useAce } from "@/hooks/useAce"
 import { useChat, type Message } from "@/hooks/useChat"
 
-const getMessages = (chatMessages: Message[], layerNum: number, direction: "UP" | "DOWN", busMessages?: string) => {
+const getMessages = (chatMessages: Message[], layerNum: number, direction: "NORTH" | "SOUTH", busMessages?: string) => {
   if (!busMessages) return ""
   const userMessage = chatMessages.find((message) => message.role === "user")
-  if (userMessage && layerNum === 6 && direction === "UP") {
+  if (userMessage && layerNum === 6 && direction === "NORTH") {
     return `USER message:\n${userMessage.text}\n\n${busMessages}`
   }
 
@@ -53,7 +53,7 @@ export default function Layer({ layerNum }: LayerProps) {
       onGeneration: () => setValue(`layer-${layerNum}-llm-message`),
       onSuccess: (llmMessage) => {
         // if it's at the bottom and it's going down, stop
-        if (ace.layerNum === 6 && ace.direction === "DOWN") {
+        if (ace.layerNum === 6 && ace.direction === "SOUTH") {
           ace.stopAce()
           chat.addMessage({ role: "assistant", text: llmMessage })
         }
@@ -73,7 +73,7 @@ export default function Layer({ layerNum }: LayerProps) {
     onSuccess: async () => {
       setValue("")
       // if it's at the top and it's going up, pivot
-      if (ace.layerNum === 1 && ace.direction === "UP") ace.pivotAce()
+      if (ace.layerNum === 1 && ace.direction === "NORTH") ace.pivotAce()
       if (ace.auto) ace.progressAce()
     },
   })
