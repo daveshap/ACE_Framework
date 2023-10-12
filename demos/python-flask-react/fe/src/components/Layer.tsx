@@ -14,10 +14,10 @@ import { layers, sleep } from "@/lib/utils"
 import { useAce } from "@/hooks/useAce"
 import { useChat, type Message } from "@/hooks/useChat"
 
-const getMessages = (chatMessages: Message[], layerNum: number, busMessages?: string) => {
+const getMessages = (chatMessages: Message[], layerNum: number, direction: "UP" | "DOWN", busMessages?: string) => {
   if (!busMessages) return ""
   const userMessage = chatMessages.find((message) => message.role === "user")
-  if (userMessage && layerNum === 6) {
+  if (userMessage && layerNum === 6 && direction === "UP") {
     return `USER message:\n${userMessage.text}\n\n${busMessages}`
   }
 
@@ -33,35 +33,48 @@ export default function Layer({ layerNum }: LayerProps) {
   const chat = useChat((state) => state)
 
   const busMessages = useQuery(["get-bus-message", layerNum], () => getBusMessages(layerNum), {
-    enabled: ace.started && ace.layerNum === layerNum && ace.type === "LAYER" && value === "",
-    onSuccess: () => setValue(`layer-${layerNum}-bus-message`),
+    enabled: ace.started && ace.layerNum === layerNum && ace.type === "LAYER" && ace.layerStep === "BUS-MESSAGE",
+    onSuccess: () => {
+      setValue(`layer-${layerNum}-bus-message`)
+      if (ace.auto) ace.progressAce()
+    },
   })
-  const messages = getMessages(chat.messages, ace.layerNum, busMessages.data)
+  const messages = getMessages(chat.messages, ace.layerNum, ace.direction, busMessages.data)
 
   const llmMessage = useGenerateLlmMessage(
     layerNum,
     {
-      onGeneration: () => setValue(`layer-${layerNum}-llm-message-generated`),
+      enabled:
+        ace.started &&
+        ace.layerNum === layerNum &&
+        ace.type === "LAYER" &&
+        ace.layerStep === "LLM-MESSAGE" &&
+        !!messages,
+      onGeneration: () => setValue(`layer-${layerNum}-llm-message`),
       onSuccess: (llmMessage) => {
         // if it's at the bottom and it's going down, stop
         if (ace.layerNum === 6 && ace.direction === "DOWN") {
           ace.stopAce()
           chat.addMessage({ role: "assistant", text: llmMessage })
-        } else {
-          ace.progressAce()
         }
+        if (ace.auto) ace.progressAce()
       },
     },
     messages,
   )
+
   useQuery(["save-response", layerNum, llmMessage.llmMessage], () => saveResponse(layerNum, llmMessage.llmMessage!), {
-    enabled: ace.started && ace.layerNum === layerNum && ace.type === "BUS" && llmMessage.done,
+    enabled:
+      ace.started &&
+      ace.layerNum === layerNum &&
+      ace.layerStep === "SAVE-RESPONSE" &&
+      ace.type === "BUS" &&
+      llmMessage.done,
     onSuccess: async () => {
       setValue("")
       // if it's at the top and it's going up, pivot
-      await sleep(2000)
       if (ace.layerNum === 1 && ace.direction === "UP") ace.pivotAce()
-      else ace.progressAce()
+      if (ace.auto) ace.progressAce()
     },
   })
 
@@ -81,7 +94,7 @@ export default function Layer({ layerNum }: LayerProps) {
           <AccordionTrigger isLoading={busMessages.isLoading}>Bus Messages Received</AccordionTrigger>
           <AccordionContent className="whitespace-pre-wrap">{messages}</AccordionContent>
         </AccordionItem>
-        <AccordionItem value={`layer-${layerNum}-llm-message-generated`}>
+        <AccordionItem value={`layer-${layerNum}-llm-message`}>
           <AccordionTrigger isLoading={llmMessage.isLoading}>LLM Message Generated</AccordionTrigger>
           <AccordionContent className="whitespace-pre-wrap">{llmMessage.llmMessage}</AccordionContent>
         </AccordionItem>

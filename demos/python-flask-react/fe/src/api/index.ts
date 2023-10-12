@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react"
-import { sleep } from "@/lib/utils"
 
 export const getBusMessages = async (layerNum: number) => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/get_messages?layer=${layerNum}`, {
@@ -17,10 +16,11 @@ export const getBusMessages = async (layerNum: number) => {
 type GenerateLlmMessageOptions = {
   onGeneration: () => void
   onSuccess: (message: string) => void
+  enabled: boolean
 }
 export const useGenerateLlmMessage = (
   layerNum: number,
-  { onGeneration, onSuccess }: GenerateLlmMessageOptions,
+  { onGeneration, onSuccess, enabled }: GenerateLlmMessageOptions,
   messages?: string,
 ) => {
   const [llmMessage, setLlmMessage] = useState<string>("")
@@ -44,33 +44,29 @@ export const useGenerateLlmMessage = (
       const decoder = new TextDecoderStream()
       const reader = res.body.pipeThrough(decoder).getReader()
 
-      await new Promise<void>(async (resolve) => {
-        while (true) {
-          let { value, done } = await reader.read()
+      while (true) {
+        let { value, done } = await reader.read()
 
-          if (done) {
-            setDone(true)
-            resolve()
-          } else {
-            setLlmMessage((message) => message + value)
-          }
+        if (done) {
+          setDone(true)
+          break
+        } else {
+          setLlmMessage((message) => message + value)
         }
-      })
+      }
     }
 
     const runSequence = async () => {
       setIsLoading(true)
       setLlmMessage("")
-      await sleep(2000)
       onGeneration()
       await generateMessage()
-      await sleep(2000)
       setIsLoading(false)
       onSuccess(llmMessage)
     }
 
-    if (messages) runSequence()
-  }, [messages, layerNum])
+    if (enabled) runSequence()
+  }, [messages, layerNum, enabled])
 
   return { llmMessage, isLoading, done }
 }

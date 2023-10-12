@@ -16,7 +16,7 @@ export default function Chat() {
   const { messages, addMessage } = useChat((state) => state)
   const ace = useAce((state) => state)
   const [inputValue, setInputValue] = useState("")
-  const acePrint = { layer: ace.layerNum, bus: ace.bus, direction: ace.direction, type: ace.type }
+  const acePrint = { layer: ace.layerNum, bus: ace.bus, direction: ace.direction, type: ace.type, step: ace.layerStep }
 
   console.log(JSON.stringify(acePrint))
 
@@ -41,7 +41,7 @@ export default function Chat() {
       {/* Chat Messages */}
       {messages.map((message, i) => (
         <div
-          className={`flex items-center rounded-lg min-w-[50px] max-w-[75%] text-sm h-10 px-4 ${
+          className={`flex items-center rounded-lg min-w-[50px] max-w-[75%] text-sm py-3 px-4 whitespace-pre-wrap ${
             message.role === "user"
               ? "bg-primary text-primary-foreground self-start"
               : "bg-muted text-secondary-foreground self-end"

@@ -3,12 +3,15 @@ import { layers } from "@/lib/utils"
 
 type State = {
   layerNum: keyof typeof layers
+  layerStep: "BUS-MESSAGE" | "LLM-MESSAGE" | "SAVE-RESPONSE"
   bus: string[]
   type: "BUS" | "LAYER"
   direction: "UP" | "DOWN"
   started: boolean
+  auto: boolean
 }
 type AceState = State & {
+  setAuto: (auto: boolean) => void
   startAce: () => void
   pivotAce: () => void
   stopAce: () => void
@@ -16,14 +19,17 @@ type AceState = State & {
 }
 const initialState: State = {
   layerNum: 6,
+  layerStep: "BUS-MESSAGE",
   bus: layers[6].bus,
   type: "LAYER",
   direction: "UP",
   started: false,
+  auto: false,
 }
 
 export const useAce = create<AceState>((set) => ({
   ...initialState,
+  setAuto: (auto) => set((state) => ({ ...state, auto })),
   startAce: () => set((state) => ({ ...state, started: true })),
   pivotAce: () =>
     set((state) => {
@@ -42,12 +48,24 @@ export const useAce = create<AceState>((set) => ({
   progressAce: () =>
     set((state) => {
       // If a layer was just processed, then a bus needs to be processed next
-      if (state.type === "LAYER") {
-        return { ...state, bus: layers[state.layerNum].bus, type: "BUS" }
+      if (state.type === "LAYER" && state.layerStep === "BUS-MESSAGE") {
+        return { ...state, layerStep: "LLM-MESSAGE" }
+      } else if (state.type === "LAYER" && state.layerStep === "LLM-MESSAGE") {
+        return { ...state, layerStep: "SAVE-RESPONSE", type: "BUS", bus: layers[state.layerNum].bus }
       } else if (state.type === "BUS" && state.direction === "UP") {
-        return { ...state, layerNum: (state.layerNum - 1) as keyof typeof layers, type: "LAYER" }
+        return {
+          ...state,
+          layerNum: (state.layerNum - 1) as keyof typeof layers,
+          type: "LAYER",
+          layerStep: "BUS-MESSAGE",
+        }
       } else {
-        return { ...state, layerNum: (state.layerNum + 1) as keyof typeof layers, type: "LAYER" }
+        return {
+          ...state,
+          layerNum: (state.layerNum + 1) as keyof typeof layers,
+          type: "LAYER",
+          layerStep: "BUS-MESSAGE",
+        }
       }
     }),
 }))
