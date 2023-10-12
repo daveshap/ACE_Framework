@@ -20,6 +20,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-icons": "^4.11.0",
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {

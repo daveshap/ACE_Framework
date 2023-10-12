@@ -77,7 +77,7 @@ function Chat() {
                 });
                 console.log('Response from backend:', response)
                 if (response.data?.content) {
-                   add_message(response.data)
+                    add_message(response.data)
                 }
 
             } catch (error) {
@@ -89,9 +89,9 @@ function Chat() {
     };
 
     return (
-        <Container maxW="container.md" p={4}>
+        <Container p={4} backgroundColor="white">
             <VStack spacing={4} align="stretch" h="full">
-                <Heading mb={4}>Stacey</Heading>
+                <Heading mb={4}>Stacey chat</Heading>
                 <Box flex="1" overflowY="auto" p={3}>
                     {messages.map((msg, index) => (
                         <Flex key={index} mb={2} direction="column" align={msg.sender === userName ? 'flex-end' : 'flex-start'}>
@@ -126,7 +126,7 @@ function Chat() {
                             />
                         </Flex>
                         <Select
-                                mb={4}
+                            mb={4}
                             placeholder="Select model"
                             value={model}
                             onChange={(e) => setModel(e.target.value)}
