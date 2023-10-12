@@ -93,7 +93,8 @@ class Layer(Resource):
         if telemetry_messages:
             self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
 
-    def parse_req_resp_messages(self, messages):
+    def parse_req_resp_messages(self, messages=None):
+        messages = messages or []
         data_messages, control_messages = [], []
         for m in messages:
             if m['type'] == "DATA_RESPONSE" or m['type'] == "CONTROL_RESPONSE":
@@ -109,12 +110,12 @@ class Layer(Resource):
         if messages:
             data_messages = [m for m in messages if m['direction']=="northbound"]
             control_messages = [m for m in messages if m['direction']=="southbound"]
-        self.log.info(f"[{self.labeled_name}] RETURNED CONTROL MESSAGES: {control_messages}")
-        self.log.info(f"[{self.labeled_name}] RETURNED DATA MESSAGES: {data_messages}")
+        self.log.debug(f"[{self.labeled_name}] RETURNED CONTROL MESSAGES: {control_messages}")
+        self.log.debug(f"[{self.labeled_name}] RETURNED DATA MESSAGES: {data_messages}")
         return data_messages, control_messages
 
     def get_messages_for_prompt(self, messages):
-        self.log.info(f"[{self.labeled_name}] MESSAGES: {messages}")
+        self.log.debug(f"[{self.labeled_name}] MESSAGES: {messages}")
         if not messages:
             return "None"
         if messages[0]['type'] == 'telemetry':
@@ -141,7 +142,6 @@ class Layer(Resource):
                                            telemetry_messages,
                                            )
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
-            self.resource_log("This is a resource log test")
             if messages_northbound and self.northern_layer:
                 for m in messages_northbound:
                     message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
