@@ -90,5 +90,8 @@ class Telemetry:
         self.scheduler[namespace] = loop.create_task(self.schedule_collection(namespace))
 
     def stop_collecting(self, namespace):
-        self.stop_event[namespace].set()
-        self.scheduler[namespace].cancel()
+        if namespace in self.settings.namespaces:
+            interval = self.settings.namespaces[namespace]
+            if interval > 0:
+                self.stop_event[namespace].set()
+                self.scheduler[namespace].cancel()

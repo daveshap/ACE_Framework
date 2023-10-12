@@ -89,12 +89,16 @@ class Resource(ABC):
         self.bus_loop.create_task(close_connections())
 
     async def post_connect(self):
-        pass
+        await self.subscribe_system_integrity_queue()
 
     def post_start(self):
         pass
 
+    def pre_stop(self):
+        pass
+
     async def pre_disconnect(self):
+        await self.unsubscribe_system_integrity_queue()
         pass
 
     def start_resource(self):
@@ -106,6 +110,7 @@ class Resource(ABC):
 
     def stop_resource(self):
         self.log.info("Shutting down resource...")
+        self.pre_stop()
         self.shutdown_service()
         self.log.info("Resource shut down")
 
@@ -240,6 +245,42 @@ class Resource(ABC):
             except (aio_pika.exceptions.ChannelClosed, aio_pika.exceptions.ChannelClosed) as e:
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
+
+    async def subscribe_system_integrity_queue(self):
+        queue_name = self.build_system_integrity_queue_name(self.settings.name)
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
+
+    async def unsubscribe_system_integrity_queue(self):
+        queue_name = self.build_system_integrity_queue_name(self.settings.name)
+        if queue_name in self.consumers:
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+
+    async def system_integrity_message_handler(self, message: aio_pika.IncomingMessage):
+        async with message.process():
+            decoded_message = message.body.decode()
+        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] message: {message}")
+        try:
+            data = yaml.safe_load(decoded_message)
+        except yaml.YAMLError as e:
+            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}")
+            return
+        if data['type'] == 'command':
+            method = data.get('method')
+            kwargs = data.get('kwargs')
+            await self.system_integrity_run_command(method, kwargs)
+
+    async def system_integrity_run_command(self, method_name: str, kwargs: dict = None):
+        kwargs = kwargs or {}
+        self.log.debug(f"[{self.labeled_name}] received a [System Integrity] command, method: {method_name}, args: {kwargs}")
+        try:
+            method = getattr(self, method_name)
+            method(**kwargs)
+        except Exception as e:
+            self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
 
     def resource_log(self, message):
         self.log.debug(f"{self.labeled_name} resource log: \n\n{message}\n\n")

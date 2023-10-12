@@ -28,11 +28,16 @@ class TelemetryManager(Resource):
     def post_start(self):
         self.schedule_collecting()
 
+    def pre_stop(self):
+        self.stop_collecting()
+
     async def post_connect(self):
+        await super().post_connect()
         await self.make_exchanges()
         await self.subscribe_telemetry_subscribe()
 
     async def pre_disconnect(self):
+        await super().pre_disconnect()
         await self.unsubscribe_telemetry_subscribe()
 
     def initial_collection(self):
@@ -45,11 +50,17 @@ class TelemetryManager(Resource):
             telemetry.start_collecting(namespace)
         self.log.info(f"{self.labeled_name} finished scheduling recurring data points collection")
 
+    def stop_collecting(self):
+        self.log.info(f"{self.labeled_name} stopping recurring data points collection")
+        for namespace, telemetry in self.namespace_map.items():
+            telemetry.stop_collecting(namespace)
+        self.log.info(f"{self.labeled_name} finished stopping recurring data points collection")
+
     @property
     def settings(self):
         return TelemetrySettings(
-            name="telemetry",
-            label="Telemetry",
+            name="telemetry_manager",
+            label="Telemetry Manager",
         )
 
     # TODO: Add valid status checks.

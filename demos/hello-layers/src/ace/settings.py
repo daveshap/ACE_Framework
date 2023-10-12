@@ -23,3 +23,8 @@ class Settings(BaseSettings):
         'layer_5',
         'layer_6',
     ]
+    other_resources: List[str] = [
+        'telemetry_manager',
+        'logging',
+        'busses',
+    ]
