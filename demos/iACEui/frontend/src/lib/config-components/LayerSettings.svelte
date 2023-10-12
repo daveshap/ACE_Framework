@@ -1,6 +1,6 @@
 <script lang="ts">
     import BusState from "$lib/config-components/BusState.svelte";
-    import InputField from "$lib/config-components/Prompt.svelte";
+    import Prompt from "$lib/config-components/Prompt.svelte";
     import {onMount} from "svelte";
 
     import ControlStateImage from "$lib/images/control_state_img.png";
@@ -21,10 +21,13 @@
         updateLayerConfigAPI, updateWithCurrentLayerConfigAPI
     } from "$lib/config-components/configManagement";
     import APISettingsView from "$lib/config-components/APISettingsView.svelte";
-    import {Accordion, AccordionItem} from "@skeletonlabs/skeleton";
+    import {Accordion, AccordionItem, ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
 
     export let layerName: string;
     export let layerBorderColor: string;
+
+    let ancestralFetchInProgress: boolean = false;
+    let configFetchInProgress: boolean = false;
 
     let colorControlBus = "border-[#9B5548]";
     let colorDataBus = "border-[#0F3D5C]";
@@ -67,28 +70,28 @@
 
 
     <div class="flex flex-row space-x-5">
-        <InputField size="w-[360px] min-h-[350px]" borderColor="{layerBorderColor}" placeholder="Identity Prompt"
-                    bind:inputValue={identityPrompt}
-                    title="Identity Prompt" fontSize="text-[26px]"/>
-        <InputField size="w-[360px] min-h-[350px]" borderColor="{layerBorderColor}" placeholder="Reasoning Prompt"
-                    title="Reasoning Prompt" fontSize="text-[26px]"
-                    bind:inputValue={reasoningPrompt} />
+        <Prompt size="w-[360px] min-h-[350px]" borderColor="{layerBorderColor}" placeholder="Identity Prompt"
+                bind:inputValue={identityPrompt}
+                title="Identity Prompt" textProps="text-[26px]"/>
+        <Prompt size="w-[360px] min-h-[350px]" borderColor="{layerBorderColor}" placeholder="Reasoning Prompt"
+                title="Reasoning Prompt" textProps="text-[26px]"
+                bind:inputValue={reasoningPrompt}/>
 
-        <InputField size="w-[360px] min-h-[350px]" borderColor="{colorControlBus}" placeholder="Control Bus Prompt"
-                    title="Control Bus Prompt" fontSize="text-[26px]"
-                    bind:inputValue={controlBusPrompt}/>
-        <InputField size="w-[360px] min-h-[350px]" borderColor="{colorDataBus}" placeholder="Data Bus Prompt"
-                    bind:inputValue={dataBusPrompt}
-                    title="Data Bus Prompt" fontSize="text-[26px]"/>
+        <Prompt size="w-[360px] min-h-[350px]" borderColor="{colorControlBus}" placeholder="Control Bus Prompt"
+                title="Control Bus Prompt" textProps="text-[26px]"
+                bind:inputValue={controlBusPrompt}/>
+        <Prompt size="w-[360px] min-h-[350px]" borderColor="{colorDataBus}" placeholder="Data Bus Prompt"
+                bind:inputValue={dataBusPrompt}
+                title="Data Bus Prompt" textProps="text-[26px]"/>
     </div>
 
     <div class="flex flex-row space-x-3">
-        <InputField size="w-[360px] min-h-[350px]" borderColor="border-[#BCA77F]" placeholder="Ancestral Prompt"
-                    bind:inputValue={$ancestralPrompt}
-                    title="Ancestral Prompt" fontSize="text-[30px] font-bold"/>
+        <Prompt size="w-[360px] min-h-[350px]" borderColor="border-[#BCA77F]" placeholder="Ancestral Prompt"
+                bind:inputValue={$ancestralPrompt}
+                title="Ancestral Prompt" textProps="text-[30px] font-bold"/>
         <APISettingsView position="relative" borderColor={layerBorderColor}/>
         <div class="flex flex-col space-y-2 min-w-[300px]">
-<!--            Save -->
+            <!--            Save -->
             <Accordion>
                 <AccordionItem open>
                     <svelte:fragment slot="lead"></svelte:fragment>
@@ -101,18 +104,41 @@
                     </svelte:fragment>
                 </AccordionItem>
             </Accordion>
-<!--            Load -->
+            <!--            Load -->
             <Accordion>
                 <AccordionItem open>
                     <svelte:fragment slot="lead"></svelte:fragment>
                     <svelte:fragment slot="summary">Fetch</svelte:fragment>
                     <svelte:fragment slot="content">
-                        <div class="btn-group variant-filled-primary">
-                            <button on:click={() => fetchLayerConfigAPI(layerName)}>Current</button>
-                            <button on:click={() => fetchAllLayerConfigsAPI()}>All</button>
+                        <div class="flex flex-row items-center space-x-3">
+                            <div class="btn-group variant-filled-primary">
+                                <button on:click={() => {
+                                fetchLayerConfigAPI(layerName, () => { configFetchInProgress = false; });
+                                configFetchInProgress = true;
+                            }}>Current
+                                </button>
+                                <button on:click={() => {
+                                fetchAllLayerConfigsAPI(() => { configFetchInProgress = false; });
+                                configFetchInProgress = true;
+                            }}>All
+                                </button>
+                            </div>
+                            {#if configFetchInProgress}
+                                <ProgressRadial width={"w-6"} value={undefined}/>
+                            {/if}
                         </div>
-                        <button class="btn variant-filled-primary" on:click={() => getAncestralPromptAPI()}>Ancestral</button>
+                        <div class="flex flex-row items-center space-x-3">
+                            <button class="btn variant-filled-primary" on:click={() => {
+                            getAncestralPromptAPI(() => { ancestralFetchInProgress = false; });
+                            ancestralFetchInProgress = true; }}>Ancestral
+                            </button>
+                            {#if ancestralFetchInProgress}
+                                <ProgressRadial width={"w-6"} value={undefined}/>
+                            {/if}
+                            <div/>
+                        </div>
                     </svelte:fragment>
+
                 </AccordionItem>
             </Accordion>
         </div>
@@ -121,7 +147,7 @@
 
     <!--    Bus States -->
     <div class="flex flex-row space-x-4">
-        <BusState busType="Data" image={DataStateImage} borderColor="{colorDataBus}"/>
         <BusState busType="Control" image={ControlStateImage} borderColor="{colorControlBus}"/>
+        <BusState busType="Data" image={DataStateImage} borderColor="{colorDataBus}"/>
     </div>
 </div>

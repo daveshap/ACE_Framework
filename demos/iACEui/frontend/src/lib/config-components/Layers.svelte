@@ -103,23 +103,6 @@
         transition: width 0.3s ease-in-out, height 0.3s ease-in-out;
     }
 
-    .bgLayer {
-
-
-
-
-        /*background-image: linear-gradient(*/
-        /*        45deg,*/
-        /*        rgba(176, 142, 102, 0.5),*/
-        /*        rgba(214, 176, 126, 0.5),*/
-        /*        rgba(95, 95, 94, 0.5),*/
-        /*        rgba(145, 110, 80, 0.5),*/
-        /*        rgba(240, 210, 152, 0.5)*/
-        /*);*/
-        /*height: 1600px;  !* 9:16 ratio, you can adjust as needed *!*/
-        /*width: 900px;*/
-    }
-
     :global(.aspirational-layer-bg) {
         background: radial-gradient(123.16% 171.6% at 131.71% -14.68%, #C9A86D 0%, #FDD182 10.96%, rgba(254, 226, 175, 0.25) 35.04%, rgba(254, 235, 200, 0.06) 48.17%, rgba(255, 255, 255, 0.00) 91.67%, rgba(255, 255, 255, 0.00) 100%);
         background-size: cover;

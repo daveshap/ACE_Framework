@@ -21,20 +21,10 @@ export function updateBusState(layerName: string, busType: string, newBusState: 
         // Deep copy
         const newStates = JSON.parse(JSON.stringify(currentStates));
 
-        // Initialize if needed
-        if (!newStates[layerName]) {
+        if (!newStates[layerName])
             newStates[layerName] = {};
-        }
 
-        // Set the new BusState
         newStates[layerName][busType] = newBusState;
-
-        // for (const [key, value] of Object.entries(newStates)) {
-        //     console.log(`${key}:`);
-        //     console.log(value as BusState);
-        // }
-        console.log("New bus state:", newBusState);
-
         return newStates;
     });
 }
@@ -46,9 +36,8 @@ export function updateLayerConfig(layerName: string, newLayerConfig: LayerConfig
 
         newConfigs[layerName] = newLayerConfig;
 
-        if (layerName == get(currentLayerName)) {
+        if (layerName == get(currentLayerName))
             currentLayerConfig.set(newLayerConfig);
-        }
 
         return newConfigs;
     });
@@ -74,7 +63,7 @@ export function getBusState(busType: string): BusState {
 	// Use the `get` function from svelte/store to get the current value of the store
 	const currentStates = get(busStates);
 	const layerName = get(currentLayerName);
-    console.log("Getting bus state for layer:", layerName);
+
     if (layerName == null) {
         throw new Error("Layer name is null");
     }
@@ -84,9 +73,7 @@ export function getBusState(busType: string): BusState {
 	if (currentStates[layerName][busType] == null)
 		currentStates[layerName][busType] = createBusState(busType);
 
-	// Retrieve the LayerConfig for the given model name
-    console.log("Got Bus state:", currentStates[layerName][busType]);
-	return currentStates[layerName][busType];
+    return currentStates[layerName][busType];
 }
 
 // get current layer config
@@ -95,8 +82,6 @@ export function getCurrentLayerConfig(): LayerConfig {
     if (layerName == null) {
         throw new Error("Layer name is null");
     }
-    console.log("Getting current layer config for layer:", layerName);
-    console.log("LLM model parameters:", getLayerConfig(layerName).llm_model_parameters);
     return getLayerConfig(layerName);
 }
 

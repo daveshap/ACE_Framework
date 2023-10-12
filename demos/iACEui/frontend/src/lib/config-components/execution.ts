@@ -1,6 +1,17 @@
 import { get } from 'svelte/store';
-import {currentLayerConfig, currentLayerName, updateBusState} from '$lib/stores/configStores';
+import {currentLayerConfig, currentLayerName, getLayerConfig, updateBusState} from '$lib/stores/configStores';
 import type { ExecuteQuery } from '$lib/config-components/configTypes';
+import type {ExecuteBusResponse} from "$lib/interaction-components/chatTypes";
+
+
+
+export type LayerMessage = {
+	id: string;
+	destinationBus: string;
+	reasoning: string;
+	message: string;
+	timestamp: string;
+}
 
 export type BusState = {
 	busType: string;
@@ -20,18 +31,17 @@ export function createBusState(busType: string): BusState {
 	};
 }
 
-export function ExecuteBus(input: string, busType: string) {
-	let config = get(currentLayerConfig);
-	let layerName = get(currentLayerName);
+export function ExecuteBus(layerName: string, input: string, busType: string, callback: (data: BusState) => void) {
+	const config = getLayerConfig(layerName);
 
 	if (config == null || layerName == null) {
-		let msg = `Config or layer name is null. config: ${config} | layerName: ${layerName}`;
+		const msg = `Config or layer name is null. config: ${config} | layerName: ${layerName}`;
 		alert(msg);
 		console.error(msg);
 		return;
 	}
 
-	let executeQuery: ExecuteQuery = {
+	const executeQuery: ExecuteQuery = {
 		layer_name: layerName,
 		llm_model_parameters: config.llm_model_parameters,
 		llm_messages: [],
@@ -49,7 +59,7 @@ export function ExecuteBus(input: string, busType: string) {
 		},
 		body: JSON.stringify(executeQuery)
 	})
-		.then((response) => {
+		.then<ExecuteBusResponse>((response) => {
 			if (!response.ok) {
 				console.error('There was a problem with the fetch operation:', response);
 				return Promise.reject('Fetch operation failed');
@@ -57,7 +67,7 @@ export function ExecuteBus(input: string, busType: string) {
 			return response.json();
 		})
 		.then((data) => {
-			updateBusState(layerName!, busType, {
+			callback({
 				input: input,
 				busType: busType,
 				reasoningResult: data.reasoning_result.content,
@@ -68,5 +78,23 @@ export function ExecuteBus(input: string, busType: string) {
 		})
 		.catch((error) => {
 			console.error('There was an error with the fetch operation:', error);
+		});
+}
+
+// set mission /mission { "mission": "..." }
+export function setMission(mission: string) {
+	fetch(`http://0.0.0.0:8000/mission`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({ mission: mission })
+	})
+		.then((response) => {
+			if (!response.ok) {
+				console.error('There was a problem with the fetch operation:', response);
+				return Promise.reject('Fetch operation failed');
+			}
+			return response.json();
 		});
 }

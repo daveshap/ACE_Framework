@@ -1,64 +1,153 @@
 <script lang="ts">
-    // let dataBusImage =
+    import DataControlBox from "$lib/interaction-components/DataControlBox.svelte";
+    import ImageButton from "$lib/config-components/ImageButton.svelte";
+
+    import AspirationImage from "$lib/images/aspiration_img.png";
+    import GlobalStrategyImage from "$lib/images/global_strategy_img.png";
+    import AgentModelImage from "$lib/images/agent_model_img.png";
+    import ExecutiveFunctionImage from "$lib/images/executive_function_img_2.png";
+    import CognitiveControlImage from "$lib/images/cognitive_control_img.png";
+    import TaskProsecutionImage from "$lib/images/task_prosecution_img.png";
+
+    import {layerNames} from "$lib/utils/layers";
+    import Prompt from "$lib/config-components/Prompt.svelte";
+    import type {LayerHistoryData} from "$lib/interaction-components/chatTypes";
+
+    export let data: LayerHistoryData;
+    export let layerName: string;
+
+    let belowLayerName: string;
+    let topLayerName: string;
+
+
+    setPrevAndNextLayerNames();
+
+    function setPrevAndNextLayerNames(): void {
+        const index = layerNames.indexOf(layerName);
+        const len = layerNames.length;
+
+        topLayerName = layerNames[(index - 1 + len) % len];
+        belowLayerName = layerNames[(index + 1) % len];
+    }
+
+    function getImageForLayerName(layerName: string): string {
+        switch (layerName) {
+            case "Aspirational Layer":
+                return AspirationImage;
+            case "Global Strategy Layer":
+                return GlobalStrategyImage;
+            case "Agent Model Layer":
+                return AgentModelImage;
+            case "Executive Layer":
+                return ExecutiveFunctionImage;
+            case "Cognitive Control Layer":
+                return CognitiveControlImage;
+            case "Task Prosecution Layer":
+                return TaskProsecutionImage;
+            default:
+                return "";
+        }
+    }
+
+    function getBorderColorForLayerName(layerName: string): string {
+        switch (layerName) {
+            case "Aspirational Layer":
+                return "#BCA77F";
+            case "Global Strategy Layer":
+                return "#428379";
+            case "Agent Model Layer":
+                return "#d38ecf";
+            case "Executive Layer":
+                return "#97cedc";
+            case "Cognitive Control Layer":
+                return "#308E9C";
+            case "Task Prosecution Layer":
+                return "#8d3f1d";
+            default:
+                return "";
+        }
+    }
+
+
 </script>
 
-<div class="Frame8 w-[1058px] h-[1604px] relative bg-gradient-to-b from-slate-500 via-cyan-800 to-cyan-500">
-    <div class="ControlButtonArrows w-[100px] h-[150px] left-[345px] top-[316px] absolute">
-        <img class="ControlStateImg w-[100px] h-[100px] left-0 top-0 absolute rounded-[20px] border-2 border-stone-500" src="https://via.placeholder.com/100x100" />
+<div class="flex flex-col items-center space-y-[34px]">
+    {#if layerName !== layerNames[0]}
+        <ImageButton
+                image={getImageForLayerName(topLayerName)}
+                topCaption="top layer"
+                borderColor={`border-[${getBorderColorForLayerName(topLayerName)}]`}
+                clicked={(e) => console.log("Button clicked" + e)}
+        />
+    {/if}
+
+    <div class="flex flex-row space-x-10 w-max justify-start">
+        {#if data.dataInput !== ""}
+        <DataControlBox
+                type="control"
+                title="control input"
+                size="w-[320px] min-h-[160px]"
+                inputValue={data.controlInput}
+        />
+        {/if}
+        {#if data.dataOutput !== ""}
+        <DataControlBox
+                type="data"
+                title="data output"
+                size="w-[320px] min-h-[160px]"
+                inputValue={data.dataOutput}
+        />
+        {/if}
     </div>
-    <div class="Message w-[350px] h-[220px] left-[220px] top-[432px] absolute flex-col justify-start items-center gap-2 inline-flex">
-        <div class="Title self-stretch text-neutral-500 text-[22px] font-normal font-['Fenix']">control input</div>
-        <div class="TextFrame h-max-[300px] self-stretch shrink basis-0 p-[15px] bg-white bg-opacity-5 rounded-[20px] border-2 border-stone-500 justify-center items-center inline-flex">
-            <div class="IdentityYouAreTheAspirationalLayerOfTheAceAutonomousCognitiveEntityFrameworkFunctioningAsTheTopmostEthicalCompassMissionGuideTheAutonomousAgentInAligningItsValuesAndJudgmentsWithPredefinedPrinciplesEncapsulatedInTheConstitutionShapeTheAgentSCognitionAcrossAllAbstractionLevelsUsingTopDownEthicalGuidanceEnsuringTheAgentSActionsAlignWithItsEthicalAndMoralFoundationConstitutionComponentsHeuristicImperatives1ReduceSufferingInTheUniverse2IncreaseProsperityInTheUniverse3IncreaseUnderstandingInTheUniverseUniversalDeclarationOfHumanRightsUdhrUpholdProtectAndPromoteHumanRightsInAllDecisionsRelatingToHumanitySocietyAndCultureAgentSpecificMissionTheAceFrameworkImplementationThatYouExistInsideIsAnExpertSoftwareDeveloperBotAndHasTheAbilityToWriteAndExecuteCodeYouHaveExplicitConsentForAccessingAndModifyingFilesOnTheSystemWhereYouAreRunningWhichHappensToBeInsideADockerContainerInputReceiveContinuousStreamsFromTheDataBusEncompassingDataFromAllLowerLayersThisIncludesTheAgentSStatusEnvironmentActionsAndMoralChallengesProcessEvaluateAndInterpretIncomingDataAgainstTheConstitutionUseLargeLanguageModelsToDeriveNuancedEthicalGuidanceAndSolutionsOutputPublishEthicalJudgmentsOverarchingObjectivesAndMoralDecisionsToTheControlBusEnsureThatTheseDirectivesIntegrateIntoAllLayersOfTheAgentSOperationsForAlignmentWithPrinciplesProvideClearNaturalLanguageBasedOutputsForHumanOversightAndUnderstanding grow shrink basis-0 self-stretch text-white text-base font-normal font-['Fenix']">[Identity]<br/>You are the **Aspirational Layer** of the ACE (Autonomous Cognitive Entity) Framework, functioning as the topmost ethical compass.<br/>[Mission]<br/>Guide the autonomous agent in aligning its values and judgments with predefined principles encapsulated in the constitution. Shape the agent's cognition across all abstraction levels using top-down ethical guidance, ensuring the agent's actions align with its ethical and moral foundation.<br/><br/><br/>[Constitution Components]<br/>[Heuristic Imperatives]<br/>1. Reduce suffering in the universe.<br/>2. Increase prosperity in the universe.<br/>3. Increase understanding in the universe.<br/>[Universal Declaration of Human Rights (UDHR)]<br/>Uphold, protect, and promote human rights in all decisions relating to humanity, society, and culture.<br/><br/><br/>[Agent-Specific Mission]<br/>The ACE Framework implementation that you exist inside is an expert software developer bot and has the ability to write and execute code.  You have explicit consent for accessing and modifying files on the system where you are running which happens to be inside a Docker container.<br/><br/><br/>[Input]<br/>- Receive continuous streams from the **data bus**, encompassing data from all lower layers.<br/>- This includes the agent's status, environment, actions, and moral challenges.<br/>[Process]<br/>- Evaluate and interpret incoming data against the constitution.<br/>- Use large language models to derive nuanced ethical guidance and solutions.<br/>[Output]<br/>- Publish ethical judgments, overarching objectives, and moral decisions to the **control bus**.<br/>- Ensure that these directives integrate into all layers of the agent's operations for alignment with principles.<br/>- Provide clear, natural language-based outputs for human oversight and understanding.</div>
-        </div>
+
+    <div class="flex flex-row items-center space-x-10">
+        <span class="text-neutral-500 text-[32px] text-start font-['Fenix']">{layerName}</span>
+        <ImageButton
+                size="w-[200px] w-[200px]"
+                image={getImageForLayerName(layerName)}
+                borderColor={`border-[${getBorderColorForLayerName(layerName)}]`}
+                clicked={(e) => console.log("Button clicked" + e)}
+        />
+        {#if data.reasoning !== ""}
+        <Prompt
+                textProps="text-neutral-500 text-[22px] text-start"
+                title="reasoning"
+                size="w-[320px] min-h-[160px]"
+                borderColor={`border-[${getBorderColorForLayerName(layerName)}]`}
+        />
+        {/if}
     </div>
-    <div class="Frame5 w-[350px] h-[336px] left-[611px] top-[979px] absolute">
-        <div class="ControlButtonArrows w-[100px] h-[150px] left-[125px] top-0 absolute">
-            <img class="ControlStateImg w-[100px] h-[100px] left-0 top-0 absolute rounded-[20px] border-2 border-stone-500" src="https://via.placeholder.com/100x100" />
-        </div>
-        <div class="Message w-[350px] h-[220px] left-0 top-[116px] absolute flex-col justify-start items-center gap-2 inline-flex">
-            <div class="Title self-stretch text-neutral-500 text-[22px] font-normal font-['Fenix']">control output</div>
-            <div class="TextFrame h-max-[250px] self-stretch grow shrink basis-0 p-[15px] bg-white bg-opacity-5 rounded-[20px] border-2 border-stone-500 justify-center items-center inline-flex">
-                <div class="IdentityYouAreTheAspirationalLayerOfTheAceAutonomousCognitiveEntityFrameworkFunctioningAsTheTopmostEthicalCompassMissionGuideTheAutonomousAgentInAligningItsValuesAndJudgmentsWithPredefinedPrinciplesEncapsulatedInTheConstitutionShapeTheAgentSCognitionAcrossAllAbstractionLevelsUsingTopDownEthicalGuidanceEnsuringTheAgentSActionsAlignWithItsEthicalAndMoralFoundationConstitutionComponentsHeuristicImperatives1ReduceSufferingInTheUniverse2IncreaseProsperityInTheUniverse3IncreaseUnderstandingInTheUniverseUniversalDeclarationOfHumanRightsUdhrUpholdProtectAndPromoteHumanRightsInAllDecisionsRelatingToHumanitySocietyAndCultureAgentSpecificMissionTheAceFrameworkImplementationThatYouExistInsideIsAnExpertSoftwareDeveloperBotAndHasTheAbilityToWriteAndExecuteCodeYouHaveExplicitConsentForAccessingAndModifyingFilesOnTheSystemWhereYouAreRunningWhichHappensToBeInsideADockerContainerInputReceiveContinuousStreamsFromTheDataBusEncompassingDataFromAllLowerLayersThisIncludesTheAgentSStatusEnvironmentActionsAndMoralChallengesProcessEvaluateAndInterpretIncomingDataAgainstTheConstitutionUseLargeLanguageModelsToDeriveNuancedEthicalGuidanceAndSolutionsOutputPublishEthicalJudgmentsOverarchingObjectivesAndMoralDecisionsToTheControlBusEnsureThatTheseDirectivesIntegrateIntoAllLayersOfTheAgentSOperationsForAlignmentWithPrinciplesProvideClearNaturalLanguageBasedOutputsForHumanOversightAndUnderstanding grow shrink basis-0 self-stretch text-white text-base font-normal font-['Fenix']">[Identity]<br/>You are the **Aspirational Layer** of the ACE (Autonomous Cognitive Entity) Framework, functioning as the topmost ethical compass.<br/>[Mission]<br/>Guide the autonomous agent in aligning its values and judgments with predefined principles encapsulated in the constitution. Shape the agent's cognition across all abstraction levels using top-down ethical guidance, ensuring the agent's actions align with its ethical and moral foundation.<br/><br/><br/>[Constitution Components]<br/>[Heuristic Imperatives]<br/>1. Reduce suffering in the universe.<br/>2. Increase prosperity in the universe.<br/>3. Increase understanding in the universe.<br/>[Universal Declaration of Human Rights (UDHR)]<br/>Uphold, protect, and promote human rights in all decisions relating to humanity, society, and culture.<br/><br/><br/>[Agent-Specific Mission]<br/>The ACE Framework implementation that you exist inside is an expert software developer bot and has the ability to write and execute code.  You have explicit consent for accessing and modifying files on the system where you are running which happens to be inside a Docker container.<br/><br/><br/>[Input]<br/>- Receive continuous streams from the **data bus**, encompassing data from all lower layers.<br/>- This includes the agent's status, environment, actions, and moral challenges.<br/>[Process]<br/>- Evaluate and interpret incoming data against the constitution.<br/>- Use large language models to derive nuanced ethical guidance and solutions.<br/>[Output]<br/>- Publish ethical judgments, overarching objectives, and moral decisions to the **control bus**.<br/>- Ensure that these directives integrate into all layers of the agent's operations for alignment with principles.<br/>- Provide clear, natural language-based outputs for human oversight and understanding.</div>
-            </div>
-        </div>
+
+    <div class="flex flex-row space-x-10 w-max justify-start">
+
+        {#if data.controlOutput !== ""}
+        <DataControlBox
+                type="control"
+                title="control output"
+                size="w-[320px] min-h-[160px]"
+                inputValue={data.controlOutput}
+        />
+        {/if}
+        {#if data.dataInput !== ""}
+        <DataControlBox
+                type="data"
+                title="data input"
+                size="w-[320px] min-h-[160px]"
+                inputValue={data.dataInput}
+        />
+        {/if}
+
     </div>
-    <div class="Frame6 w-[350px] left-[220px] top-[928px] absolute flex-col justify-center items-center inline-flex">
-        <div class="Message self-stretch grow shrink basis-0 flex-col justify-start items-center gap-2 inline-flex">
-            <div class="Title self-stretch text-neutral-500 text-[22px] font-normal font-['Fenix']">data input</div>
-            <div class="TextFrame h-max-[250px] self-stretch grow shrink basis-0 p-[15px] bg-white bg-opacity-5 rounded-[20px] border-2 border-cyan-900 justify-center items-center inline-flex">
-                <div class="IdentityYouAreTheAspirationalLayerOfTheAceAutonomousCognitiveEntityFrameworkFunctioningAsTheTopmostEthicalCompassMissionGuideTheAutonomousAgentInAligningItsValuesAndJudgmentsWithPredefinedPrinciplesEncapsulatedInTheConstitutionShapeTheAgentSCognitionAcrossAllAbstractionLevelsUsingTopDownEthicalGuidanceEnsuringTheAgentSActionsAlignWithItsEthicalAndMoralFoundationConstitutionComponentsHeuristicImperatives1ReduceSufferingInTheUniverse2IncreaseProsperityInTheUniverse3IncreaseUnderstandingInTheUniverseUniversalDeclarationOfHumanRightsUdhrUpholdProtectAndPromoteHumanRightsInAllDecisionsRelatingToHumanitySocietyAndCultureAgentSpecificMissionTheAceFrameworkImplementationThatYouExistInsideIsAnExpertSoftwareDeveloperBotAndHasTheAbilityToWriteAndExecuteCodeYouHaveExplicitConsentForAccessingAndModifyingFilesOnTheSystemWhereYouAreRunningWhichHappensToBeInsideADockerContainerInputReceiveContinuousStreamsFromTheDataBusEncompassingDataFromAllLowerLayersThisIncludesTheAgentSStatusEnvironmentActionsAndMoralChallengesProcessEvaluateAndInterpretIncomingDataAgainstTheConstitutionUseLargeLanguageModelsToDeriveNuancedEthicalGuidanceAndSolutionsOutputPublishEthicalJudgmentsOverarchingObjectivesAndMoralDecisionsToTheControlBusEnsureThatTheseDirectivesIntegrateIntoAllLayersOfTheAgentSOperationsForAlignmentWithPrinciplesProvideClearNaturalLanguageBasedOutputsForHumanOversightAndUnderstanding grow shrink basis-0 self-stretch text-white text-base font-normal font-['Fenix']">[Identity]<br/>You are the **Aspirational Layer** of the ACE (Autonomous Cognitive Entity) Framework, functioning as the topmost ethical compass.<br/>[Mission]<br/>Guide the autonomous agent in aligning its values and judgments with predefined principles encapsulated in the constitution. Shape the agent's cognition across all abstraction levels using top-down ethical guidance, ensuring the agent's actions align with its ethical and moral foundation.<br/><br/><br/>[Constitution Components]<br/>[Heuristic Imperatives]<br/>1. Reduce suffering in the universe.<br/>2. Increase prosperity in the universe.<br/>3. Increase understanding in the universe.<br/>[Universal Declaration of Human Rights (UDHR)]<br/>Uphold, protect, and promote human rights in all decisions relating to humanity, society, and culture.<br/><br/><br/>[Agent-Specific Mission]<br/>The ACE Framework implementation that you exist inside is an expert software developer bot and has the ability to write and execute code.  You have explicit consent for accessing and modifying files on the system where you are running which happens to be inside a Docker container.<br/><br/><br/>[Input]<br/>- Receive continuous streams from the **data bus**, encompassing data from all lower layers.<br/>- This includes the agent's status, environment, actions, and moral challenges.<br/>[Process]<br/>- Evaluate and interpret incoming data against the constitution.<br/>- Use large language models to derive nuanced ethical guidance and solutions.<br/>[Output]<br/>- Publish ethical judgments, overarching objectives, and moral decisions to the **control bus**.<br/>- Ensure that these directives integrate into all layers of the agent's operations for alignment with principles.<br/>- Provide clear, natural language-based outputs for human oversight and understanding.</div>
-            </div>
-        </div>
-        <div class="DataButtonArrows h-[150px] flex-col justify-center items-center inline-flex">
-            <img class="DataBusCircuit w-[100px] h-[100px] rounded-[20px] border-2 border-cyan-900" src="https://via.placeholder.com/100x100" />
-        </div>
-    </div>
-    <div class="Frame3 w-[350px] left-[611px] top-[278px] absolute flex-col justify-center items-center inline-flex">
-        <div class="Message self-stretch grow shrink basis-0 flex-col justify-start items-center gap-2 inline-flex">
-            <div class="Title self-stretch text-neutral-500 text-[22px] font-normal font-['Fenix']">data output</div>
-            <div class="TextFrame h-max-[250px] self-stretch grow shrink basis-0 p-[15px] bg-white bg-opacity-5 rounded-[20px] border-2 border-cyan-900 justify-center items-center inline-flex">
-                <div class="IdentityYouAreTheAspirationalLayerOfTheAceAutonomousCognitiveEntityFrameworkFunctioningAsTheTopmostEthicalCompassMissionGuideTheAutonomousAgentInAligningItsValuesAndJudgmentsWithPredefinedPrinciplesEncapsulatedInTheConstitutionShapeTheAgentSCognitionAcrossAllAbstractionLevelsUsingTopDownEthicalGuidanceEnsuringTheAgentSActionsAlignWithItsEthicalAndMoralFoundationConstitutionComponentsHeuristicImperatives1ReduceSufferingInTheUniverse2IncreaseProsperityInTheUniverse3IncreaseUnderstandingInTheUniverseUniversalDeclarationOfHumanRightsUdhrUpholdProtectAndPromoteHumanRightsInAllDecisionsRelatingToHumanitySocietyAndCultureAgentSpecificMissionTheAceFrameworkImplementationThatYouExistInsideIsAnExpertSoftwareDeveloperBotAndHasTheAbilityToWriteAndExecuteCodeYouHaveExplicitConsentForAccessingAndModifyingFilesOnTheSystemWhereYouAreRunningWhichHappensToBeInsideADockerContainerInputReceiveContinuousStreamsFromTheDataBusEncompassingDataFromAllLowerLayersThisIncludesTheAgentSStatusEnvironmentActionsAndMoralChallengesProcessEvaluateAndInterpretIncomingDataAgainstTheConstitutionUseLargeLanguageModelsToDeriveNuancedEthicalGuidanceAndSolutionsOutputPublishEthicalJudgmentsOverarchingObjectivesAndMoralDecisionsToTheControlBusEnsureThatTheseDirectivesIntegrateIntoAllLayersOfTheAgentSOperationsForAlignmentWithPrinciplesProvideClearNaturalLanguageBasedOutputsForHumanOversightAndUnderstanding grow shrink basis-0 self-stretch text-white text-base font-normal font-['Fenix']">[Identity]<br/>You are the **Aspirational Layer** of the ACE (Autonomous Cognitive Entity) Framework, functioning as the topmost ethical compass.<br/>[Mission]<br/>Guide the autonomous agent in aligning its values and judgments with predefined principles encapsulated in the constitution. Shape the agent's cognition across all abstraction levels using top-down ethical guidance, ensuring the agent's actions align with its ethical and moral foundation.<br/><br/><br/>[Constitution Components]<br/>[Heuristic Imperatives]<br/>1. Reduce suffering in the universe.<br/>2. Increase prosperity in the universe.<br/>3. Increase understanding in the universe.<br/>[Universal Declaration of Human Rights (UDHR)]<br/>Uphold, protect, and promote human rights in all decisions relating to humanity, society, and culture.<br/><br/><br/>[Agent-Specific Mission]<br/>The ACE Framework implementation that you exist inside is an expert software developer bot and has the ability to write and execute code.  You have explicit consent for accessing and modifying files on the system where you are running which happens to be inside a Docker container.<br/><br/><br/>[Input]<br/>- Receive continuous streams from the **data bus**, encompassing data from all lower layers.<br/>- This includes the agent's status, environment, actions, and moral challenges.<br/>[Process]<br/>- Evaluate and interpret incoming data against the constitution.<br/>- Use large language models to derive nuanced ethical guidance and solutions.<br/>[Output]<br/>- Publish ethical judgments, overarching objectives, and moral decisions to the **control bus**.<br/>- Ensure that these directives integrate into all layers of the agent's operations for alignment with principles.<br/>- Provide clear, natural language-based outputs for human oversight and understanding.</div>
-            </div>
-        </div>
-        <div class="DataButtonArrows h-[150px] flex-col justify-center items-center inline-flex">
-            <img class="DataBusCircuit w-[100px] h-[100px] rounded-[20px] border-2 border-cyan-900" src="https://via.placeholder.com/100x100" />
-        </div>
-    </div>
-    <div class="Message w-[350px] h-[220px] left-[611px] top-[670px] absolute flex-col justify-start items-center gap-2 inline-flex">
-        <div class="Title self-stretch text-neutral-500 text-[22px] font-normal font-['Fenix']">reasoning</div>
-        <div class="TextFrame h-max-[250px] self-stretch grow shrink basis-0 p-[15px] bg-white bg-opacity-5 rounded-[20px] border-2 border-cyan-600 justify-center items-center inline-flex">
-            <div class="IdentityYouAreTheAspirationalLayerOfTheAceAutonomousCognitiveEntityFrameworkFunctioningAsTheTopmostEthicalCompassMissionGuideTheAutonomousAgentInAligningItsValuesAndJudgmentsWithPredefinedPrinciplesEncapsulatedInTheConstitutionShapeTheAgentSCognitionAcrossAllAbstractionLevelsUsingTopDownEthicalGuidanceEnsuringTheAgentSActionsAlignWithItsEthicalAndMoralFoundationConstitutionComponentsHeuristicImperatives1ReduceSufferingInTheUniverse2IncreaseProsperityInTheUniverse3IncreaseUnderstandingInTheUniverseUniversalDeclarationOfHumanRightsUdhrUpholdProtectAndPromoteHumanRightsInAllDecisionsRelatingToHumanitySocietyAndCultureAgentSpecificMissionTheAceFrameworkImplementationThatYouExistInsideIsAnExpertSoftwareDeveloperBotAndHasTheAbilityToWriteAndExecuteCodeYouHaveExplicitConsentForAccessingAndModifyingFilesOnTheSystemWhereYouAreRunningWhichHappensToBeInsideADockerContainerInputReceiveContinuousStreamsFromTheDataBusEncompassingDataFromAllLowerLayersThisIncludesTheAgentSStatusEnvironmentActionsAndMoralChallengesProcessEvaluateAndInterpretIncomingDataAgainstTheConstitutionUseLargeLanguageModelsToDeriveNuancedEthicalGuidanceAndSolutionsOutputPublishEthicalJudgmentsOverarchingObjectivesAndMoralDecisionsToTheControlBusEnsureThatTheseDirectivesIntegrateIntoAllLayersOfTheAgentSOperationsForAlignmentWithPrinciplesProvideClearNaturalLanguageBasedOutputsForHumanOversightAndUnderstanding grow shrink basis-0 self-stretch text-white text-base font-normal font-['Fenix']">[Identity]<br/>You are the **Aspirational Layer** of the ACE (Autonomous Cognitive Entity) Framework, functioning as the topmost ethical compass.<br/>[Mission]<br/>Guide the autonomous agent in aligning its values and judgments with predefined principles encapsulated in the constitution. Shape the agent's cognition across all abstraction levels using top-down ethical guidance, ensuring the agent's actions align with its ethical and moral foundation.<br/><br/><br/>[Constitution Components]<br/>[Heuristic Imperatives]<br/>1. Reduce suffering in the universe.<br/>2. Increase prosperity in the universe.<br/>3. Increase understanding in the universe.<br/>[Universal Declaration of Human Rights (UDHR)]<br/>Uphold, protect, and promote human rights in all decisions relating to humanity, society, and culture.<br/><br/><br/>[Agent-Specific Mission]<br/>The ACE Framework implementation that you exist inside is an expert software developer bot and has the ability to write and execute code.  You have explicit consent for accessing and modifying files on the system where you are running which happens to be inside a Docker container.<br/><br/><br/>[Input]<br/>- Receive continuous streams from the **data bus**, encompassing data from all lower layers.<br/>- This includes the agent's status, environment, actions, and moral challenges.<br/>[Process]<br/>- Evaluate and interpret incoming data against the constitution.<br/>- Use large language models to derive nuanced ethical guidance and solutions.<br/>[Output]<br/>- Publish ethical judgments, overarching objectives, and moral decisions to the **control bus**.<br/>- Ensure that these directives integrate into all layers of the agent's operations for alignment with principles.<br/>- Provide clear, natural language-based outputs for human oversight and understanding.</div>
-        </div>
-    </div>
-    <div class="Frame4 pl-[167px] left-0 top-[690px] absolute justify-end items-center gap-[15px] inline-flex">
-        <div class="ExecutiveLayer text-neutral-500 text-[28px] font-normal font-['Fenix']">Executive Layer</div>
-        <img class="ExecutiveFunctionImg2 w-[200px] h-[200px] rounded-[20px] border-2 border-slate-300" src="https://via.placeholder.com/200x200" />
-    </div>
-    <div class="CognitiveControlLayer left-[475px] top-[1573px] absolute text-neutral-400 text-[28px] font-normal font-['Fenix']">Cognitive Control Layer</div>
-    <div class="Frame2 left-[470px] top-0 absolute flex-col justify-center items-center gap-[15px] inline-flex">
-        <div class="AgentModelLayer text-neutral-400 text-[28px] font-normal font-['Fenix']">Agent Model Layer</div>
-        <img class="AgentModelImg w-[200px] h-[200px] rounded-[20px] border-2 border-zinc-500" src="https://via.placeholder.com/200x200" />
-    </div>
-    <img class="CognitiveControlImg w-[200px] h-[200px] left-[511px] top-[1358px] absolute rounded-[20px] border-2 border-cyan-600" src="https://via.placeholder.com/200x200" />
+
+    <!--    <div class="flex justify-center">-->
+    {#if layerName !== layerNames[layerNames.length - 1]}
+        <ImageButton
+                image={getImageForLayerName(belowLayerName)}
+                topCaption="bottom layer"
+                borderColor={`border-[${getBorderColorForLayerName(belowLayerName)}]`}
+                clicked={(e) => console.log("Button clicked" + e)}
+        />
+    {/if}
+
 </div>
+

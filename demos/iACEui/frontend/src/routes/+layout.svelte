@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Goldman" rel="stylesheet">
 
 <!-- App Shell -->
-<AppShell regionPage="relative" slotPageHeader="sticky top-0 z-10">
+<AppShell regionPage="relative" slotPageHeader="sticky top-0 z-10" class="bg-[#1E1E1E]">
 <!--	+page is inside ./Layers -->
 	<slot />
 </AppShell>

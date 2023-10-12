@@ -7,10 +7,13 @@
     import type {BusState} from "$lib/config-components/execution";
     import {busStates, currentLayerName, getBusState, updateBusState} from "$lib/stores/configStores";
     import {get} from "svelte/store";
+    import {ProgressBar, ProgressRadial} from "@skeletonlabs/skeleton";
 
     export let busType: string;
     export let image: string;
     export let borderColor: string;
+
+    let inProgress: boolean = false;
 
     let layerName: string = $currentLayerName!;
     let busState: BusState = getBusState(busType);
@@ -40,32 +43,38 @@
 </script>
 
 <div class="card w-[750px] h-auto p-4 flex flex-col items-center {borderColor} border-2 rounded-[20px]">
+
     <!--    Title -->
-    <div class="flex pb-1 mb-1 items-center justify-center text-center relative">
-        <span class="text-center text-neutral-400 text-3xl font-normal font-['Fenix'] inline-block relative px-2">
+    <div class="flex pb-5 items-center justify-center text-center relative">
+        <span class="pb-2 text-center text-neutral-400 text-3xl font-normal font-['Fenix'] inline-block relative px-2">
             {busType} Bus State
             <span class="absolute inset-x-0 bottom-0 border-b {borderColor}"></span>
         </span>
     </div>
 
-    <div class="flex flex-row">
-        <div class="flex flex-col space-y-5">
-
-            <div class="flex flex-row h-auto">
-                <InputField bind:inputValue={inputStateValue} borderColor="{borderColor}" size="w-[260px] min-h-[300px]"
-                            title="Input"/>
-                <div class="flex flex-col items-center">
-                    <ImageButton image={image} borderColor="{borderColor}" caption={"open full view"}
-                                 clicked={() => console.log("test full view open !")}/>
-                    <div class="btn-group-vertical button-primary {borderColor} border-[3px] rounded-[10px] w-32">
-                        <button on:click={() => { ExecuteBus(inputStateValue, busType)} }>Execute</button>
-                        <button>History</button>
-                    </div>
+    <div class="flex flex-row space-x-4">
+        <InputField bind:inputValue={inputStateValue} borderColor="{borderColor}" size="w-[260px] min-h-[300px]"
+                    title="Input"/>
+        <div class="flex flex-col items-center space-y-4">
+            {#if inProgress}
+                <div class="w-20 h-2">
+                    <ProgressBar value={undefined}/>
                 </div>
-            </div>
-
+            {/if}
+            <ImageButton image={image} borderColor="{borderColor}"
+                         clicked={() => console.log("test full view open !")}/>
+<!--            <div class="btn-group-vertical button-primary {borderColor} border-[3px] rounded-[10px] w-32">-->
+                <button class="btn variant-filled-surface" disabled={inProgress} on:click={() => {
+                    ExecuteBus($currentLayerName, inputStateValue, busType, (data) => {
+                        inProgress = false;
+                        updateBusState(layerName, busType, data);
+                    });
+                    inProgress = true;
+                }}>Execute</button>
+<!--            </div>-->
 
         </div>
+
 
         <div class="ReasoningAction flex flex-col space-y-10">
             <InputField bind:inputValue={reasoningStateValue} borderColor="{borderColor}" size="w-[260px] min-h-[200px]"

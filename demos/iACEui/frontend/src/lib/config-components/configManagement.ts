@@ -45,7 +45,7 @@ export function updateAncestralPromptAPI() {
 	});
 }
 
-export function getAncestralPromptAPI() {
+export function getAncestralPromptAPI(callback: () => void) {
 	fetch(`http://0.0.0.0:8000/prompt/ancestral/active`, {
 		method: 'GET',
 		headers: {
@@ -61,6 +61,7 @@ export function getAncestralPromptAPI() {
 	}).then((data) => {
 		console.log('Received Ancestral Prompt Data:', data);
 		ancestralPrompt.set(data.prompt);
+		callback();
 	});
 }
 
@@ -89,13 +90,20 @@ export function updateLayerConfigAPI(config: LayerConfig) {
         });
 }
 
-export function fetchAllLayerConfigsAPI() {
+export function fetchAllLayerConfigsAPI(callback: () => void) {
+	let done = 0;
+
 	for (const layerName of layerNames) {
-		fetchLayerConfigAPI(layerName);
+		fetchLayerConfigAPI(layerName, () => {
+			done++;
+			if (done == layerNames.length) {
+				callback();
+			}
+		});
 	}
 }
 
-export function fetchLayerConfigAPI(layerName: string) {
+export function fetchLayerConfigAPI(layerName: string, callback: () => void) {
 	fetch(`http://0.0.0.0:8000/layer/config/${encodeURIComponent(layerName)}`, {
 		method: 'GET',
 		headers: {
@@ -111,11 +119,13 @@ export function fetchLayerConfigAPI(layerName: string) {
 		.then((data) => {
 			console.log('Received data:', data);
 			updateLayerConfig(layerName, data);
+			callback();
 		})
 		.catch((error) => {
 			console.error('There was an error with the fetch operation:', error);
-			let config = getLayerConfig(layerName);
+			const config = getLayerConfig(layerName);
             updateLayerConfigAPI(config);
+			callback();
 		});
 }
 
