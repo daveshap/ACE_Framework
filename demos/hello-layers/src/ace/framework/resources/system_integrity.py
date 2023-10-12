@@ -75,6 +75,11 @@ class SystemIntegrity(Resource):
             await self.execute_layer_command(layer, 'stop_resource')
         self.shutdown_complete = True
 
+    async def begin_work(self):
+        top_layer = self.settings.layers[0]
+        self.log.info(f"[{self.labeled_name}] Beginning work from top layer: {top_layer}")
+        await self.execute_layer_command(top_layer, 'begin_work')
+
     async def message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():
             body = message.body.decode()
@@ -103,7 +108,9 @@ class SystemIntegrity(Resource):
         if data['type'] in ['ping', 'pong']:
             if self.verify_ping_pong_sequence_complete(f"{data['type']}.{data['resource']['source']}.{data['resource']['destination']}"):
                 self.log.info(f"[{self.labeled_name}] verified POST complete for all layers")
+                self.post_complete = True
                 await self.run_layers()
+                await self.begin_work()
 
     async def check_done(self, data):
         if data['type'] == 'done':
