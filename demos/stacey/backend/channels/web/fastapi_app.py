@@ -10,11 +10,12 @@ from starlette.responses import HTMLResponse
 from ace.types import ChatMessage, create_chat_message, LayerState
 from channels.web.web_communication_channel import WebCommunicationChannel
 from channels.web.web_socket_connection_manager import WebSocketConnectionManager
+from llm.gpt import GPT, ChatCompletion
 from media.media_replace import MediaGenerator
 
 
 class FastApiApp:
-    def __init__(self, ace_system, media_generators: [MediaGenerator]):
+    def __init__(self, ace_system, media_generators: [MediaGenerator], llm: GPT):
         self.app = FastAPI()
         self.ace = ace_system
         self.media_generators = media_generators
@@ -26,6 +27,8 @@ class FastApiApp:
             'southbound': WebSocketConnectionManager()
         }
         self.chatConnectionManager = WebSocketConnectionManager()
+        self.llmConnectionManager = WebSocketConnectionManager()
+
         self.app.add_exception_handler(Exception, self.custom_exception_handler)
 
         # Setup CORS
@@ -39,6 +42,8 @@ class FastApiApp:
 
         self.setup_routes()
 
+        self.llm = llm
+
     # noinspection PyUnusedLocal
     async def custom_exception_handler(self, request: Request, exc: Exception):
         """
@@ -48,6 +53,9 @@ class FastApiApp:
         traceback_str = traceback.format_exc()
         print(traceback_str)
         return JSONResponse(content={"error": str(exc), "traceback": traceback_str}, status_code=500)
+
+    async def llm_completion_listener(self, completion: ChatCompletion):
+        await self.llmConnectionManager.send_message(completion)
 
     def setup_routes(self):
         app = self.app
@@ -72,6 +80,11 @@ class FastApiApp:
         async def websocket_endpoint_chat(websocket: WebSocket):
             print("websocket_endpoint_chat called")
             await self.chatConnectionManager.connect(websocket)
+
+        @app.websocket("/ws-llmlog/")
+        async def websocket_endpoint_llmlog(websocket: WebSocket):
+            print("websocket_endpoint_llmlog called")
+            await self.llmConnectionManager.connect(websocket)
 
         # noinspection PyUnusedLocal
         @app.exception_handler(Exception)
@@ -115,6 +128,10 @@ class FastApiApp:
                 traceback_str = traceback.format_exc()
                 print(traceback_str)
                 return JSONResponse(content={"error": str(e), "traceback": traceback_str}, status_code=400)
+
+        @app.get("/llmlog/")
+        async def get_llm_completions():
+            return self.llm.get_completion_log()
 
         @app.get("/bus/")
         async def view_bus(name: str):
@@ -187,6 +204,8 @@ class FastApiApp:
 
         for layer in self.ace.get_layers():
             layer.add_layer_state_listener(self.create_layer_state_listener(layer))
+
+        self.llm.add_completion_listener(self.llm_completion_listener)
 
     def create_bus_listener(self, bus):
         async def listener(sender, message):

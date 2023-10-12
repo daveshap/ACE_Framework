@@ -37,7 +37,7 @@ async def stacey_main(start_discord, start_web):
 
     web_task = asyncio.create_task(asyncio.sleep(0))
     if start_web:
-        web_backend = FastApiApp(ace, media_generators)
+        web_backend = FastApiApp(ace, media_generators, llm)
         print('Starting web backend')
         web_task = asyncio.create_task(web_backend.run())
         print('Started web backend')

@@ -3,6 +3,7 @@ import React from 'react';
 import {Alert, Box, Flex, Heading, Image, VStack} from '@chakra-ui/react';
 import {Bus} from "@/components/bus";
 import LayerStateComponent from "@/components/layerStateComponent";
+import NextLink from "next/link";
 
 const AdminPage = () => {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -16,6 +17,11 @@ const AdminPage = () => {
         <Box backgroundColor="black" minH="100vh">
             <VStack w={"full"}>
                 <Heading color={"white"} >Stacey's brain</Heading>
+                <Box  color={"white"} >
+                    <NextLink href="/completions" passHref>
+                        LLM log
+                    </NextLink>
+                </Box>
                 <Flex w="full" align="start">
                     <Box flex="1" mx="3"><Bus busName="southbound" /></Box>
                     <VStack>
