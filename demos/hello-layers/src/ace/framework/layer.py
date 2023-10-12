@@ -1,3 +1,4 @@
+import time
 import yaml
 import aio_pika
 from abc import abstractmethod
@@ -6,9 +7,8 @@ from threading import Thread
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
-import openai
 from ace.framework.llm.gpt import GPT
-from ace.framework.util import get_environment_variable
+
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
@@ -55,7 +55,7 @@ class Layer(Resource):
             message = f"Invalid layer name: {self.settings.name}"
             self.log.error(message)
             raise ValueError(message)
-    
+
     def set_llm(self):
         self.llm = GPT()
 
@@ -122,7 +122,7 @@ class Layer(Resource):
         else:
             message_strings = [m['message'] for m in messages]
         result = " | ".join(message_strings)
-        return result 
+        return result
 
     def run_layer_in_thread(self):
         while True and self.layer_running:
@@ -142,14 +142,15 @@ class Layer(Resource):
                                            )
             messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
             self.resource_log("This is a resource log test")
-            if messages_northbound:
+            if messages_northbound and self.northern_layer:
                 for m in messages_northbound:
                     message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
-            if messages_southbound:
+            if messages_southbound and self.southern_layer:
                 for m in messages_southbound:
                     message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
+            time.sleep(10)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
         queue_name = self.build_layer_queue_name(direction, layer)
