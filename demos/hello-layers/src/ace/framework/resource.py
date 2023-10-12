@@ -242,8 +242,9 @@ class Resource(ABC):
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
 
     def resource_log(self, message):
-        message = self.build_message('logging', message={'message': message}, message_type='log')
-        self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, message)
+        self.log.debug(f"{self.labeled_name} resource log: \n\n{message}\n\n")
+        log_message = self.build_message('logging', message={'message': message}, message_type='log')
+        self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, log_message)
 
     def telemetry_subscribe_to_namespace(self, namespace):
         self.telemetry_subscribe_unsubscribe_namespace('subscribe', namespace)
