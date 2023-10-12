@@ -3,7 +3,7 @@ from jinja2 import Template
 operation_classifier = Template(
     """
     {{ace_context}}
-    {{identitiy}}
+    {{identity}}
 
     Below is a list of your incoming messages. Remember DATA and DATA_RESPONSE messages are on the NORTH bus. CONTROL and CONTROL_RESPONSE messages are on the south bus.
 
@@ -30,9 +30,12 @@ operation_classifier = Template(
     Determine which operations are needed in the NORTH and SOUTH directions according to your role in the ACE framework and the incoming messages.
     You must choose from the the following operations:
 
-    ## MAKE_A_REQUEST: Request more information
+    ## CREATE_REQUEST: Request more information
     ## ADD_TO_CONTEXT: Do nothing, but store these messages in memory
     ## TAKE_ACTION: Communicate a message to the next layer on the bus.
+
+    If there are no messages, your should default to ADD_TO_CONTEXT
+    If there are messages, you should default to TAKE_ACTION
 
     # RESPONSE FORMAT
     {
@@ -60,11 +63,11 @@ operation_classifier = Template(
 
     Your response should be:
     {
-        "SOUTH": "MAKE_A_REQUEST"
+        "SOUTH": "CREATE_REQUEST"
         "NORTH": "ADD_TO_CONTEXT"
     }
 
-    ## EXAMPLE 2
+    ## EXAMPLE 3
 
     Based on all incoming messages, you decide to send a CONTROL message along the the SOUTH bus to communicate this information to the layer below you.
     You need more information from the layer below before you can send information further along the NORTH bus. Therefore, you decide to send a CONTROL_REQUEST message along the SOUTH bus to the layer below.
@@ -72,7 +75,7 @@ operation_classifier = Template(
     Your response should be:
     {
         "SOUTH": "TAKE_ACTION"
-        "NORTH": "MAKE_A_REQUEST"
+        "NORTH": "CREATE_REQUEST"
     }
 
     """

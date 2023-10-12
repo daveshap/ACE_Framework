@@ -1,9 +1,9 @@
 from jinja2 import Template
 
-layer_instructions = Template(
+l1_layer_instructions = Template(
     """
     {{ace_context}}
-    {{identitiy}}
+    {{identity}}
 
     Below is a list of your incoming messages.
     
@@ -25,24 +25,24 @@ layer_instructions = Template(
 
     DATA_REQUEST message types require immediate response. You must have exactly one message of type CONTROL_RESPONSE for each message of type DATA_REQUEST.
 
-    {{control_operation_prompt}}
+    {{operation_prompt}}
     
     ## FORMAT
 
     Your response should be an array of messages with type, direction and text attributes. 
-    The direction should always be "SOUTH". The type should always be "CONTROL" or "CONTROL_RESPONSE".
+    The direction should always be "southbound". The type should always be "CONTROL" or "CONTROL_RESPONSE".
     If no messages are needed, retunr an empty array.
     For example:
     [
         {
-            "type": "CONTROL_RESPONSE",
-            "direction": "SOUTH",
-            "text": "Send additional data"
+            "type": "CONTROL",
+            "direction": "southbound",
+            "message": "Create a strategy to accomplish the mission"
         },
         {
-            "type": "CONTROL",
-            "direction": "SOUTH",
-            "text": "Create a strategy to end hunger worldwide"
+            "type": "CONTROL_RESPONSE",
+            "direction": "southbound",
+            "message": "The global strategy you created does not align with our moral principles"
         }
     ]
     """

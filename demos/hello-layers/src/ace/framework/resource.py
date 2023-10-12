@@ -283,7 +283,7 @@ class Resource(ABC):
             self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
 
     def resource_log(self, message):
-        self.log.debug(f"{self.labeled_name} resource log: \n\n{message}\n\n")
+        self.log.info(f"{self.labeled_name} resource log: \n\n{message}\n\n")
         log_message = self.build_message('logging', message={'message': message}, message_type='log')
         self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, log_message)
 

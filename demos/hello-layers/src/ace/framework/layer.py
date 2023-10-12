@@ -6,7 +6,9 @@ from threading import Thread
 
 from ace.settings import Settings
 from ace.framework.resource import Resource
-
+import openai
+from ace.framework.llm.gpt import GPT
+from ace.framework.util import get_environment_variable
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
@@ -25,6 +27,7 @@ class Layer(Resource):
         self.set_adjacent_layers()
         self.set_identity()
         await self.subscribe_telemetry()
+        self.set_llm()
         await self.register_busses()
 
     def post_start(self):
@@ -52,6 +55,9 @@ class Layer(Resource):
             message = f"Invalid layer name: {self.settings.name}"
             self.log.error(message)
             raise ValueError(message)
+    
+    def set_llm(self):
+        self.llm = GPT()
 
     async def register_busses(self):
         self.log.debug("Registering busses...")
@@ -86,6 +92,37 @@ class Layer(Resource):
             self.log.debug(f"[{self.labeled_name}] RUN LAYER RESPONSE MESSAGES: {response_messages}")
         if telemetry_messages:
             self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
+
+    def parse_req_resp_messages(self, messages):
+        data_messages, control_messages = [], []
+        for m in messages:
+            if m['type'] == "DATA_RESPONSE" or m['type'] == "CONTROL_RESPONSE":
+                m['type'] = 'response'
+            elif m['type'] == "DATA_REQUEST" or m['type'] == "CONTROL_REQUEST":
+                m['type'] = 'request'
+            elif m['type'] == "DATA":
+                m['type'] = 'data'
+            elif m['type'] == "CONTROL":
+                m['type'] = 'control'
+            else:
+                m['type'] = 'data'
+        if messages:
+            data_messages = [m for m in messages if m['direction']=="northbound"]
+            control_messages = [m for m in messages if m['direction']=="southbound"]
+        self.log.info(f"[{self.labeled_name}] RETURNED CONTROL MESSAGES: {control_messages}")
+        self.log.info(f"[{self.labeled_name}] RETURNED DATA MESSAGES: {data_messages}")
+        return data_messages, control_messages
+
+    def get_messages_for_prompt(self, messages):
+        self.log.info(f"[{self.labeled_name}] MESSAGES: {messages}")
+        if not messages:
+            return "None"
+        if messages[0]['type'] == 'telemetry':
+            message_strings = [m['namespace'] + ': ' + m['data'] for m in messages]
+        else:
+            message_strings = [m['message'] for m in messages]
+        result = " | ".join(message_strings)
+        return result 
 
     def run_layer_in_thread(self):
         while True and self.layer_running:
