@@ -14,6 +14,7 @@ class Layer3(Layer):
             telemetry_subscriptions=[
                 "environment.os.distribution.*",
                 "environment.os.shell",
+                "environment.os.resource_usage",
             ],
         )
 

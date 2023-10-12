@@ -19,7 +19,6 @@ class Layer2(Layer):
             telemetry_subscriptions=[
                 "environment.type",
                 "environment.interface",
-                "environment.os.uptime",
             ],
         )
 
