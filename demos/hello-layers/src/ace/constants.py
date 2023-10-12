@@ -14,5 +14,6 @@ THIRD_PARTY_LOGGERS = [
     'asyncio',
     'docker',
     'urllib3',
+    'openai',
 ]
 THIRD_PARTY_LOG_LEVEL = "WARNING"

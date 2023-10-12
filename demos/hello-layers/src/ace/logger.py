@@ -25,7 +25,9 @@ def get_log_level(level_str):
 for base_logger in constants.THIRD_PARTY_LOGGERS:
     # Docker Compose sets this to an empty string, so a 'falsy' check is needed here.
     log_level = os.getenv('ACE_THIRD_PARTY_LOG_LEVEL') or constants.THIRD_PARTY_LOG_LEVEL
-    logging.getLogger(base_logger).setLevel(get_log_level(log_level))
+    logger = logging.getLogger(base_logger)
+    logger.setLevel(get_log_level(log_level))
+    logger.propagate = False
 
 
 class Logger:
