@@ -6,8 +6,6 @@ import ChakraUIRenderer from "chakra-ui-markdown-renderer";
 import ReactMarkdown from "react-markdown";
 import {ChatMessage, createChatMessage} from "@/lib/types";
 
-const userName = 'web-user'
-
 function Chat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -16,7 +14,7 @@ function Chat() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     const chatSocketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
     const webSocketRef = useRef<WebSocket | null>(null);
-    const [userName, setUserName] = useState('web-user');
+    const [userName, setUserName] = useState('MrHenrik');
 
 
     if (!backendUrl) {
