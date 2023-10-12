@@ -91,7 +91,7 @@ class TelemetryManager(Resource):
 
     def build_telemetry_message(self, namespace, data):
         root = self.namespace_root(namespace)
-        message = self.build_message(root, message={'data': data}, message_type='telemetry')
+        message = self.build_message(self.build_telemetry_exchange_name(root), message={'namespace': namespace, 'data': data}, message_type='telemetry')
         return message
 
     async def make_exchanges(self):
