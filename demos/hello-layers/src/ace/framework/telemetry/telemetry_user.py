@@ -14,8 +14,7 @@ class TelemetryUser(Telemetry):
 
     def __init__(self, publisher=None):
         super().__init__(publisher)
-        self.loop = asyncio.get_event_loop()
-        self.loop.add_signal_handler(signal.SIGUSR1, self.schedule_receive_event)
+        signal.signal(signal.SIGUSR1, self.schedule_receive_event)
 
     @property
     def settings(self):
@@ -31,10 +30,11 @@ class TelemetryUser(Telemetry):
         if namespace in ENVIRONMENT_CONSTANTS:
             return ENVIRONMENT_CONSTANTS[namespace]
 
-    def schedule_receive_event(self):
-        self.loop.create_task(self.receive_encouragement_event())
+    def schedule_receive_event(self, signal, frame):
+        self.log.info(f"{self.labeled_name} received SIGUSR1 signal")
+        loop = asyncio.get_event_loop()
+        loop.call_soon_threadsafe(loop.create_task, self.receive_encouragement_event())
 
     async def receive_encouragement_event(self):
-        self.log.info("Received SIGUSR1 signal -- let's add some encouragement...")
-        await self.collection_event()
-
+        self.log.info(f"{self.labeled_name} add some encouragement...")
+        await self.collection_event('user.encouragement')
