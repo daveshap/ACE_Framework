@@ -1,4 +1,5 @@
 import os
+import glob
 import aio_pika
 import yaml
 
@@ -7,10 +8,15 @@ from ace.framework.resource import Resource
 
 
 class LoggingSettings(Settings):
-    pass
+    clear_logs_on_start: bool = True
 
 
 class Logging(Resource):
+
+    def __init__(self):
+        super().__init__()
+        if self.settings.clear_logs_on_start:
+            self.clear_logs()
 
     @property
     def settings(self):
@@ -18,6 +24,16 @@ class Logging(Resource):
             name="logging",
             label="Logging",
         )
+
+    def clear_logs(self):
+        self.log.info(f"{self.labeled_name} clearing old logs...")
+        files = glob.glob(self.settings.log_dir + '/*.log')
+        for f in files:
+            try:
+                os.remove(f)
+                self.log.debug(f'{self.labeled_name} file {f} has been removed successfully')
+            except OSError as e:
+                self.log.error(f'{self.labeled_name} error removing log file: {f} : {e}')
 
     # TODO: Add valid status checks.
     def status(self):
