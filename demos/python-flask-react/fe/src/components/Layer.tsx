@@ -33,7 +33,7 @@ export default function Layer({ layerNum }: LayerProps) {
   const chat = useChat((state) => state)
 
   const busMessages = useQuery(["get-bus-message", layerNum], () => getBusMessages(layerNum), {
-    enabled: ace.started && ace.layerNum === layerNum && ace.type === "LAYER" && ace.layerStep === "BUS-MESSAGE",
+    enabled: ace.started && ace.layerNum === layerNum && ace.layerStep === "BUS-MESSAGE",
     onSuccess: () => {
       setValue(`layer-${layerNum}-bus-message`)
       if (ace.auto) ace.progressAce()
@@ -44,12 +44,7 @@ export default function Layer({ layerNum }: LayerProps) {
   const llmMessage = useGenerateLlmMessage(
     layerNum,
     {
-      enabled:
-        ace.started &&
-        ace.layerNum === layerNum &&
-        ace.type === "LAYER" &&
-        ace.layerStep === "LLM-MESSAGE" &&
-        !!messages,
+      enabled: ace.started && ace.layerNum === layerNum && ace.layerStep === "LLM-MESSAGE" && !!messages,
       onGeneration: () => setValue(`layer-${layerNum}-llm-message`),
       onSuccess: (llmMessage) => {
         // if it's at the bottom and it's going down, stop
@@ -63,20 +58,21 @@ export default function Layer({ layerNum }: LayerProps) {
     messages,
   )
 
-  useQuery(["save-response", layerNum, llmMessage.llmMessage], () => saveResponse(layerNum, llmMessage.llmMessage!), {
-    enabled:
-      ace.started &&
-      ace.layerNum === layerNum &&
-      ace.layerStep === "SAVE-RESPONSE" &&
-      ace.type === "BUS" &&
-      llmMessage.done,
-    onSuccess: async () => {
+  useQuery(
+    ["save-response", layerNum, llmMessage.llmMessage],
+    () => {
       setValue("")
-      // if it's at the top and it's going up, pivot
-      if (ace.layerNum === 1 && ace.direction === "NORTH") ace.pivotAce()
-      if (ace.auto) ace.progressAce()
+      return saveResponse(layerNum, llmMessage.llmMessage!)
     },
-  })
+    {
+      enabled: ace.started && ace.layerNum === layerNum && ace.layerStep === "SAVE-RESPONSE" && llmMessage.done,
+      onSuccess: async () => {
+        // if it's at the top and it's going up, pivot
+        if (ace.layerNum === 1 && ace.direction === "NORTH") ace.pivotAce()
+        if (ace.auto) ace.progressAce()
+      },
+    },
+  )
 
   return (
     <div className="self-center w-1/2 flex flex-col gap-y-2 border border-zinc-800 px-8 py-6 rounded-md bg-zinc-800/20">

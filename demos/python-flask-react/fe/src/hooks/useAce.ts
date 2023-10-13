@@ -4,8 +4,6 @@ import { layers } from "@/lib/utils"
 type State = {
   layerNum: keyof typeof layers
   layerStep: "BUS-MESSAGE" | "LLM-MESSAGE" | "SAVE-RESPONSE"
-  bus: string[]
-  type: "BUS" | "LAYER"
   direction: "NORTH" | "SOUTH"
   started: boolean
   auto: boolean
@@ -20,8 +18,6 @@ type AceState = State & {
 const initialState: State = {
   layerNum: 6,
   layerStep: "BUS-MESSAGE",
-  bus: layers[6].bus,
-  type: "LAYER",
   direction: "NORTH",
   started: false,
   auto: false,
@@ -48,22 +44,20 @@ export const useAce = create<AceState>((set) => ({
   progressAce: () =>
     set((state) => {
       // If a layer was just processed, then a bus needs to be processed next
-      if (state.type === "LAYER" && state.layerStep === "BUS-MESSAGE") {
+      if (state.layerStep === "BUS-MESSAGE") {
         return { ...state, layerStep: "LLM-MESSAGE" }
-      } else if (state.type === "LAYER" && state.layerStep === "LLM-MESSAGE") {
-        return { ...state, layerStep: "SAVE-RESPONSE", type: "BUS", bus: layers[state.layerNum].bus }
-      } else if (state.type === "BUS" && state.direction === "NORTH") {
+      } else if (state.layerStep === "LLM-MESSAGE") {
+        return { ...state, layerStep: "SAVE-RESPONSE" }
+      } else if (state.layerStep === "SAVE-RESPONSE" && state.direction === "NORTH") {
         return {
           ...state,
           layerNum: (state.layerNum - 1) as keyof typeof layers,
-          type: "LAYER",
           layerStep: "BUS-MESSAGE",
         }
       } else {
         return {
           ...state,
           layerNum: (state.layerNum + 1) as keyof typeof layers,
-          type: "LAYER",
           layerStep: "BUS-MESSAGE",
         }
       }

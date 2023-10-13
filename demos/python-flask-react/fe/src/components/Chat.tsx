@@ -16,7 +16,7 @@ export default function Chat() {
   const { messages, addMessage } = useChat((state) => state)
   const ace = useAce((state) => state)
   const [inputValue, setInputValue] = useState("")
-  const acePrint = { layer: ace.layerNum, bus: ace.bus, direction: ace.direction, step: ace.layerStep }
+  const acePrint = { layer: ace.layerNum, direction: ace.direction, step: ace.layerStep }
 
   console.log(JSON.stringify(acePrint))
 
@@ -35,7 +35,7 @@ export default function Chat() {
 
   return (
     <form
-      className="flex-grow relative max-h-[50vh] lg:max-w-[50vw] lg:max-h-full flex flex-col px-6 py-3 gap-3"
+      className="flex-grow relative max-h-[50vh] lg:max-w-[50vw] lg:max-h-screen flex flex-col px-6 py-3 gap-3 overflow-y-scroll"
       onSubmit={onSubmit}
     >
       {/* Chat Messages */}
