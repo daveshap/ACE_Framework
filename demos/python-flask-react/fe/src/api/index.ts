@@ -62,11 +62,14 @@ export const useGenerateLlmMessage = (
       onGeneration()
       await generateMessage()
       setIsLoading(false)
-      onSuccess(llmMessage)
     }
 
     if (enabled) runSequence()
   }, [messages, layerNum, enabled])
+
+  useEffect(() => {
+    if (done) onSuccess(llmMessage)
+  }, [done, llmMessage])
 
   return { llmMessage, isLoading, done }
 }

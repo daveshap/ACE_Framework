@@ -11,21 +11,23 @@ import { TriangleDownIcon, TriangleUpIcon } from "@radix-ui/react-icons"
 const Message = ({ direction, layerNum }: { direction: string; layerNum: number }) => {
   const ace = useAce((state) => state)
 
-  if (ace.layerStep === "BUS-MESSAGE") {
-    if (
-      (direction === "SOUTH" && ace.layerNum === layerNum + 1) ||
-      (direction === "NORTH" && ace.layerNum === layerNum)
-    ) {
-      return "Fetching Bus..."
+  if (ace.started) {
+    if (ace.layerStep === "BUS-MESSAGE") {
+      if (
+        (direction === "SOUTH" && ace.layerNum === layerNum + 1) ||
+        (direction === "NORTH" && ace.layerNum === layerNum)
+      ) {
+        return "Fetching Bus..."
+      }
     }
-  }
 
-  if (ace.layerStep === "SAVE-RESPONSE") {
-    if (
-      (direction === "SOUTH" && ace.layerNum === layerNum) ||
-      (direction === "NORTH" && ace.layerNum - 1 === layerNum)
-    ) {
-      return "Saving Response..."
+    if (ace.layerStep === "SAVE-RESPONSE") {
+      if (
+        (direction === "SOUTH" && ace.layerNum === layerNum) ||
+        (direction === "NORTH" && ace.layerNum - 1 === layerNum)
+      ) {
+        return "Saving Response..."
+      }
     }
   }
 

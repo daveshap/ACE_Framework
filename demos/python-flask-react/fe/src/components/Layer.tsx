@@ -18,7 +18,7 @@ const getMessages = (chatMessages: Message[], layerNum: number, direction: "NORT
   if (!busMessages) return ""
   const userMessage = chatMessages.find((message) => message.role === "user")
   if (userMessage && layerNum === 6 && direction === "NORTH") {
-    return `USER message:\n${userMessage.text}\n\n${busMessages}`
+    return `${busMessages}\nUSER:\n${userMessage.text} `
   }
 
   return busMessages
@@ -75,7 +75,7 @@ export default function Layer({ layerNum }: LayerProps) {
   )
 
   return (
-    <div className="self-center w-1/2 flex flex-col gap-y-2 border border-zinc-800 px-8 py-6 rounded-md bg-zinc-800/20">
+    <div className="self-center w-3/4 max-w-[500px] flex flex-col gap-y-2 border border-zinc-800 px-8 py-6 rounded-md bg-zinc-800/20">
       <h1 className="text-center font-bold text-lg lg:text-xl">{layers[layerNum].name}</h1>
 
       <Accordion
