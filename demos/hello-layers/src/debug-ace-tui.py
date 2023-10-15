@@ -155,7 +155,16 @@ class DebugAceTui:
         self.dialog = None
 
     def update_output_display(self):
-        self.data_display.text = f"# {self.active_layer_name.upper()}\n\n" + yaml.dump(self.active_layer, default_flow_style=False, sort_keys=True)
+        text = []
+        text.append(f"# ACTIVE LAYER: {self.active_layer_name.upper()}")
+        text.append(yaml.dump(self.active_layer, default_flow_style=False, sort_keys=True))
+        text.append("# OTHER LAYERS:")
+        for layer in self.layers:
+            if layer != self.active_layer_number:
+                name = f"layer_{layer}"
+                text.append(f"## {name.upper()}")
+                text.append(yaml.dump(self.data_dict[name], default_flow_style=False, sort_keys=True))
+        self.data_display.text = "\n\n".join(text)
 
     def set_active_layer(self, layer):
         self.active_layer_number = layer
