@@ -1,3 +1,4 @@
+import copy
 import yaml
 import functools
 from prompt_toolkit import Application
@@ -10,7 +11,7 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.data import YamlLexer
 from prompt_toolkit.filters import Condition
 
-HELP_MESSAGE = """
+DEFAULT_HELP_MESSAGE = """
 Keyboard shortcuts:
     1-6: Switch to layer 1-6
     c: Add to 'control' list.
@@ -18,10 +19,11 @@ Keyboard shortcuts:
     r: Add to 'request' list.
     s: Add to 'response' list.
     t: Add to 'telemetry' list.
+    e: Erase all for current layer.
     q: Quit the application.
 """
 
-style = Style.from_dict({
+DEFAULT_STYLE = Style.from_dict({
     'dialog': 'noinherit',
     'dialog.body': 'noinherit',
     'dialog.shadow': 'noinherit',
@@ -33,7 +35,7 @@ style = Style.from_dict({
     'text-area': 'bg:#000000 #FFFFFF',
 })
 
-layers = [
+DEFAULT_LAYERS = [
     '1',
     '2',
     '3',
@@ -42,229 +44,140 @@ layers = [
     '6',
 ]
 
-# The dict we're building
-data_dict = {}
-for layer in layers:
-    data_dict[f"layer_{layer}"] = {
-        'data': [],
-        'control': [],
-        'request': [],
-        'response': [],
-        'telemetry': []
-    }
 
-active_layer = None
-active_layer_name = None
+class DebugAceTui:
+    def __init__(self):
+        self.help_message = DEFAULT_HELP_MESSAGE
+        self.style = DEFAULT_STYLE
+        self.layers = DEFAULT_LAYERS
 
-# Key bindings
-kb = KeyBindings()
+        self.data_dict = {f"layer_{layer}": self.empty_data() for layer in self.layers}
+        self.active_layer = None
+        self.active_layer_name = None
+        self.active_layer_number = self.layers[0]
+        self.dialog = None
+        self.dialog_not_focused = Condition(lambda: self.dialog is None)
+        self.text_area = TextArea(multiline=True)
+        self.radio_list = RadioList(values=[('northbound', 'Northbound'), ('southbound', 'Southbound')])
+        self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
+        self.kb = KeyBindings()
+        self.app = Application(key_bindings=self.kb, full_screen=True, style=self.style)
 
-dialog = None
+        self._init_key_bindings()
+        self.set_active_layer(self.active_layer_number)
 
-# Create a condition that checks if the dialog is not focused.
-dialog_not_focused = Condition(lambda: dialog is None)
+    def empty_data(self):
+        return {
+            'data': [],
+            'control': [],
+            'request': [],
+            'response': [],
+            'telemetry': [],
+        }
 
-# Create the TextArea and assign it to a variable
-text_area = TextArea(multiline=False)
+    def _init_key_bindings(self):
+        @self.kb.add('q', filter=self.dialog_not_focused)
+        def _(event):
+            event.app.exit()
 
-# Create the RadioList and assign it to a variable
-radio_list = RadioList(values=[
-    ('northbound', 'Northbound'),
-    ('southbound', 'Southbound'),
-])
+        for layer in self.layers:
+            self.kb.add(layer, filter=self.dialog_not_focused)(self.layer_kb_callback(layer))
 
-data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
+        @self.kb.add('c', filter=self.dialog_not_focused)
+        def _(event):
+            self.open_dialog("control", "Add CONTROL messages")
 
+        @self.kb.add('d', filter=self.dialog_not_focused)
+        def _(event):
+            self.open_dialog("data", "Add DATA messages")
 
-@kb.add('q', filter=dialog_not_focused)
-def _(event):
-    " Handle 'c-q': Quit the application. "
-    event.app.exit()
+        @self.kb.add('r', filter=self.dialog_not_focused)
+        def _(event):
+            self.open_dialog("request", "Add REQUEST messages", include_direction=True)
 
+        @self.kb.add('s', filter=self.dialog_not_focused)
+        def _(event):
+            self.open_dialog("response", "Add RESPONSE messages", include_direction=True)
 
-def layer_kb_callback(layer):
-    def callback(event):
-        set_active_layer(layer)
-    return callback
+        @self.kb.add('t', filter=self.dialog_not_focused)
+        def _(event):
+            self.open_dialog("telemetry", "Add TELEMETRY messages")
 
+        @self.kb.add('e', filter=self.dialog_not_focused)
+        def _(event):
+            self.clear_layer()
 
-for layer in layers:
-    kb.add(layer, filter=dialog_not_focused)(layer_kb_callback(layer))
+    def layer_kb_callback(self, layer):
+        def callback(event):
+            self.set_active_layer(layer)
+        return callback
 
+    def open_dialog(self, key, title, include_direction=False):
+        fields = []
+        if include_direction:
+            fields.append(Label(text='Direction:'))
+            fields.append(self.radio_list)
+        fields.append(Label(text='Message:'))
+        fields.append(self.text_area)
+        self.dialog = Dialog(
+            title=f"{self.active_layer_name}: {title}",
+            body=HSplit(fields),
+            buttons=[
+                Button(text='Add', handler=functools.partial(self.add, key)),
+                Button(text='Cancel', handler=self.cancel),
+                Button(text=f"Clear {key} messages", handler=functools.partial(self.clear_type, key), width=25),
+            ]
+        )
+        self.app.layout = Layout(self.dialog, focused_element=self.dialog)
 
-@kb.add('c', filter=dialog_not_focused)
-def _(event):
-    " Handle 'c-d': Open the dialog for adding a dict to the 'control' list."
-    global dialog
-    global active_layer_name
-    dialog = Dialog(
-        title=f"{active_layer_name}: Add CONTROL messages",
-        body=HSplit([
-            Label(text='Message:'),
-            text_area,
-        ]),
-        buttons=[
-            Button(text='Add', handler=functools.partial(add, "control")),
-            Button(text='Cancel', handler=cancel),
-            Button(text="Clear data", handler=functools.partial(clear, "control")),
-        ]
-    )
-    event.app.layout = Layout(dialog, focused_element=dialog)
+    def clear_type(self, key):
+        self.data_dict[self.active_layer_name][key] = []
+        self.reset_values()
+        self.update_output_display()
+        self.app.layout = self.layout
+        self.dialog = None
 
+    def clear_layer(self):
+        self.data_dict[self.active_layer_name] = self.empty_data()
+        self.reset_values()
+        self.set_active_layer(self.active_layer_number)
+        self.app.layout = self.layout
+        self.dialog = None
 
-@kb.add('d', filter=dialog_not_focused)
-def _(event):
-    " Handle 'c-d': Open the dialog for adding a dict to the 'data' list."
-    global dialog
-    global active_layer_name
-    dialog = Dialog(
-        title=f"{active_layer_name}: Add DATA messages",
-        body=HSplit([
-            Label(text='Message:'),
-            text_area,
-        ]),
-        buttons=[
-            Button(text='Add', handler=functools.partial(add, "data")),
-            Button(text='Cancel', handler=cancel),
-            Button(text="Clear data", handler=functools.partial(clear, "data")),
-        ]
-    )
-    event.app.layout = Layout(dialog, focused_element=dialog)
+    def add(self, key):
+        new_message = {'message': self.text_area.text}
+        if key in ['request', 'response']:
+            new_message['direction'] = self.radio_list.current_value
+        self.reset_values()
+        self.data_dict[self.active_layer_name][key].append(new_message)
+        self.update_output_display()
+        self.app.layout = self.layout
+        self.dialog = None
 
+    def update_output_display(self):
+        self.data_display.text = f"# {self.active_layer_name.upper()}\n\n" + yaml.dump(self.active_layer, default_flow_style=False, sort_keys=True)
 
-@kb.add('r', filter=dialog_not_focused)
-def _(event):
-    global dialog
-    global active_layer_name
-    " Handle 'c-r': Open the dialog for adding a dict to the 'request' list."
-    dialog = Dialog(
-        title=f"{active_layer_name}: Add REQUEST messages",
-        body=HSplit([
-            Label(text='Direction:'),
-            radio_list,
-            Label(text='Message:'),
-            text_area,
-        ]),
-        buttons=[
-            Button(text='Add', handler=functools.partial(add, "request")),
-            Button(text='Cancel', handler=cancel),
-            Button(text="Clear data", handler=functools.partial(clear, "request")),
-        ]
-    )
-    event.app.layout = Layout(dialog, focused_element=dialog)
+    def set_active_layer(self, layer):
+        self.active_layer_number = layer
+        self.active_layer_name = f"layer_{layer}"
+        self.active_layer = self.data_dict[self.active_layer_name]
+        self.update_output_display()
 
+    def cancel(self):
+        self.reset_values()
+        self.app.layout = self.layout
+        self.dialog = None
 
-@kb.add('s', filter=dialog_not_focused)
-def _(event):
-    global dialog
-    global active_layer_name
-    " Handle 'c-s': Open the dialog for adding a dict to the 'response' list."
-    dialog = Dialog(
-        title=f"{active_layer_name}: Add RESPONSE messages",
-        body=HSplit([
-            Label(text='Direction:'),
-            radio_list,
-            Label(text='Message:'),
-            text_area,
-        ]),
-        buttons=[
-            Button(text='Add', handler=functools.partial(add, "response")),
-            Button(text='Cancel', handler=cancel),
-            Button(text="Clear data", handler=functools.partial(clear, "response")),
-        ]
-    )
-    event.app.layout = Layout(dialog, focused_element=dialog)
+    def reset_values(self):
+        self.text_area.text = ''
+        self.radio_list.current_value = None
 
+    def run(self):
+        body = Frame(body=HSplit([Label(text=self.help_message), self.data_display]))
+        root_container = VSplit([body])
+        self.layout = Layout(root_container)
+        self.app.layout = self.layout
+        self.app.run()
 
-@kb.add('t', filter=dialog_not_focused)
-def _(event):
-    " Handle 'c-t': Open the dialog for adding a dict to the 'telemetry' list."
-    global dialog
-    global active_layer_name
-    dialog = Dialog(
-        title=f"{active_layer_name}: Add TELEMETRY messages",
-        body=HSplit([
-            Label(text='Message:'),
-            text_area,
-        ]),
-        buttons=[
-            Button(text='Add', handler=functools.partial(add, "telemetry")),
-            Button(text='Cancel', handler=cancel),
-            Button(text="Clear data", handler=functools.partial(clear, "telemetry")),
-        ]
-    )
-    event.app.layout = Layout(dialog, focused_element=dialog)
-
-
-def clear(key):
-    global dialog
-    global active_layer_name
-    " Clear the list. "
-    data_dict[active_layer_name][key] = []
-    reset_values()
-    update_output_display()
-    # Reset the layout
-    app.layout = layout
-    dialog = None
-
-
-def add(key):
-    " Add a dict to the 'data' list. "
-    global dialog
-    global active_layer_name
-    # Get the message from the TextArea
-    new_message = {
-        'message': text_area.text,
-    }
-    if key in ['request', 'response']:
-        new_message['direction'] = radio_list.current_value
-    reset_values()
-    data_dict[active_layer_name][key].append(new_message)
-    update_output_display()
-    # Reset the layout
-    app.layout = layout
-    dialog = None
-
-
-def update_output_display():
-    global active_layer
-    global active_layer_name
-    data_display.text = f"# {active_layer_name.upper()}\n\n" + yaml.dump(active_layer, default_flow_style=False)
-
-
-def set_active_layer(layer):
-    global active_layer
-    global active_layer_name
-    active_layer_name = f"layer_{layer}"
-    active_layer = data_dict[active_layer_name]
-    update_output_display()
-
-
-def cancel():
-    " Cancel adding a dict to the 'data' list. "
-    global dialog
-    # Reset the layout
-    reset_values()
-    app.layout = layout
-    dialog = None
-
-
-def reset_values():
-    text_area.text = ''
-    radio_list.current_value = None
-
-
-set_active_layer(layers[0])
-# The initial layout
-body = Frame(body=HSplit([
-    Label(text=HELP_MESSAGE),
-    data_display,
-]))
-root_container = VSplit([body])
-layout = Layout(root_container)
-
-# The application
-app = Application(key_bindings=kb, layout=layout, full_screen=True, style=style)
-
-# Run the application
-app.run()
+if __name__ == "__main__":
+    DebugAceTui().run()
