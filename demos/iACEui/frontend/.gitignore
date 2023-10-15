@@ -1,0 +1,45 @@
+!svelte.config.js
+
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Node modules and package files
+node_modules/
+package-lock.json
+
+# SvelteKit build folder
+.svelte-kit/
+build/
+
+# TypeScript compiler output
+*.js
+*.js.map
+*.d.ts
+*.tsbuildinfo
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Tailwind CSS build output
+public/build/
+tailwind.output.css
+

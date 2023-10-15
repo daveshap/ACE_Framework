@@ -1,103 +1,222 @@
 import asyncio
 import logging
 import aio_pika
-from abc import ABC, abstractmethod
+from abc import ABC
 from base.settings import Settings
-import base.prompts as p
 from base.amqp.connection import get_connection
 from base.amqp.exchange import create_exchange
-import time
+from base import ai
+from base import prompts
+
 import openai
-from typing import List
+import re
+import tiktoken
+import json
+from database.connection import get_db
+from database.dao import (
+    get_layer_state_by_name,
+    get_layer_config,
+    get_active_ancestral_prompt,
+    update_layer_state,
+)
+from database.dao_models import LayerConfigModel, AncestralPromptModel
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class BaseLayer(ABC):
 
+class BaseLayer(ABC):
     def __init__(self, settings: Settings):
         self.settings = settings
         self.loop = asyncio.get_event_loop()
         self.connection = None
         self.channel = None
-        self.primary_directive = self.get_primary_directive()
+        self.llm_messages = []
+        self.ancestral_prompt: AncestralPromptModel
+        self.layer_config: LayerConfigModel
+        self._fetch_layer_config()
+        self._fetch_ancestral_prompt()
 
-        self.primary_directive_messages=[
-            {"role": "system", "content": self.primary_directive},
-            {"role": "user", "content": "Give me a brief summary about who or what you are."}
-        ]
+    async def data_bus_message_handler(self, message: aio_pika.IncomingMessage):
+        logger.info("data_bus_message_handler")
+        # try:
+        if self.settings.debug:
+            await self.wait_for_signal()
 
-        logger.info(f"setting {self.settings.role_name} Layer's mission")
-        chat_completion = self._generate_multi_message_completion(self.primary_directive_messages)
-        logger.info(chat_completion)
+            with get_db() as db:
+                update_layer_state(
+                    db=db,
+                    layer_name=self.settings.role_name,
+                    process_messages=False,
+                )
 
-
-    @abstractmethod
-    def get_primary_directive(self):
-        pass
-
-    # Override this function in your subclass, the default behavior here is to confirm the system is up and running
-    async def northbound_message_handler(self, message: aio_pika.IncomingMessage):
-        msg = message.body.decode()
-        logger.info(f"received message = {msg}")
-
-        northbound_full_prompt = [
-            {"role": "user", "content": msg},
-        ]
-        northbound_message = self._generate_multi_message_completion(northbound_full_prompt)
-        
-        southbound_full_prompt = [
-            {"role": "user", "content": msg},
-        ]
-        southbound_message = self._generate_multi_message_completion(southbound_full_prompt)
-
-        logger.info(f"{northbound_message=}")
-        logger.info(f"{southbound_message=}")
-
-        if northbound_message != "none":
-            await self._publish(
-                queue_name=self.settings.northbound_publish_queue,
-                message=northbound_message,
-            )
-        if southbound_message != "none":
-            await self._publish(
-                queue_name=self.settings.southbound_publish_queue,
-                message=southbound_message,
-            )
+        await self._process_message(
+            message=message, 
+            source_bus="Data Bus",
+        )
         await message.ack()
+    # except:
+        # await message.nack()
 
+    async def control_bus_message_handler(self, message: aio_pika.IncomingMessage):
+        logger.info("control_bus_message_handler")
+    # try:
+        if self.settings.debug:
+            await self.wait_for_signal()
 
-    # Override this function in your subclass, the default behavior here is to confirm the system is up and running
-    async def southbound_message_handler(self, message: aio_pika.IncomingMessage):
-        msg = message.body.decode()
-        logger.info(f"received message = {msg}")
-
-        northbound_full_prompt = [
-            {"role": "user", "content": msg},
-        ]
-        northbound_message = self._generate_multi_message_completion(northbound_full_prompt)
-        
-        southbound_full_prompt = [
-            {"role": "user", "content": msg},
-        ]
-        southbound_message = self._generate_multi_message_completion(southbound_full_prompt)
-
-        logger.info(f"{northbound_message=}")
-        logger.info(f"{southbound_message=}")
-
-        if northbound_message != "none":
-            await self._publish(
-                queue_name=self.settings.northbound_publish_queue,
-                message=northbound_message,
-            )
-        if southbound_message != "none":
-            await self._publish(
-                queue_name=self.settings.southbound_publish_queue,
-                message=southbound_message,
-            )
+        await self._process_message(
+            message=message, 
+            source_bus="Control Bus",
+        )
         await message.ack()
+    # except:
+        # await message.nack()
 
+    async def wait_for_signal(self):
+        while True:
+            logger.info("wait_for_signal")
+            with get_db() as session:
+                process_messages = get_layer_state_by_name(
+                    db=session,
+                    layer_name=self.settings.role_name,
+                ).process_messages
+                logger.info(f"{process_messages=}")
+
+            if process_messages:
+                break
+            await asyncio.sleep(3)
+
+    async def _process_message(
+        self, message: aio_pika.IncomingMessage, source_bus: str
+    ):
+        logger.info(f"Processing message from {source_bus}")
+        # if debug == True
+        self._fetch_layer_config()
+        self._fetch_ancestral_prompt()
+
+        await self._handle_bus_message(
+            message=message,
+            source_bus=source_bus,
+        )
+
+    def _reason(
+        self,
+        input: str,
+        source_bus: str,
+    ):
+        return ai.reason(
+            ancestral_prompt=self.ancestral_prompt.prompt,
+            input=input,
+            source_bus=source_bus,
+            prompts=self.layer_config.prompts,
+            llm_model_parameters=self.layer_config.llm_model_parameters,
+            llm_messages=self.llm_messages,
+        )
+
+    async def _handle_bus_message(self, message: aio_pika.IncomingMessage, source_bus):
+
+        logger.info(f"handling message from {source_bus}")
+
+        reasoning_completion = self._reason(
+            input=input,
+            source_bus=source_bus,
+        )
+
+        logger.info(f"{reasoning_completion=}")
+
+
+        data_bus_message, control_bus_message = self._determine_action(
+            source_bus,
+            reasoning_completion,
+        )
+
+        logger.info(f"{data_bus_message=}")
+        logger.info(f"{control_bus_message=}")
+
+        logger.info(f"{ai.determine_none(data_bus_message['content'])=}")
+        logger.info(f"{ai.determine_none(control_bus_message['content'])=}")
+
+        if ai.determine_none(data_bus_message['content']) != "none":
+            await self._publish(
+                queue_name=self.settings.data_bus_pub_queue,
+                message=data_bus_message,
+                destination_bus="Data Bus",
+                source_bus=source_bus,
+                input_message=message,
+                reasoning_message=reasoning_completion,
+            )
+            self.llm_messages.append(data_bus_message)
+
+        if ai.determine_none(control_bus_message['content']) != "none":
+            await self._publish(
+                queue_name=self.settings.control_bus_pub_queue,
+                message=control_bus_message,
+                destination_bus="Control Bus",
+                source_bus=source_bus,
+                input_message=message,
+                reasoning_message=reasoning_completion,
+            )
+            # create setting to disable this.
+            self.llm_messages.append(control_bus_message)
+
+        self._compact_llm_messages()
+
+    def _determine_action(
+        self,
+        source_bus,
+        reasoning_completion,
+    ):
+        return ai.determine_action(
+            ancestral_prompt=self.ancestral_prompt.prompt,
+            source_bus=source_bus,
+            reasoning_completion=reasoning_completion,
+            prompts=self.layer_config.prompts,
+            llm_model_parameters=self.layer_config.llm_model_parameters,
+            role_name=self.settings.role_name,
+            llm_messages=self.llm_messages,
+        )
+
+    async def _publish(
+        self,
+        queue_name,
+        message,
+        destination_bus,
+        source_bus,
+        input_message: aio_pika.IncomingMessage,
+        reasoning_message,
+    ):
+        exchange = await create_exchange(
+            connection=self.connection,
+            queue_name=queue_name,
+        )
+
+        headers = {
+            "source_bus": source_bus,
+            "parent_message_id": str(input_message.message_id),
+            "destination_bus": destination_bus,
+            "layer_name": self.settings.role_name or "user input",
+            "llm_messages": json.dumps(self.llm_messages),
+            "config_id": str(self.layer_config.config_id),
+            "input": input_message.body.decode(),
+            "reasoning": json.dumps(reasoning_message),
+        }
+
+        logger.info(f"message {headers=}")
+
+        message_body = aio_pika.Message(
+            body=message["content"].encode(),
+            headers=headers,
+            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            content_type="text/plain",
+        )
+
+        logger.info(f"publishing {queue_name=}, {destination_bus=}, {source_bus=}")
+
+        await exchange.publish(
+            message_body,
+            routing_key=queue_name,
+        )
 
     async def _connect(self):
         self.connection = await get_connection(
@@ -111,57 +230,77 @@ class BaseLayer(ABC):
         logger.info(f"{self.settings.role_name} connection established...")
 
     async def _subscribe(self):
-        nb_queue = await self.channel.declare_queue(self.settings.northbound_subscribe_queue, durable=True)
-        sb_queue = await self.channel.declare_queue(self.settings.southbound_subscribe_queue, durable=True)
-
-        await nb_queue.consume(self.northbound_message_handler)
-        await sb_queue.consume(self.southbound_message_handler)
-
-    def _generate_completion(self, conversation):
-        openai.api_key = self.settings.openai_api_key
-        messages = [
-            {"role": "user", "content": conversation}
-        ]
-        completion = openai.ChatCompletion.create(
-            model=self.settings.model,
-            messages=messages,
-            temperature=0.25,
+        nb_queue = await self.channel.declare_queue(
+            self.settings.data_bus_sub_queue,
+            durable=True,
         )
-        return completion.choices[0].message["content"]
-    
-    def _generate_multi_message_completion(self, conversation):
+        sb_queue = await self.channel.declare_queue(
+            self.settings.control_bus_sub_queue,
+            durable=True,
+        )
+
+        await nb_queue.consume(self.data_bus_message_handler)
+        await sb_queue.consume(self.control_bus_message_handler)
+
+    def _compact_llm_messages(self):
+        token_count = 0
+        for message in self.llm_messages:
+            token_count += self._count_tokens(message)
+        logger.info(f"Current {token_count=}")
+        if token_count > self.settings.memory_max_tokens:
+            logger.info("compacting initiated...")
+            self._update_llm_messages()
+            token_count = self._count_tokens(self.llm_messages[0])
+            logger.info(f"After compaction memory {token_count=}")
+        else:
+            logger.info("No compaction required")
+
+    def _update_llm_messages(self):
         openai.api_key = self.settings.openai_api_key
+        identity = {"role": "system", "content": self.layer_config.prompts.identity}
+        summarization_prompt = {
+            "role": "user",
+            "content": prompts.memory_compaction_prompt,
+        }
+
+        conversation = [identity] + self.llm_messages + [summarization_prompt]
 
         completion = openai.ChatCompletion.create(
             model=self.settings.model,
             messages=conversation,
-            temperature=0.25,
+            temperature=self.settings.temperature,
         )
-        return completion.choices[0].message["content"]
+        self.llm_messages = [completion.choices[0].message]
+
+    def _count_tokens(self, message: str) -> int:
+        encoding = tiktoken.encoding_for_model(self.settings.model)
+
+        logger.info(f"{message=}")
+
+        num_tokens = len(encoding.encode(message["content"]))
+        return num_tokens
+
+    def _fetch_layer_config(self):
+        with get_db() as db:
+            config = get_layer_config(
+                db=db,
+                layer_name=self.settings.role_name,
+            )
+            self.layer_config = LayerConfigModel.model_validate(config)
 
 
-    async def _publish(self, queue_name, message):
-
-        exchange = await create_exchange(
-            connection=self.connection,
-            queue_name=queue_name,
-        )
-        message_body = aio_pika.Message(
-            body=message.encode(),
-            delivery_mode=aio_pika.DeliveryMode.PERSISTENT
-        )
-        await exchange.publish(
-            message_body,
-            routing_key=queue_name,
-        )
-
+    def _fetch_ancestral_prompt(self):
+        with get_db() as db:
+            prompt = get_active_ancestral_prompt(db=db)
+            self.ancestral_prompt = AncestralPromptModel.model_validate(prompt)
 
     async def _run_layer(self):
         logger.info(f"Running {self.settings.role_name}")
         await self._connect()
         await self._subscribe()
-        logger.info(f"{self.settings.role_name} Subscribed to {self.settings.northbound_subscribe_queue} and {self.settings.southbound_subscribe_queue}")
-
+        logger.info(
+            f"{self.settings.role_name} Subscribed to {self.settings.data_bus_sub_queue} and {self.settings.control_bus_sub_queue}"
+        )
 
     def run(self):
         self.loop.create_task(self._run_layer())
@@ -169,9 +308,3 @@ class BaseLayer(ABC):
             self.loop.run_forever()
         finally:
             self.loop.close()
-
-
-# def closest_match(input_str: str, options: List[str]):
-#     scores = [fuzz.ratio(input_str, option) for option in options]
-#     return options[scores.index(max(scores))]
-

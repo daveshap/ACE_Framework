@@ -15,12 +15,9 @@ services:
 
   api:
     build:
-      context: ./src/ace/app/api
-      dockerfile: Dockerfile
-    environment:
-      - AMQP_HOST_NAME=rabbitmq
-      - AMQP_USERNAME=rabbit
-      - AMQP_PASSWORD=carrot
+      context: ./src/ace/app
+      dockerfile: api.Dockerfile
+    env_file: ./src/ace/app/api/.env
     restart: always
     ports:
       - "8000:8000"
@@ -29,21 +26,21 @@ services:
     networks:
       - ace-framework-network
 
-  # db:
-  #   image: postgres:15.1-bullseye
-  #   environment:
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_DB=log-db
-  #     - POSTGRES_HOST=db
-  #     - PGDATA=/var/lib/postgresql/data/pgdata
-  #   restart: always
-  #   ports:
-  #     - 5435:5432
-  #   volumes:
-  #     - data:/var/lib/postgresql/data
-  #   networks:
-  #     - ace-framework-network
+  db:
+    image: postgres:15.1-bullseye
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=log-db
+      - POSTGRES_HOST=db
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    restart: always
+    ports:
+      - 5435:5432
+    volumes:
+      - data:/var/lib/postgresql/data
+    networks:
+      - ace-framework-network
 
   # flaskapp:
   #   build:
@@ -62,23 +59,22 @@ services:
   #   networks:
   #     - ace-framework-network
 
-  # logger:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   restart: always
-  #   environment:
-  #     - AMQP_HOST_NAME=rabbitmq
-  #     - AMQP_USERNAME=rabbit
-  #     - AMQP_PASSWORD=carrot
-  #     - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
-  #   command: ["python", "logger.py"]
-  #   depends_on:
-  #     - db
-  #     - rabbitmq
-  #   networks:
-  #     - ace-framework-network
-
+  logger:
+    build:
+      context: ./src/ace/app
+      dockerfile: logger.Dockerfile
+    restart: always
+    environment:
+      - AMQP_HOST_NAME=rabbitmq
+      - AMQP_USERNAME=rabbit
+      - AMQP_PASSWORD=carrot
+      - DATABASE_URI=postgresql://postgres:password@db:5432/log-db
+    command: ["python", "app.py"]
+    depends_on:
+      - db
+      - rabbitmq
+    networks:
+      - ace-framework-network
 
   layer_1_aspirant:
     build:

@@ -2,20 +2,50 @@
 
 ## Interactive Autonomous Cognitive Entity User Interface
 
-## To confirm it's working load up the API and send it a mission.  You should see something like this:
+### Runing the backend
 
+#### Step 1: Set up your environment
+
+- create the .env file
+```bash
+cp src/ace/app/example.env src/ace/app/.env
 ```
-iaceui-api-1                 | INFO:     172.25.0.1:52132 - "POST /send-mission/ HTTP/1.1" 200 OK
-iaceui-layer_1_aspirant-1    | INFO:base.base_layer:I'm the [layer_1_aspirant] and I've received a [Southbound] message, here it is: hello
-iaceui-layer_2_strategist-1  | INFO:base.base_layer:I'm the [layer_2_strategist] and I've received a [Southbound] message, here it is: hello from layer_1_aspirant...
-iaceui-layer_3_agent-1       | INFO:base.base_layer:I'm the [layer_3_agent] and I've received a [Southbound] message, here it is: hello from layer_2_strategist...
-iaceui-layer_4_executive-1   | INFO:base.base_layer:I'm the [layer_4_executive] and I've received a [Southbound] message, here it is: hello from layer_3_agent...
-iaceui-layer_5_controller-1  | INFO:base.base_layer:I'm the [layer_5_controller] and I've received a [Southbound] message, here it is: hello from layer_4_executive...
-iaceui-layer_6_prosecutor-1  | INFO:__main__:I'm the [layer_6_prosecutor] and I've received a [Southbound] message, here it is: hello from layer_5_controller...
-iaceui-layer_6_prosecutor-1  | INFO:__main__:I'm the [layer_6_prosecutor] and pretending have done something and sending a message [Northbound], here it is: hello from layer_5_controller...
-iaceui-layer_5_controller-1  | INFO:base.base_layer:I'm the [layer_5_controller] and I've received a [Northbound] message, here it is: hello from layer_6_prosecutor...
-iaceui-layer_4_executive-1   | INFO:base.base_layer:I'm the [layer_4_executive] and I've received a [Northbound] message, here it is: hello from layer_5_controller...
-iaceui-layer_3_agent-1       | INFO:base.base_layer:I'm the [layer_3_agent] and I've received a [Northbound] message, here it is: hello from layer_4_executive...
-iaceui-layer_2_strategist-1  | INFO:base.base_layer:I'm the [layer_2_strategist] and I've received a [Northbound] message, here it is: hello from layer_3_agent...
-iaceui-layer_1_aspirant-1    | INFO:base.base_layer:I'm the [layer_1_aspirant] and I've received a [Northbound] message, here it is: hello from layer_2_strategist...
+
+- Set you Open API key in the .evn file on this line:
+```bash
+OPENAI_API_KEY=<OPENAI API key>
+```
+
+- Copy the .env file to all the services
+```bash
+cp src/ace/app/.env src/ace/app/api/app
+cp src/ace/app/.env src/ace/app/layer_1_aspirational
+cp src/ace/app/.env src/ace/app/layer_2_global_strategy
+cp src/ace/app/.env src/ace/app/layer_3_agent_model
+cp src/ace/app/.env src/ace/app/layer_4_executive
+cp src/ace/app/.env src/ace/app/layer_5_cognitive_control
+cp src/ace/app/.env src/ace/app/layer_6_task_prosecution
+```
+
+#### Step 2: Build the base image with:
+```bash
+./build_base_image.sh
+```
+
+#### Step 3: Start the backend with:
+- Start the full stack
+```bash
+docker-compose up --build
+```
+the `--build` option is only required if you made code changes to the backend
+
+- In some cases you may want to just start the API
+```bash
+docker-compose up db api --build
+```
+### Check out the API docs for usage details
+
+open the swagger docs:
+```bash
+http://0.0.0.0:8000/docs
 ```

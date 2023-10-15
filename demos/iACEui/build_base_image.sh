@@ -2,4 +2,4 @@
 
 args=$*
 
-docker build ./src/ace/app/base -t ace-base:latest ${args}
+docker build ./src/ace/app -t ace-base:latest ${args} -f ./src/ace/app/base.Dockerfile

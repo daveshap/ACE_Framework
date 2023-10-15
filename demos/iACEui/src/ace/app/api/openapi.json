@@ -1,0 +1,843 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "FastAPI",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/mission": {
+            "post": {
+                "summary": "Send Mission",
+                "operationId": "send_mission_mission_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Mission"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object",
+                                    "title": "Response Send Mission Mission Post"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/test": {
+            "post": {
+                "summary": "Test Prompt",
+                "operationId": "test_prompt_layer_test_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LayerTestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerTestResponseModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/config": {
+            "put": {
+                "summary": "Update Layer Config",
+                "operationId": "update_layer_config_layer_config_put",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LayerConfigUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerConfigModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Layer Config",
+                "operationId": "create_layer_config_layer_config_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LayerConfigCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerConfigModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/config/{layer_name}/all": {
+            "get": {
+                "summary": "Get All Layer Config",
+                "operationId": "get_all_layer_config_layer_config__layer_name__all_get",
+                "parameters": [
+                    {
+                        "name": "layer_name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Layer Name"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/LayerConfigModel"
+                                    },
+                                    "title": "Response Get All Layer Config Layer Config  Layer Name  All Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/config/{layer_name}": {
+            "get": {
+                "summary": "Get Layer Config",
+                "operationId": "get_layer_config_layer_config__layer_name__get",
+                "parameters": [
+                    {
+                        "name": "layer_name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Layer Name"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerConfigModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/logs/{layer_name}": {
+            "get": {
+                "summary": "Get Layer Logs",
+                "operationId": "get_layer_logs_layer_logs__layer_name__get",
+                "parameters": [
+                    {
+                        "name": "layer_name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Layer Name"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerConfigModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/state": {
+            "put": {
+                "summary": "Update Layer State",
+                "operationId": "update_layer_state_layer_state_put",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LayerStateUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerStateModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Create Layer State",
+                "operationId": "create_layer_state_layer_state_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LayerStateCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerStateModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/layer/state/{layer_name}": {
+            "get": {
+                "summary": "Get Layer State By Name",
+                "operationId": "get_layer_state_by_name_layer_state__layer_name__get",
+                "parameters": [
+                    {
+                        "name": "layer_name",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Layer Name"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LayerStateModel"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "LayerConfigCreate": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "llm_model_name": {
+                        "type": "string",
+                        "title": "Llm Model Name",
+                        "default": "gpt-3.5-turbo"
+                    },
+                    "prompts": {
+                        "type": "object",
+                        "title": "Prompts"
+                    },
+                    "llm_model_parameters": {
+                        "type": "object",
+                        "title": "Llm Model Parameters"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "prompts",
+                    "llm_model_parameters"
+                ],
+                "title": "LayerConfigCreate"
+            },
+            "LayerConfigModel": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "llm_model_name": {
+                        "type": "string",
+                        "title": "Llm Model Name",
+                        "default": "gpt-3.5-turbo"
+                    },
+                    "config_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Config Id"
+                    },
+                    "parent_config_id": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Parent Config Id"
+                    },
+                    "prompts": {
+                        "type": "object",
+                        "title": "Prompts"
+                    },
+                    "llm_model_parameters": {
+                        "type": "object",
+                        "title": "Llm Model Parameters"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "title": "Is Active",
+                        "default": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "config_id",
+                    "prompts",
+                    "llm_model_parameters",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "LayerConfigModel"
+            },
+            "LayerConfigUpdate": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "llm_model_name": {
+                        "type": "string",
+                        "title": "Llm Model Name",
+                        "default": "gpt-3.5-turbo"
+                    },
+                    "config_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Config Id"
+                    },
+                    "prompts": {
+                        "type": "object",
+                        "title": "Prompts"
+                    },
+                    "llm_model_parameters": {
+                        "type": "object",
+                        "title": "Llm Model Parameters"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "config_id",
+                    "prompts",
+                    "llm_model_parameters"
+                ],
+                "title": "LayerConfigUpdate"
+            },
+            "LayerStateCreate": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "process_messages": {
+                        "type": "boolean",
+                        "title": "Process Messages"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "process_messages"
+                ],
+                "title": "LayerStateCreate"
+            },
+            "LayerStateModel": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "layer_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "title": "Layer Id"
+                    },
+                    "process_messages": {
+                        "type": "boolean",
+                        "title": "Process Messages"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "layer_id",
+                    "process_messages",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "LayerStateModel"
+            },
+            "LayerStateUpdate": {
+                "properties": {
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "process_messages": {
+                        "type": "boolean",
+                        "title": "Process Messages"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "process_messages"
+                ],
+                "title": "LayerStateUpdate"
+            },
+            "LayerTestRequest": {
+                "properties": {
+                    "llm_model_name": {
+                        "type": "string",
+                        "title": "Llm Model Name"
+                    },
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "source_bus": {
+                        "type": "string",
+                        "title": "Source Bus"
+                    },
+                    "destination_bus": {
+                        "type": "string",
+                        "title": "Destination Bus"
+                    },
+                    "input": {
+                        "type": "string",
+                        "title": "Input"
+                    },
+                    "prompts": {
+                        "$ref": "#/components/schemas/Prompts"
+                    },
+                    "llm_messages": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/LlmMessage"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Llm Messages"
+                    },
+                    "llm_model_parameters": {
+                        "$ref": "#/components/schemas/OpenAiGPTChatParameters"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "llm_model_name",
+                    "layer_name",
+                    "source_bus",
+                    "destination_bus",
+                    "input",
+                    "prompts",
+                    "llm_messages",
+                    "llm_model_parameters"
+                ],
+                "title": "LayerTestRequest"
+            },
+            "LayerTestResponseModel": {
+                "properties": {
+                    "llm_model_name": {
+                        "type": "string",
+                        "title": "Llm Model Name",
+                        "default": "gpt-3.5-turbo"
+                    },
+                    "layer_name": {
+                        "type": "string",
+                        "title": "Layer Name"
+                    },
+                    "reasoning_result": {
+                        "$ref": "#/components/schemas/LlmMessage"
+                    },
+                    "action_result": {
+                        "$ref": "#/components/schemas/LlmMessage"
+                    },
+                    "llm_messages": {
+                        "$ref": "#/components/schemas/LlmMessage"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "layer_name",
+                    "reasoning_result",
+                    "action_result",
+                    "llm_messages"
+                ],
+                "title": "LayerTestResponseModel"
+            },
+            "LlmMessage": {
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "title": "Role"
+                    },
+                    "content": {
+                        "type": "string",
+                        "title": "Content"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "title": "LlmMessage"
+            },
+            "Mission": {
+                "properties": {
+                    "mission": {
+                        "type": "string",
+                        "title": "Mission"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "mission"
+                ],
+                "title": "Mission"
+            },
+            "OpenAiGPTChatParameters": {
+                "properties": {
+                    "temperature": {
+                        "type": "number",
+                        "title": "Temperature",
+                        "default": 0.0
+                    },
+                    "max_tokens": {
+                        "type": "integer",
+                        "title": "Max Tokens",
+                        "default": 512
+                    },
+                    "top_p": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Top P"
+                    },
+                    "frequency_penalty": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Frequency Penalty"
+                    },
+                    "presence_penalty": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Presence Penalty"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "top_p",
+                    "frequency_penalty",
+                    "presence_penalty"
+                ],
+                "title": "OpenAiGPTChatParameters"
+            },
+            "Prompts": {
+                "properties": {
+                    "identity": {
+                        "type": "string",
+                        "title": "Identity"
+                    },
+                    "input": {
+                        "type": "string",
+                        "title": "Input"
+                    },
+                    "reasoning": {
+                        "type": "string",
+                        "title": "Reasoning"
+                    },
+                    "bus": {
+                        "type": "string",
+                        "title": "Bus"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "identity",
+                    "input",
+                    "reasoning",
+                    "bus"
+                ],
+                "title": "Prompts"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}
