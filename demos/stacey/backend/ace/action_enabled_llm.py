@@ -8,6 +8,7 @@ from actions.get_all_memories import GetAllMemories
 from actions.get_web_content import GetWebContent
 from actions.remove_memory import RemoveClosestMemory
 from actions.save_memory import SaveMemory
+from actions.search_web import SearchWeb
 from actions.send_message_to_user import SendMessageToUser
 from actions.set_next_alarm import SetNextAlarm
 from actions.update_whiteboard import UpdateWhiteboard
@@ -19,11 +20,12 @@ from util import parse_json
 
 class ActionEnabledLLM:
     def __init__(self, llm: GPT, model: str, memory_manager: WeaviateMemoryManager,
-                 l3_agent_layer):
+                 l3_agent_layer, serpapi_key: str):
         self.llm = llm
         self.model = model
         self.memory_manager = memory_manager
         self.l3_agent_layer = l3_agent_layer
+        self.serpapi_key = serpapi_key
 
     async def talk_to_llm_and_execute_actions(
             self, communication_channel: CommunicationChannel, llm_messages: [GptMessage]):
@@ -103,6 +105,8 @@ class ActionEnabledLLM:
         action_name = action_data.get("action")
         if action_name == "get_web_content":
             return GetWebContent(action_data["url"])
+        elif action_name == "search_web":
+            return SearchWeb(self.serpapi_key, action_data["query"])
         elif action_name == "send_message_to_user":
             return SendMessageToUser(communication_channel, action_data["text"])
         elif action_name == "update_whiteboard":

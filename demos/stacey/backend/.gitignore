@@ -6,3 +6,5 @@ __pycache__
 # IDE
 *.iml
 
+# Temp code
+spikes/

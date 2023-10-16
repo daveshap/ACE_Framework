@@ -121,6 +121,7 @@ The following actions are available.
   If anything happens that you think needs to be remembered for the future, use the save_memory action
   and tell the user that you will remember it.
 - get_all_memories(): Returns a list of all memories that have been saved.
+- search_web(query): Searches the web using serpapi with the given query, returns the organic results.
 - remove_closest_memory(memory_string): Removes the memory that is closest to the given memory string, if any
 - update_whiteboard(contents): Replaces the current contents of my whiteboard with the given updated contents,
   in markdown format. This is how I maintain a train of thought and task list for the future.
