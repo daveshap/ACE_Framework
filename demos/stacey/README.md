@@ -11,6 +11,7 @@ But it is helping us evolve and explore the framework, and she can already do so
 - She is self-aware (well, more like her prompt causes her to act as if she was self-aware), and knows that she is an evolving prototype of the ACE framework, which makes for some pretty interesting conversations. 
 - See her internal state live using a web admin UI
 - She can embed auto-generated images and gifs ("Draw me cat image", "Make a dancing banana gif"), or even multiple images ("Draw me a 3-frame cartoon about how we used AI to solve climate change")
+- She can search the web ("Give me the latest news on climate change")
 - She can read web pages ("Summarize the contents of http://.....")
 - She follow aspirations and guidance from the aspirational layer (although it is really just a prompt for now) 
 - She dynamically decide when she should or shouldn't respond to messages, based on social cues

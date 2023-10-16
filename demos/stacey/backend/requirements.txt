@@ -13,3 +13,4 @@ starlette~=0.27.0
 APScheduler~=3.10.4
 pytest~=7.4.2
 weaviate-client
+google-search-results

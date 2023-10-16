@@ -8,7 +8,7 @@ from .l3_agent import L3AgentLayer
 
 
 class AceSystem:
-    def __init__(self, llm: GPT, model: str, memory_manager: WeaviateMemoryManager):
+    def __init__(self, llm: GPT, model: str, memory_manager: WeaviateMemoryManager, serpapi_key: str):
         self.northbound_bus = Bus('northbound')
         self.southbound_bus = Bus('southbound')
 
@@ -24,7 +24,8 @@ class AceSystem:
         self.l3_agent: L3AgentLayer = L3AgentLayer(
             llm,
             model,
-            memory_manager
+            memory_manager,
+            serpapi_key
         )
 
         self.layers = [

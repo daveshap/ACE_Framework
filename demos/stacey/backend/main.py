@@ -17,7 +17,8 @@ async def stacey_main(start_discord, start_web):
     llm = GPT(openai_api_key)
     weaviate_url = get_environment_variable('WEAVIATE_URL')
     memory_manager = WeaviateMemoryManager(weaviate_url, openai_api_key)
-    ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"), memory_manager)
+    serpapi_key = get_environment_variable('SERPAPI_KEY')
+    ace = AceSystem(llm, get_environment_variable("DEFAULT_MODEL"), memory_manager, serpapi_key)
 
     giphy = GiphyFinder(get_environment_variable('GIPHY_API_KEY'))
     media_generators = [

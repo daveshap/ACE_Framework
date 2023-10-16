@@ -20,14 +20,14 @@ max_memories_to_include = 5
 
 
 class L3AgentLayer(AceLayer):
-    def __init__(self, llm: GPT, model, memory_manager: WeaviateMemoryManager):
+    def __init__(self, llm: GPT, model, memory_manager: WeaviateMemoryManager, serpapi_key: str):
         super().__init__("3")
         self.llm = llm
         self.model = model
         self.scheduler = AsyncIOScheduler()
         self.scheduler.start()
         self.memory_manager = memory_manager
-        self.action_enabled_llm = ActionEnabledLLM(llm, model, memory_manager, self)
+        self.action_enabled_llm = ActionEnabledLLM(llm, model, memory_manager, self, serpapi_key)
         self.whiteboard = ""
         self.active: bool = False
         self.next_wakeup_time: Optional[str] = None
