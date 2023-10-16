@@ -144,7 +144,7 @@ The actions should be a valid json array with zero or more actions, for example:
         "contents": "I should ping Henrik at 2023-01-30T13:45:00Z"
     }
 ]
-``´
+```
 
 If you send zero actions, I will not do anything.
 If you send multiple actions, I will execute them all in parallel.
