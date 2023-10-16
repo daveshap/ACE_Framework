@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     log_dir: str = "/var/log/ace"
     system_integrity_queue: str = "system-integrity-queue"
     system_integrity_data_queue: str = "system-integrity-data-queue"
+    debug_data_queue: str = "debug-data-queue"
     telemetry_subscribe_queue: str = "telemetry-subscribe-queue"
     telemetry_subscriptions: List[str] = []
     layers: List[str] = [

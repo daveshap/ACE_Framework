@@ -26,6 +26,7 @@ class Layer(Resource):
         await super().post_connect()
         self.set_adjacent_layers()
         self.set_identity()
+        await self.subscribe_debug_queue()
         await self.subscribe_telemetry()
         self.set_llm()
         await self.register_busses()
@@ -38,6 +39,7 @@ class Layer(Resource):
 
     async def pre_disconnect(self):
         await super().pre_disconnect()
+        await self.unsubscribe_debug_queue()
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
         await self.deregister_busses()
@@ -124,6 +126,18 @@ class Layer(Resource):
             message_strings = [m['message'] for m in messages]
         result = " | ".join(message_strings)
         return result
+
+    def debug_update_messages_state(self):
+        self.log.info(f"[{self.labeled_name}] received debug request to update messages state...")
+        data = {
+            'control': self.get_messages_from_consumer_local_queue('control') if self.northern_layer else [],
+            'data': self.get_messages_from_consumer_local_queue('data') if self.southern_layer else [],
+            'request': self.get_messages_from_consumer_local_queue('request'),
+            'response': self.get_messages_from_consumer_local_queue('response'),
+            'telemetry': self.get_messages_from_consumer_local_queue('telemetry'),
+        }
+        message = self.build_message('debug', message={'messages': data}, message_type='state')
+        self.push_exchange_message_to_publisher_local_queue(self.settings.debug_data_queue, message)
 
     def run_layer_in_thread(self):
         while True and self.layer_running:

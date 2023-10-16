@@ -241,6 +241,18 @@ services:
     networks: *default_networks
     healthcheck: *healthcheck
 
+  debug:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+      ACE_RESOURCE_NAME: debug
+    command: *default_command
+    networks: *default_networks
+    healthcheck: *healthcheck
+
 networks:
   ace-framework-network:
 

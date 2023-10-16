@@ -177,6 +177,9 @@ class Resource(ABC):
     def build_system_integrity_queue_name(self, layer):
         return f"system_integrity.{layer}"
 
+    def build_debug_queue_name(self, layer):
+        return f"debug.{layer}"
+
     def build_telemetry_queue_name(self, name):
         return f"telemetry.{name}"
 
@@ -281,6 +284,42 @@ class Resource(ABC):
             method(**kwargs)
         except Exception as e:
             self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
+
+    async def subscribe_debug_queue(self):
+        queue_name = self.build_debug_queue_name(self.settings.name)
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.debug_message_handler)
+
+    async def unsubscribe_debug_queue(self):
+        queue_name = self.build_debug_queue_name(self.settings.name)
+        if queue_name in self.consumers:
+            queue, consumer_tag = self.consumers[queue_name]
+            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+            await queue.cancel(consumer_tag)
+            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+
+    async def debug_message_handler(self, message: aio_pika.IncomingMessage):
+        async with message.process():
+            decoded_message = message.body.decode()
+        self.log.debug(f"[{self.labeled_name}] received a [Debug] message: {message}")
+        try:
+            data = yaml.safe_load(decoded_message)
+        except yaml.YAMLError as e:
+            self.log.error(f"[{self.labeled_name}] could not parse [Debug] message: {e}")
+            return
+        if data['type'] == 'command':
+            method = data.get('method')
+            kwargs = data.get('kwargs')
+            await self.debug_run_command(method, kwargs)
+
+    async def debug_run_command(self, method_name: str, kwargs: dict = None):
+        kwargs = kwargs or {}
+        self.log.debug(f"[{self.labeled_name}] received a [Debug] command, method: {method_name}, args: {kwargs}")
+        try:
+            method = getattr(self, method_name)
+            method(**kwargs)
+        except Exception as e:
+            self.log.error(f"[{self.labeled_name}] failed [Debug] command: method {method_name}, error: {e}")
 
     def resource_log(self, message):
         self.log.info(f"{self.labeled_name} resource log: \n\n{message}\n\n")
