@@ -20,6 +20,10 @@ But it is helping us evolve and explore the framework, and she can already do so
 - She is autonomous. She can set an internal alarm clock to wake up and do things in the future. For example "Stacey, ping me in this channel in 30 seconds". So she sleeps by default, but is woken up by incoming messages and by her own alarm clock. Every time she goes back to sleep, she figures out when it makes sense to wake up next.
 - She maintains a "whiteboard", a dynamically updated state of the world. For example "I have agreed to be Henrik's health coach. For starters, I will remind him to stand up every hour (next time is 18:55)". She automatically updates it when needed and includes it with every prompt. 
 
+## Architecture overview
+
+![Stacey-architecture.jpg](docs/Stacey-architecture.jpg)
+
 ## Reflection & caveats
 
 - The current implementation of Stacey is actually surprisingly fun and useful. We've had her running on our internal discord during her whole development, bantering with her on a daily basis. She really only uses the Agent layer right now. The code includes an implemention of the Bus system, and stubs for the other layers, but this wasn't needed for Stacey's current capabilities. So there is some unused code in the system right now. 
