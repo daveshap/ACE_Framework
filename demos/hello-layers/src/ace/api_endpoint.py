@@ -5,6 +5,7 @@ import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 from ace.logger import Logger
+from ace import constants
 
 logger = Logger(os.path.basename(__file__))
 
@@ -48,7 +49,7 @@ class StatusHandler(BaseHTTPRequestHandler):
 
 
 class ApiEndpoint:
-    def __init__(self, callbacks, api_endpoint_port=3000):
+    def __init__(self, callbacks, api_endpoint_port=constants.DEFAULT_API_ENDPOINT_PORT):
         self.callbacks = callbacks
         self.api_endpoint_port = api_endpoint_port
         self.server = None
