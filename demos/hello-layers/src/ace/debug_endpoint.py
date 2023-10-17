@@ -11,27 +11,40 @@ logger = Logger(os.path.basename(__file__))
 
 
 class StatusHandler(BaseHTTPRequestHandler):
-    CALLBACKS = {}
+    ROUTES = {}
 
     @classmethod
-    def set_callbacks(cls, callbacks):
-        cls.CALLBACKS = callbacks
+    def set_routes(cls, routes):
+        cls.ROUTES = routes
 
     def __init__(self, *args, **kwargs):
-        self.ROUTES = {
-            '/status': self.CALLBACKS.get('status', self._handle_default),
-        }
+        self.get_routes = self.ROUTES.get('get', {})
+        self.post_routes = self.ROUTES.get('post', {})
         super().__init__(*args, **kwargs)
 
     def do_GET(self):
         try:
-            handler = self.ROUTES.get(self.path)
+            handler = self.get_routes.get(self.path)
             if handler:
                 data = handler()
                 self._handle_callback_response(data)
             else:
                 self._handle_default()
+        except Exception as e:
+            logger.exception(f"Error handling request: {e}")
+            self.respond(500, {"error": "Internal server error"})
 
+    def do_POST(self):
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            post_data = json.loads(post_data)
+            handler = self.post_routes.get(self.path)
+            if handler:
+                data = handler(post_data)
+                self._handle_callback_response(data)
+            else:
+                self._handle_default()
         except Exception as e:
             logger.exception(f"Error handling request: {e}")
             self.respond(500, {"error": "Internal server error"})
@@ -52,23 +65,23 @@ class StatusHandler(BaseHTTPRequestHandler):
         logger.debug(format, *args)
 
 
-class ApiEndpoint:
-    def __init__(self, callbacks, api_endpoint_port=constants.DEFAULT_API_ENDPOINT_PORT):
-        self.callbacks = callbacks
-        self.api_endpoint_port = api_endpoint_port
+class DebugEndpoint:
+    def __init__(self, routes, debug_endpoint_port=constants.DEFAULT_DEBUG_ENDPOINT_PORT):
+        self.routes = routes
+        self.debug_endpoint_port = debug_endpoint_port
         self.server = None
 
     def start_endpoint(self):
-        logger.info("Starting API endpoint...")
-        StatusHandler.set_callbacks(self.callbacks)
-        self.server = HTTPServer(('localhost', self.api_endpoint_port), StatusHandler)
+        logger.info("Starting debug endpoint...")
+        StatusHandler.set_routes(self.routes)
+        self.server = HTTPServer(('localhost', self.debug_endpoint_port), StatusHandler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.start()
-        logger.info("API endpoint started")
+        logger.info("Debug endpoint started")
 
     def stop_endpoint(self):
         if self.server:
-            logger.info("Shutting down API endpoint...")
+            logger.info("Shutting down debug endpoint...")
             self.server.shutdown()
             self.thread.join()
-            logger.info("API endpoint shut down")
+            logger.info("Debug endpoint shut down")

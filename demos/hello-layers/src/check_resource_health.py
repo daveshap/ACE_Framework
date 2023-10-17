@@ -6,10 +6,11 @@ import logging
 import requests
 
 from ace.logger import Logger
+from ace import constants
 
 logger = Logger(os.path.basename(__file__))
 
-HOST = 'http://localhost:3000'
+HOST = f'http://localhost:{constants.DEFAULT_API_ENDPOINT_PORT}'
 
 
 def main():

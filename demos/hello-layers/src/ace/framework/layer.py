@@ -5,6 +5,7 @@ from abc import abstractmethod
 import asyncio
 from threading import Thread
 
+from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
 from ace.framework.llm.gpt import GPT
@@ -139,6 +140,9 @@ class Layer(Resource):
         message = self.build_message('debug', message={'messages': data}, message_type='state')
         self.push_exchange_message_to_publisher_local_queue(self.settings.debug_data_queue, message)
 
+    def debug_run_layer_with_messages(self, **kwargs):
+        self.log.info(f"[{self.labeled_name}] received debug run layer request, messages: {kwargs}")
+
     def run_layer_in_thread(self):
         while True and self.layer_running:
             control_messages, data_messages = None, None
@@ -164,7 +168,7 @@ class Layer(Resource):
                 for m in messages_southbound:
                     message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
                     self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
-            time.sleep(10)
+            time.sleep(constants.LAYER_SLEEP_TIME)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
         queue_name = self.build_layer_queue_name(direction, layer)

@@ -4,6 +4,7 @@ FROM $BASE_IMAGE
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev
+RUN apt-get update && apt-get install -y --no-install-recommends curl net-tools
 RUN apt-get update && apt-get install -y --no-install-recommends vim procps
 RUN apt-get update && apt-get install -y --no-install-recommends figlet toilet cowsay
 
