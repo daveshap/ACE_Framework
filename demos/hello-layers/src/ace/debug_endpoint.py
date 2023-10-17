@@ -24,7 +24,7 @@ class StatusHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            handler = self.get_routes.get(self.path, self._handle_default)
+            handler = self.get_routes.get(self.path)
             if handler:
                 data = handler()
                 self._handle_callback_response(data)
