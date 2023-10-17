@@ -34,3 +34,6 @@ services:
 
   system_integrity:
     volumes: *shared-volumes
+
+  debug:
+    volumes: *shared-volumes

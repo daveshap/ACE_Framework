@@ -23,6 +23,7 @@ class Busses(Resource):
 
     async def post_connect(self):
         await self.create_system_integrity_queues()
+        await self.create_debug_queues()
         await self.create_logging_queues()
         await self.create_exchanges()
         await self.create_telemetry_queues()
@@ -31,6 +32,7 @@ class Busses(Resource):
     async def pre_disconnect(self):
         await super().pre_disconnect()
         await self.destroy_exchanges()
+        await self.destroy_debug_queues()
         await self.destroy_system_integrity_queues()
         await self.destroy_logging_queues()
         await self.destroy_telemetry_queues()
@@ -82,6 +84,18 @@ class Busses(Resource):
             queue_name = self.build_system_integrity_queue_name(resource)
             await self.consumer_channel.queue_delete(queue_name)
         await self.destroy_exchange(self.settings.system_integrity_data_queue, durable=False)
+
+    async def create_debug_queues(self):
+        for layer in self.settings.layers:
+            queue_name = self.build_debug_queue_name(layer)
+            await self.consumer_channel.declare_queue(queue_name, durable=False)
+        await self.create_exchange(self.settings.debug_data_queue, durable=False)
+
+    async def destroy_debug_queues(self):
+        for layer in self.settings.layers:
+            queue_name = self.build_debug_queue_name(layer)
+            await self.consumer_channel.queue_delete(queue_name)
+        await self.destroy_exchange(self.settings.debug_data_queue, durable=False)
 
     async def create_logging_queues(self):
         await self.create_exchange(self.settings.resource_log_queue)
