@@ -25,9 +25,13 @@ class StatusHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         try:
-            handler = self.ROUTES.get(self.path, self._handle_default)
-            data = handler()
-            self._handle_callback_response(data)
+            handler = self.ROUTES.get(self.path)
+            if handler:
+                data = handler()
+                self._handle_callback_response(data)
+            else:
+                self._handle_default()
+
         except Exception as e:
             logger.exception(f"Error handling request: {e}")
             self.respond(500, {"error": "Internal server error"})
