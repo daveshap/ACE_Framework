@@ -1,6 +1,8 @@
 import yaml
 import httpx
 import functools
+from datetime import datetime
+
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout.containers import HSplit, VSplit
@@ -25,6 +27,7 @@ Keyboard shortcuts:
     s: Add to 'response' list.
     t: Add to 'telemetry' list.
     l: Retrieve current messages for all layers.
+    x: Send the current messages for the active layer.
     e: Erase all for current layer.
     q: Quit the application.
 """
@@ -43,17 +46,39 @@ DEFAULT_STYLE = Style.from_dict({
 
 
 class DataType:
+    def __init__(self, settings):
+        self.settings = settings
+
     def multiline_text(self):
         return TextArea(multiline=True)
 
     def bus_direction(self):
         return RadioList(values=[('northbound', 'Northbound'), ('southbound', 'Southbound')])
 
+    def get_southbound_source(self, layer):
+        previous_index = self.settings.layers.index(layer) - 1
+        return 'debug' if previous_index < 0 else self.settings.layers[previous_index]
+
+    def get_northbound_source(self, layer):
+        next_index = self.settings.layers.index(layer) + 1
+        return 'debug' if next_index >= len(self.settings.layers) else self.settings.layers[next_index]
+
+    def message_metadata(self, message, message_type, source, destination, direction):
+        message['type'] = message_type
+        message['resource'] = {
+            'source': source,
+            'destination': destination,
+        }
+        message['direction'] = direction
+        message['timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        return message
+
 
 class ControlDataType(DataType):
     key = 'control'
 
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.message = self.multiline_text()
 
     def build_fields(self, data=None):
@@ -80,6 +105,13 @@ class ControlDataType(DataType):
                 'message': m['message'],
             })
         return messages
+
+    def build_layer_message(self, layer, data):
+        source = self.get_southbound_source(layer)
+        message = {
+            'message': data['message'],
+        }
+        return self.message_metadata(message, 'control', source, layer, 'southbound')
 
     def reset_values(self):
         self.message.text = ''
@@ -88,7 +120,8 @@ class ControlDataType(DataType):
 class DataDataType(DataType):
     key = 'data'
 
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.message = self.multiline_text()
 
     def build_fields(self, data=None):
@@ -116,6 +149,13 @@ class DataDataType(DataType):
             })
         return messages
 
+    def build_layer_message(self, layer, data):
+        source = self.get_northbound_source(layer)
+        message = {
+            'message': data['message'],
+        }
+        return self.message_metadata(message, 'data', source, layer, 'northbound')
+
     def reset_values(self):
         self.message.text = ''
 
@@ -123,7 +163,8 @@ class DataDataType(DataType):
 class RequestDataType(DataType):
     key = 'request'
 
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.direction = self.bus_direction()
         self.message = self.multiline_text()
 
@@ -156,6 +197,14 @@ class RequestDataType(DataType):
                 'message': m['message'],
             })
         return messages
+
+    def build_layer_message(self, layer, data):
+        direction = data['direction']
+        source = self.get_southbound_source(layer) if direction == 'southbound' else self.get_northbound_source(layer)
+        message = {
+            'message': data['message'],
+        }
+        return self.message_metadata(message, 'request', source, layer, direction)
 
     def reset_values(self):
         self.direction.current_value = None
@@ -165,7 +214,8 @@ class RequestDataType(DataType):
 class ResponseDataType(DataType):
     key = 'response'
 
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.direction = self.bus_direction()
         self.message = self.multiline_text()
 
@@ -199,6 +249,14 @@ class ResponseDataType(DataType):
             })
         return messages
 
+    def build_layer_message(self, layer, data):
+        direction = data['direction']
+        source = self.get_southbound_source(layer) if direction == 'southbound' else self.get_northbound_source(layer)
+        message = {
+            'message': data['message'],
+        }
+        return self.message_metadata(message, 'response', source, layer, direction)
+
     def reset_values(self):
         self.direction.current_value = None
         self.message.text = ''
@@ -207,7 +265,8 @@ class ResponseDataType(DataType):
 class TelemetryDataType(DataType):
     key = 'telemetry'
 
-    def __init__(self):
+    def __init__(self, settings):
+        super().__init__(settings)
         self.telemetry_manager = TelemetryManager()
         self.namespace = RadioList(values=[(namespace, namespace) for namespace in self.telemetry_manager.namespace_map.keys()])
         self.data = self.multiline_text()
@@ -242,6 +301,15 @@ class TelemetryDataType(DataType):
             })
         return messages
 
+    def build_layer_message(self, layer, data):
+        namespace = data['namespace']
+        destination = self.telemetry_manager.build_telemetry_exchange_name(self.telemetry_manager.namespace_root(namespace))
+        message = {
+            'data': data['data'],
+            'namespace': namespace,
+        }
+        return self.message_metadata(message, 'telmetry', 'telmetry_manager', destination, 'telmetry')
+
     def reset_values(self):
         self.namespace.current_value = None
         self.data.text = ''
@@ -264,6 +332,7 @@ class DebugAceTui:
         self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         # self.current_messages_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         self.debug_endpoint = DebugEndpoint(constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT, self.debug_endpoint_routes)
+        self.debug_endpoint_url = f"http://localhost:{constants.DEFAULT_DEBUG_ENDPOINT_PORT}"
         self.kb = KeyBindings()
         self.app = Application(key_bindings=self.kb, full_screen=True, style=self.style)
 
@@ -297,11 +366,11 @@ class DebugAceTui:
 
     def build_data_types(self):
         return {
-            'control': ControlDataType(),
-            'data': DataDataType(),
-            'request': RequestDataType(),
-            'response': ResponseDataType(),
-            'telemetry': TelemetryDataType(),
+            'control': ControlDataType(self.settings),
+            'data': DataDataType(self.settings),
+            'request': RequestDataType(self.settings),
+            'response': ResponseDataType(self.settings),
+            'telemetry': TelemetryDataType(self.settings),
         }
 
     def update_layer_messages(self, data):
@@ -319,8 +388,28 @@ class DebugAceTui:
     def get_current_layer_messages(self):
         self.get_to_debug('layers-messages')
 
+    def run_active_layer_messages(self):
+        data = self.compose_active_layer_messages_data()
+        self.post_to_debug('run-layer', data)
+
+    def compose_active_layer_messages_data(self):
+        layer = self.active_layer_name
+        messages = {}
+        for key, data_type in self.data_types.items():
+            messages[key] = []
+            if key in self.data_dict[layer]:
+                for m in self.data_dict[layer][key]:
+                    messages[key].append(data_type.build_layer_message(layer, m))
+        return {
+            'layer': layer,
+            'messages': messages,
+        }
+
     def get_to_debug(self, path):
-        httpx.get(f'http://localhost:{constants.DEFAULT_DEBUG_ENDPOINT_PORT}/{path}')
+        httpx.get(f"{self.debug_endpoint_url}/{path}")
+
+    def post_to_debug(self, path, data):
+        httpx.post(f"{self.debug_endpoint_url}/{path}", json=data)
 
     def _init_key_bindings(self):
         @self.kb.add('q', filter=self.dialog_not_focused)
@@ -354,6 +443,10 @@ class DebugAceTui:
         @self.kb.add('l', filter=self.dialog_not_focused)
         def _(event):
             self.get_current_layer_messages()
+
+        @self.kb.add('x', filter=self.dialog_not_focused)
+        def _(event):
+            self.run_active_layer_messages()
 
         @self.kb.add('e', filter=self.dialog_not_focused)
         def _(event):
