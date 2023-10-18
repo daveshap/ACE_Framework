@@ -1,5 +1,4 @@
-import time
-
+from ace import constants
 from ace.framework.layer import Layer, LayerSettings
 from ace.framework.prompts.identities import l1_identity
 from ace.framework.prompts.templates.l1_layer_instructions import l1_layer_instructions
@@ -11,11 +10,6 @@ from ace.framework.prompts.outputs import l1_southbound_outputs
 from ace.framework.llm.gpt import GptMessage
 from ace.framework.prompts.operation_descriptions import take_action_data_l1, do_nothing_data, create_request_data
 from ace.framework.util import parse_json
-from ace.framework.enums.operation_classification_enum import OperationClassification
-from jinja2 import Template
-import time
-
-DECLARE_DONE_MESSAGE_COUNT = 5
 
 
 class Layer1(Layer):
@@ -95,7 +89,7 @@ class Layer1(Layer):
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
         self.message_count += 1
         self.log.info(f"{self.labeled_name} message count: {self.message_count}")
-        if self.message_count >= DECLARE_DONE_MESSAGE_COUNT:
+        if self.message_count >= constants.LAYER_1_DECLARE_DONE_MESSAGE_COUNT:
             if not self.done:
                 self.declare_done()
                 self.done = True

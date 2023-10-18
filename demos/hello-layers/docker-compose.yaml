@@ -219,6 +219,7 @@ services:
     depends_on:
       - rabbitmq
       - logging
+      - telemetry_manager_layer
       - aspirational_layer
       - global_strategy_layer
       - agent_model_layer

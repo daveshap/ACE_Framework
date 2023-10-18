@@ -25,6 +25,7 @@ class Settings(BaseSettings):
         'layer_6',
     ]
     other_resources: List[str] = [
+        'debug',
         'telemetry_manager',
         'logging',
         'busses',

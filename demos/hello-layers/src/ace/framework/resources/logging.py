@@ -41,7 +41,6 @@ class Logging(Resource):
         return self.return_status(True)
 
     async def post_connect(self):
-        await super().post_connect()
         await self.subscribe_logging()
         await self.subscribe_resource_log()
 
