@@ -54,6 +54,18 @@ class Resource(ABC):
     def status(self):
         pass
 
+    async def post_connect(self):
+        pass
+
+    async def pre_disconnect(self):
+        pass
+
+    def post_start(self):
+        pass
+
+    def pre_stop(self):
+        pass
+
     def return_status(self, up, data=None):
         data = data or {}
         data['up'] = up
@@ -83,6 +95,7 @@ class Resource(ABC):
 
         async def close_connections():
             await asyncio.sleep(1)
+            self.unsubscribe_system_integrity_queue_if_needed()
             await self.pre_disconnect()
             await self.publisher_channel.close()
             await self.consumer_channel.close()
@@ -92,22 +105,13 @@ class Resource(ABC):
 
         asyncio.run_coroutine_threadsafe(close_connections(), self.bus_loop)
 
-    async def post_connect(self):
-        pass
-
     def subscribe_system_integrity_queue_if_needed(self):
         if self.settings.name in self.system_integrity_managed_resources:
             asyncio.run_coroutine_threadsafe(self.subscribe_system_integrity_queue(), self.bus_loop)
 
-    def post_start(self):
-        pass
-
-    def pre_stop(self):
-        pass
-
-    async def pre_disconnect(self):
-        await self.unsubscribe_system_integrity_queue()
-        pass
+    def unsubscribe_system_integrity_queue_if_needed(self):
+        if self.settings.name in self.system_integrity_managed_resources:
+            asyncio.run_coroutine_threadsafe(self.unsubscribe_system_integrity_queue(), self.bus_loop)
 
     def start_resource(self):
         self.log.info("Starting resource...")

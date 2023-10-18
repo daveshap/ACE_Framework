@@ -45,7 +45,6 @@ class Logging(Resource):
         await self.subscribe_resource_log()
 
     async def pre_disconnect(self):
-        await super().pre_disconnect()
         await self.unsubscribe_logging()
         await self.unsubscribe_resource_log()
 

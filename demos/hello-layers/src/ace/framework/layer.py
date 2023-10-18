@@ -39,7 +39,6 @@ class Layer(Resource):
         asyncio.run_coroutine_threadsafe(self.unsubscribe_debug_queue(), self.bus_loop)
 
     async def pre_disconnect(self):
-        await super().pre_disconnect()
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
         await self.deregister_busses()

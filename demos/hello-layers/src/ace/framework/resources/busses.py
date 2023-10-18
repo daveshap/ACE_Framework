@@ -30,7 +30,6 @@ class Busses(Resource):
 
     async def pre_disconnect(self):
         await self.destroy_debug_queues()
-        await super().pre_disconnect()
         await self.destroy_telemetry_queues()
         await self.destroy_exchanges()
         await self.destroy_system_integrity_queues()
