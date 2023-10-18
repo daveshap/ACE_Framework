@@ -22,20 +22,19 @@ class Busses(Resource):
         return self.return_status(True)
 
     async def post_connect(self):
-        await self.create_system_integrity_queues()
-        await self.create_debug_queues()
         await self.create_logging_queues()
+        await self.create_system_integrity_queues()
         await self.create_exchanges()
         await self.create_telemetry_queues()
-        await super().post_connect()
+        await self.create_debug_queues()
 
     async def pre_disconnect(self):
-        await super().pre_disconnect()
-        await self.destroy_exchanges()
         await self.destroy_debug_queues()
+        await super().pre_disconnect()
+        await self.destroy_telemetry_queues()
+        await self.destroy_exchanges()
         await self.destroy_system_integrity_queues()
         await self.destroy_logging_queues()
-        await self.destroy_telemetry_queues()
 
     async def create_exchanges(self):
         self.log.debug(f"{self.labeled_name} creating exchanges...")

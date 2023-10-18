@@ -35,8 +35,7 @@ class SystemIntegrity(Resource):
         await self.subscribe_system_integrity_data()
 
     def post_start(self):
-        asyncio.set_event_loop(self.bus_loop)
-        self.bus_loop.create_task(self.post_layers())
+        asyncio.run_coroutine_threadsafe(self.post_layers(), self.bus_loop)
 
     async def system_integrity_pre_disconnect(self):
         await self.unsubscribe_system_integrity()
@@ -69,7 +68,7 @@ class SystemIntegrity(Resource):
             self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
             await self.execute_resource_command(layer, 'run_layer')
 
-    async def stop_layers(self):
+    async def stop_resources(self):
         for layer in reversed(self.settings.layers):
             self.log.info(f"[{self.labeled_name}] Stopping layer: {layer}")
             await self.execute_resource_command(layer, 'stop_resource')
@@ -123,7 +122,7 @@ class SystemIntegrity(Resource):
     async def check_done(self, data):
         if data['type'] == 'done':
             self.log.info(f"[{self.labeled_name}] ACE mission done, initiating shutdown of all layers")
-            await self.stop_layers()
+            await self.stop_resources()
 
     async def subscribe_system_integrity(self):
         self.log.debug(f"{self.labeled_name} subscribing to system integrity queue...")

@@ -24,23 +24,22 @@ class Layer(Resource):
         self.layer_running = False
 
     async def post_connect(self):
-        await super().post_connect()
         self.set_adjacent_layers()
         self.set_identity()
-        await self.subscribe_debug_queue()
         await self.subscribe_telemetry()
         self.set_llm()
         await self.register_busses()
 
     def post_start(self):
         self.subscribe_to_all_telemetry_namespaces()
+        asyncio.run_coroutine_threadsafe(self.subscribe_debug_queue(), self.bus_loop)
 
     def pre_stop(self):
         self.layer_running = False
+        asyncio.run_coroutine_threadsafe(self.unsubscribe_debug_queue(), self.bus_loop)
 
     async def pre_disconnect(self):
         await super().pre_disconnect()
-        await self.unsubscribe_debug_queue()
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
         await self.deregister_busses()
@@ -202,8 +201,7 @@ class Layer(Resource):
             await self.send_message(response_direction, layer, message)
 
     def schedule_post(self):
-        asyncio.set_event_loop(self.bus_loop)
-        self.bus_loop.create_task(self.post())
+        asyncio.run_coroutine_threadsafe(self.post(), self.bus_loop)
 
     async def post(self):
         self.log.info(f"{self.labeled_name} received POST request")

@@ -41,6 +41,10 @@ class Resource(ABC):
         return f"{self.settings.name} ({self.settings.label})"
 
     @property
+    def system_integrity_managed_resources(self):
+        return self.settings.layers + self.settings.other_resources
+
+    @property
     def api_callbacks(self):
         return {
             'status': self.status
@@ -86,10 +90,14 @@ class Resource(ABC):
             self.log.info(f"{self.labeled_name} busses connection closed...")
             self.bus_loop.stop()
 
-        self.bus_loop.create_task(close_connections())
+        asyncio.run_coroutine_threadsafe(close_connections(), self.bus_loop)
 
     async def post_connect(self):
-        await self.subscribe_system_integrity_queue()
+        pass
+
+    def subscribe_system_integrity_queue_if_needed(self):
+        if self.settings.name in self.system_integrity_managed_resources:
+            asyncio.run_coroutine_threadsafe(self.subscribe_system_integrity_queue(), self.bus_loop)
 
     def post_start(self):
         pass
@@ -105,6 +113,7 @@ class Resource(ABC):
         self.log.info("Starting resource...")
         self.setup_service()
         self.wait_for_local_publisher_queue()
+        self.subscribe_system_integrity_queue_if_needed()
         self.post_start()
         self.log.info("Resource started")
 

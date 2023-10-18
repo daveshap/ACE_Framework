@@ -32,7 +32,6 @@ class TelemetryManager(Resource):
         self.stop_collecting()
 
     async def post_connect(self):
-        await super().post_connect()
         await self.make_exchanges()
         await self.subscribe_telemetry_subscribe()
 
@@ -41,8 +40,7 @@ class TelemetryManager(Resource):
         await self.unsubscribe_telemetry_subscribe()
 
     def initial_collection(self):
-        asyncio.set_event_loop(self.bus_loop)
-        self.bus_loop.create_task(self.collect_initial_data_points())
+        asyncio.run_coroutine_threadsafe(self.collect_initial_data_points(), self.bus_loop)
 
     def schedule_collecting(self):
         self.log.info(f"{self.labeled_name} scheduling recurring data points collection")
