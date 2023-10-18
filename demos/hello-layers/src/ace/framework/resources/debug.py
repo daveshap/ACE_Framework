@@ -54,8 +54,9 @@ class Debug(Resource):
         await self.subscribe_debug_data()
 
     def get_layers_messages(self):
-        asyncio.set_event_loop(self.bus_loop)
-        self.bus_loop.create_task(self.update_layers_messages_state())
+        self.log.debug(f"{self.labeled_name} requesting updated messages for layers")
+        asyncio.run_coroutine_threadsafe(self.update_layers_messages_state(), self.bus_loop)
+        self.log.debug(f"{self.labeled_name} requested updated messages for layers")
         return {
             'success': True,
             'message': f"Requested updated messages for layers: {', '.join(self.settings.layers)}"
@@ -64,8 +65,9 @@ class Debug(Resource):
     def run_layer(self, data):
         layer = data['layer']
         messages = data['messages']
-        asyncio.set_event_loop(self.bus_loop)
-        self.bus_loop.create_task(self.run_layer_with_messages(layer, messages))
+        self.log.debug(f"{self.labeled_name} requesting run layer for layer: {layer}")
+        asyncio.run_coroutine_threadsafe(self.run_layer_with_messages(layer, messages), self.bus_loop)
+        self.log.debug(f"{self.labeled_name} requested run layer for layer: {layer}")
         return {
             'success': True,
             'message': f"Requested run layer for layer: {layer}",
@@ -90,6 +92,7 @@ class Debug(Resource):
         await self.publish_message(queue_name, message)
 
     async def update_layers_messages_state(self):
+        self.log.debug(f"{self.labeled_name} updating layers messages state")
         for layer in self.settings.layers:
             await self.update_layer_messages_state(layer)
 
