@@ -50,7 +50,7 @@ services:
       timeout: 10s
       retries: 3
 
-  logging_layer:
+  logging:
     build:
       <<: *default_build
     environment:
@@ -218,6 +218,7 @@ services:
     command: *default_command
     depends_on:
       - rabbitmq
+      - logging
       - aspirational_layer
       - global_strategy_layer
       - agent_model_layer
@@ -250,6 +251,8 @@ services:
         - *logging_environment
       ACE_RESOURCE_NAME: debug
     command: *default_command
+    depends_on:
+      - system_integrity
     networks: *default_networks
     healthcheck: *healthcheck
 
