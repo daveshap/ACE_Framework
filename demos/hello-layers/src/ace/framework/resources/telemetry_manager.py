@@ -36,7 +36,6 @@ class TelemetryManager(Resource):
         await self.subscribe_telemetry_subscribe()
 
     async def pre_disconnect(self):
-        await super().pre_disconnect()
         await self.unsubscribe_telemetry_subscribe()
 
     def initial_collection(self):
