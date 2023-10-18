@@ -10,6 +10,9 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.data import YamlLexer
 from prompt_toolkit.filters import Condition
 
+from ace.settings import Settings
+from ace.framework.resources.telemetry_manager import TelemetryManager
+
 DEFAULT_HELP_MESSAGE = """
 Keyboard shortcuts:
     1-6: Switch to layer 1-6
@@ -34,31 +37,183 @@ DEFAULT_STYLE = Style.from_dict({
     'text-area': 'bg:#000000 #FFFFFF',
 })
 
-DEFAULT_LAYERS = [
-    '1',
-    '2',
-    '3',
-    '4',
-    '5',
-    '6',
-]
+
+class DataType:
+    def multiline_text(self):
+        return TextArea(multiline=True)
+
+    def bus_direction(self):
+        return RadioList(values=[('northbound', 'Northbound'), ('southbound', 'Southbound')])
+
+
+class ControlDataType(DataType):
+    key = 'control'
+
+    def __init__(self):
+        self.message = self.multiline_text()
+
+    def build_fields(self, data=None):
+        if data:
+            self.message.text = data['message']
+        else:
+            self.reset_values()
+        fields = []
+        fields.append(Label(text='Message:'))
+        fields.append(self.message)
+        return fields
+
+    def get_message_from_dialog(self):
+        new_message = {
+            'message': self.message.text,
+        }
+        self.reset_values()
+        return new_message
+
+    def reset_values(self):
+        self.message.text = ''
+
+
+class DataDataType(DataType):
+    key = 'data'
+
+    def __init__(self):
+        self.message = self.multiline_text()
+
+    def build_fields(self, data=None):
+        if data:
+            self.message.text = data['message']
+        else:
+            self.reset_values()
+        fields = []
+        fields.append(Label(text='Message:'))
+        fields.append(self.message)
+        return fields
+
+    def get_message_from_dialog(self):
+        new_message = {
+            'message': self.message.text,
+        }
+        self.reset_values()
+        return new_message
+
+    def reset_values(self):
+        self.message.text = ''
+
+
+class RequestDataType(DataType):
+    key = 'request'
+
+    def __init__(self):
+        self.direction = self.bus_direction()
+        self.message = self.multiline_text()
+
+    def build_fields(self, data=None):
+        if data:
+            self.direction.current_value = data['direction']
+            self.message.text = data['message']
+        else:
+            self.reset_values()
+        fields = []
+        fields.append(Label(text='Direction:'))
+        fields.append(self.direction)
+        fields.append(Label(text='Message:'))
+        fields.append(self.message)
+        return fields
+
+    def get_message_from_dialog(self):
+        new_message = {
+            'direction': self.direction.current_value,
+            'message': self.message.text,
+        }
+        self.reset_values()
+        return new_message
+
+    def reset_values(self):
+        self.direction.current_value = None
+        self.message.text = ''
+
+
+class ResponseDataType(DataType):
+    key = 'response'
+
+    def __init__(self):
+        self.direction = self.bus_direction()
+        self.message = self.multiline_text()
+
+    def build_fields(self, data=None):
+        if data:
+            self.direction.current_value = data['direction']
+            self.message.text = data['message']
+        else:
+            self.reset_values()
+        fields = []
+        fields.append(Label(text='Direction:'))
+        fields.append(self.direction)
+        fields.append(Label(text='Message:'))
+        fields.append(self.message)
+        return fields
+
+    def get_message_from_dialog(self):
+        new_message = {
+            'direction': self.direction.current_value,
+            'message': self.message.text,
+        }
+        self.reset_values()
+        return new_message
+
+    def reset_values(self):
+        self.direction.current_value = None
+        self.message.text = ''
+
+
+class TelemetryDataType(DataType):
+    key = 'telemetry'
+
+    def __init__(self):
+        self.telemetry_manager = TelemetryManager()
+        self.namespace = RadioList(values=[(namespace, namespace) for namespace in self.telemetry_manager.namespace_map.keys()])
+        self.data = self.multiline_text()
+
+    def build_fields(self, data=None):
+        if data:
+            self.namespace.current_value = data['namespace']
+            self.data.text = data['data']
+        else:
+            self.reset_values()
+        fields = []
+        fields.append(Label(text='Namespace:'))
+        fields.append(self.namespace)
+        fields.append(Label(text='Data:'))
+        fields.append(self.data)
+        return fields
+
+    def get_message_from_dialog(self):
+        new_message = {
+            'namespace': self.namespace.current_value,
+            'data': self.data.text,
+        }
+        self.reset_values()
+        return new_message
+
+    def reset_values(self):
+        self.namespace.current_value = None
+        self.data.text = ''
 
 
 class DebugAceTui:
     def __init__(self):
         self.help_message = DEFAULT_HELP_MESSAGE
         self.style = DEFAULT_STYLE
-        self.layers = DEFAULT_LAYERS
+        self.layer_numbers = [layer[len('layer_'):] for layer in self.settings.layers]
 
-        self.data_dict = {f"layer_{layer}": self.empty_data() for layer in self.layers}
+        self.data_dict = {layer: self.empty_data() for layer in self.settings.layers}
         self.active_layer = None
         self.active_layer_name = None
-        self.active_layer_number = self.layers[0]
+        self.active_layer_number = self.layer_numbers[0]
         self.dialog = None
         self.dialog_not_focused = Condition(lambda: self.dialog is None)
-        self.current_dialog_key = None
-        self.text_area = TextArea(multiline=True)
-        self.radio_list = RadioList(values=[('northbound', 'Northbound'), ('southbound', 'Southbound')])
+        self.current_dialog_type = None
+        self.data_types = self.build_data_types()
         self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         # self.current_messages_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         self.kb = KeyBindings()
@@ -67,13 +222,29 @@ class DebugAceTui:
         self._init_key_bindings()
         self.set_active_layer(self.active_layer_number)
 
+    @property
+    def settings(self):
+        return Settings(
+            name="debug_tui",
+            label="Debug TUI",
+        )
+
     def empty_data(self):
         return {
-            'data': [],
             'control': [],
+            'data': [],
             'request': [],
             'response': [],
             'telemetry': [],
+        }
+
+    def build_data_types(self):
+        return {
+            'control': ControlDataType(),
+            'data': DataDataType(),
+            'request': RequestDataType(),
+            'response': ResponseDataType(),
+            'telemetry': TelemetryDataType(),
         }
 
     def _init_key_bindings(self):
@@ -81,7 +252,7 @@ class DebugAceTui:
         def _(event):
             event.app.exit()
 
-        for layer in self.layers:
+        for layer in self.layer_numbers:
             self.kb.add(layer, filter=self.dialog_not_focused)(self.layer_kb_callback(layer))
 
         @self.kb.add('c', filter=self.dialog_not_focused)
@@ -94,11 +265,11 @@ class DebugAceTui:
 
         @self.kb.add('r', filter=self.dialog_not_focused)
         def _(event):
-            self.open_dialog("request", "Add/edit REQUEST messages", include_direction=True)
+            self.open_dialog("request", "Add/edit REQUEST messages")
 
         @self.kb.add('s', filter=self.dialog_not_focused)
         def _(event):
-            self.open_dialog("response", "Add/edit RESPONSE messages", include_direction=True)
+            self.open_dialog("response", "Add/edit RESPONSE messages")
 
         @self.kb.add('t', filter=self.dialog_not_focused)
         def _(event):
@@ -121,20 +292,11 @@ class DebugAceTui:
             self.set_active_layer(layer)
         return callback
 
-    def build_fields(self, include_direction=False):
-        fields = []
-        if include_direction:
-            fields.append(Label(text='Direction:'))
-            fields.append(self.radio_list)
-        fields.append(Label(text='Message:'))
-        fields.append(self.text_area)
-        return fields
-
-    def open_dialog(self, key, title, include_direction=False):
-        self.current_dialog_key = key
+    def open_dialog(self, key, title):
+        self.current_dialog_type = self.data_types[key]
         full_title = f"{self.active_layer_name}: {title}"
         existing_messages = bool(self.data_dict[self.active_layer_name][key])
-        fields = self.build_fields(include_direction=include_direction)
+        fields = self.current_dialog_type.build_fields()
         # self.current_messages_display.text = yaml.dump(self.data_dict[self.active_layer_name][key], default_flow_style=False, sort_keys=True)
         # fields.append(self.current_messages_display)
         buttons = [
@@ -153,13 +315,9 @@ class DebugAceTui:
         )
         self.app.layout = Layout(self.dialog, focused_element=self.dialog)
 
-    def edit_dialog(self, key, index, title, include_direction=False):
-        self.reset_values()
-        message = self.data_dict[self.active_layer_name][key][index]
-        self.text_area.text = message['message']
-        if 'direction' in message:
-            self.radio_list.current_value = message['direction']
-        fields = self.build_fields(include_direction)
+    def edit_dialog(self, key, index, title):
+        data = self.data_dict[self.active_layer_name][key][index]
+        fields = self.current_dialog_type.build_fields(data)
         buttons = [
             Button(text='OK', handler=functools.partial(self.edit, key, index)),
             Button(text='Cancel', handler=self.cancel),
@@ -173,50 +331,43 @@ class DebugAceTui:
 
     def clear_type(self, key):
         self.data_dict[self.active_layer_name][key] = []
-        self.reset_values()
+        self.data_types[key].reset_values()
+        self.current_dialog_type = None
         self.update_output_display()
         self.app.layout = self.layout
         self.dialog = None
 
     def clear_layer(self):
         self.data_dict[self.active_layer_name] = self.empty_data()
-        self.reset_values()
         self.set_active_layer(self.active_layer_number)
         self.app.layout = self.layout
         self.dialog = None
 
     def add(self, key):
-        new_message = self.get_message_from_dialog(key)
+        new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key].append(new_message)
         self.update_after_change(key)
 
     def edit(self, key, index):
-        new_message = self.get_message_from_dialog(key)
+        new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key][index] = new_message
         self.update_after_change(key)
 
-    def get_message_from_dialog(self, key):
-        new_message = {'message': self.text_area.text}
-        if key in ['request', 'response']:
-            new_message['direction'] = self.radio_list.current_value
-        self.reset_values()
-        return new_message
-
     def update_after_change(self, key):
-        self.current_dialog_key = None
+        self.current_dialog_type = None
         self.update_output_display()
         self.app.layout = self.layout
         self.dialog = None
 
     def open_message_selector(self, action):
-        key = self.current_dialog_key
+        key = self.current_dialog_type.key
         values = [(i, yaml.dump(msg, default_flow_style=False, sort_keys=True)) for i, msg in enumerate(self.data_dict[self.active_layer_name][key])]
         radio_list = RadioList(values)
 
         def handler():
             index = radio_list.current_value
             if action == "edit":
-                self.edit_dialog(key, index, f"Edit {key.upper()} message", include_direction='direction' in self.data_dict[self.active_layer_name][key][index])
+                self.edit_dialog(key, index, f"Edit {key.upper()} message")
             elif action == "delete":
                 self.delete_message(key, index)
 
@@ -239,7 +390,7 @@ class DebugAceTui:
         text.append(f"# ACTIVE LAYER: {self.active_layer_name.upper()}")
         text.append(yaml.dump(self.active_layer, default_flow_style=False, sort_keys=True))
         text.append("# OTHER LAYERS:")
-        for layer in self.layers:
+        for layer in self.layer_numbers:
             if layer != self.active_layer_number:
                 name = f"layer_{layer}"
                 text.append(f"## {name.upper()}")
@@ -253,13 +404,10 @@ class DebugAceTui:
         self.update_output_display()
 
     def cancel(self):
-        self.reset_values()
+        self.current_dialog_type.reset_values()
+        self.current_dialog_type = None
         self.app.layout = self.layout
         self.dialog = None
-
-    def reset_values(self):
-        self.text_area.text = ''
-        self.radio_list.current_value = None
 
     def run(self):
         body = Frame(body=HSplit([Label(text=self.help_message), self.data_display]))
