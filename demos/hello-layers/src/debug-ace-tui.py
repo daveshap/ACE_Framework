@@ -1,4 +1,5 @@
 import yaml
+import httpx
 import functools
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
@@ -10,7 +11,9 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.data import YamlLexer
 from prompt_toolkit.filters import Condition
 
+from ace import constants
 from ace.settings import Settings
+from ace.debug_endpoint import DebugEndpoint
 from ace.framework.resources.telemetry_manager import TelemetryManager
 
 DEFAULT_HELP_MESSAGE = """
@@ -21,6 +24,7 @@ Keyboard shortcuts:
     r: Add to 'request' list.
     s: Add to 'response' list.
     t: Add to 'telemetry' list.
+    l: Retrieve current messages for all layers.
     e: Erase all for current layer.
     q: Quit the application.
 """
@@ -69,6 +73,14 @@ class ControlDataType(DataType):
         self.reset_values()
         return new_message
 
+    def update_messages(self, data):
+        messages = []
+        for m in data:
+            messages.append({
+                'message': m['message'],
+            })
+        return messages
+
     def reset_values(self):
         self.message.text = ''
 
@@ -95,6 +107,14 @@ class DataDataType(DataType):
         }
         self.reset_values()
         return new_message
+
+    def update_messages(self, data):
+        messages = []
+        for m in data:
+            messages.append({
+                'message': m['message'],
+            })
+        return messages
 
     def reset_values(self):
         self.message.text = ''
@@ -128,6 +148,15 @@ class RequestDataType(DataType):
         self.reset_values()
         return new_message
 
+    def update_messages(self, data):
+        messages = []
+        for m in data:
+            messages.append({
+                'direction': m['direction'],
+                'message': m['message'],
+            })
+        return messages
+
     def reset_values(self):
         self.direction.current_value = None
         self.message.text = ''
@@ -160,6 +189,15 @@ class ResponseDataType(DataType):
         }
         self.reset_values()
         return new_message
+
+    def update_messages(self, data):
+        messages = []
+        for m in data:
+            messages.append({
+                'direction': m['direction'],
+                'message': m['message'],
+            })
+        return messages
 
     def reset_values(self):
         self.direction.current_value = None
@@ -195,6 +233,15 @@ class TelemetryDataType(DataType):
         self.reset_values()
         return new_message
 
+    def update_messages(self, data):
+        messages = []
+        for m in data:
+            messages.append({
+                'namespace': m['namespace'],
+                'data': m['data'],
+            })
+        return messages
+
     def reset_values(self):
         self.namespace.current_value = None
         self.data.text = ''
@@ -216,11 +263,13 @@ class DebugAceTui:
         self.data_types = self.build_data_types()
         self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         # self.current_messages_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
+        self.debug_endpoint = DebugEndpoint(constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT, self.debug_endpoint_routes)
         self.kb = KeyBindings()
         self.app = Application(key_bindings=self.kb, full_screen=True, style=self.style)
 
         self._init_key_bindings()
         self.set_active_layer(self.active_layer_number)
+        self.debug_endpoint.start_endpoint()
 
     @property
     def settings(self):
@@ -228,6 +277,14 @@ class DebugAceTui:
             name="debug_tui",
             label="Debug TUI",
         )
+
+    @property
+    def debug_endpoint_routes(self):
+        return {
+            'post': {
+                '/layer-messages': self.update_layer_messages,
+            },
+        }
 
     def empty_data(self):
         return {
@@ -247,9 +304,28 @@ class DebugAceTui:
             'telemetry': TelemetryDataType(),
         }
 
+    def update_layer_messages(self, data):
+        layer = data['layer']
+        messages = data['messages']
+        for key, data_type in self.data_types.items():
+            if key in messages:
+                self.data_dict[layer][key] = data_type.update_messages(messages[key])
+        self.update_output_display()
+        return {
+            'success': True,
+            'message': f"Updated messages for layer: {layer}",
+        }
+
+    def get_current_layer_messages(self):
+        self.get_to_debug('layers-messages')
+
+    def get_to_debug(self, path):
+        httpx.get(f'http://localhost:{constants.DEFAULT_DEBUG_ENDPOINT_PORT}/{path}')
+
     def _init_key_bindings(self):
         @self.kb.add('q', filter=self.dialog_not_focused)
         def _(event):
+            self.debug_endpoint.stop_endpoint()
             event.app.exit()
 
         for layer in self.layer_numbers:
@@ -274,6 +350,10 @@ class DebugAceTui:
         @self.kb.add('t', filter=self.dialog_not_focused)
         def _(event):
             self.open_dialog("telemetry", "Add/edit TELEMETRY messages")
+
+        @self.kb.add('l', filter=self.dialog_not_focused)
+        def _(event):
+            self.get_current_layer_messages()
 
         @self.kb.add('e', filter=self.dialog_not_focused)
         def _(event):

@@ -16,6 +16,8 @@ THIRD_PARTY_LOGGERS = [
     'docker',
     'urllib3',
     'openai',
+    'httpx',
+    'httpcore',
 ]
 THIRD_PARTY_LOG_LEVEL = "WARNING"
 DEFAULT_API_ENDPOINT_PORT: int = 3000
