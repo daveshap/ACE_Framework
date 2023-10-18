@@ -1,7 +1,9 @@
 import aio_pika
 import asyncio
+import httpx
 import yaml
 
+from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
 from ace.debug_endpoint import DebugEndpoint
@@ -13,10 +15,9 @@ class DebugSettings(Settings):
 
 class Debug(Resource):
 
-    # TODO: Need this?
     def __init__(self):
         super().__init__()
-        self.debug_endpoint = DebugEndpoint(self.debug_endpoint_routes)
+        self.debug_endpoint = DebugEndpoint(constants.DEFAULT_DEBUG_ENDPOINT_PORT, self.debug_endpoint_routes)
 
     @property
     def settings(self):
@@ -109,11 +110,24 @@ class Debug(Resource):
         except yaml.YAMLError as e:
             self.log.error(f"[{self.labeled_name}] could not parse data message: {e}")
             return
-        await self.post_debug_data(data)
+        await self.process_debug_data(data)
 
-    # TODO: need this method implemented.
-    async def post_debug_data(self, data):
-        self.log.info(f"{self.labeled_name} received debug data to POST: {data}")
+    async def process_debug_data(self, data):
+        self.log.debug(f"{self.labeled_name} processing debug data: {data}")
+        if data['type'] == 'state':
+            await self.post_layer_messages_update(data)
+
+    async def post_layer_messages_update(self, data):
+        layer = data['layer']
+        messages = data['messages']
+        self.log.debug(f"{self.labeled_name} POST layer update for layer: {layer}")
+        data = {'layer': layer, 'messages': messages}
+        await self.post_to_debug_ui('layer-messages', data)
+
+    async def post_to_debug_ui(self, path, data):
+        async with httpx.AsyncClient() as client:
+            response = await client.post(f'http://localhost:{constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT}/{path}', json=data)
+            self.log.debug(f"{self.labeled_name} POST response from debug UI: {response.text}")
 
     async def subscribe_debug_data(self):
         self.log.debug(f"{self.labeled_name} subscribing to debug data queue...")

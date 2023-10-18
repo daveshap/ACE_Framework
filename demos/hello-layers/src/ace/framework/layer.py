@@ -137,7 +137,7 @@ class Layer(Resource):
             'response': self.get_messages_from_consumer_local_queue('response'),
             'telemetry': self.get_messages_from_consumer_local_queue('telemetry'),
         }
-        message = self.build_message('debug', message={'messages': data}, message_type='state')
+        message = self.build_message('debug', message={'layer': self.settings.name, 'messages': data}, message_type='state')
         self.push_exchange_message_to_publisher_local_queue(self.settings.debug_data_queue, message)
 
     def debug_run_layer_with_messages(self, **kwargs):

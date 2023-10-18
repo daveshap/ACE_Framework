@@ -66,9 +66,9 @@ class StatusHandler(BaseHTTPRequestHandler):
 
 
 class DebugEndpoint:
-    def __init__(self, routes, debug_endpoint_port=constants.DEFAULT_DEBUG_ENDPOINT_PORT):
-        self.routes = routes
+    def __init__(self, debug_endpoint_port, routes):
         self.debug_endpoint_port = debug_endpoint_port
+        self.routes = routes
         self.server = None
 
     def start_endpoint(self):
