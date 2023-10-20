@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+import os
 import time
 from datetime import datetime
 import yaml
@@ -30,6 +31,7 @@ class Resource(ABC):
         self.consumer_local_queues = {}
         self.publisher_local_queue = None
         self.publish_messages = False
+        self.set_debug_state()
 
     @property
     @abstractmethod
@@ -70,6 +72,9 @@ class Resource(ABC):
         data = data or {}
         data['up'] = up
         return data
+
+    def set_debug_state(self, debug_mode=None):
+        self.debug_mode = bool(os.getenv('ACE_DEBUG_MODE')) if debug_mode is None else debug_mode
 
     def connect_busses(self):
         self.log.debug(f"{self.labeled_name} connecting to busses...")
@@ -178,7 +183,7 @@ class Resource(ABC):
                 if queue_name:
                     await self.publish_message(self.build_exchange_name(queue_name), message)
             except Exception as e:
-                self.log.error(f"Publishing message from local publisher queue failed: {e}")
+                self.log.error(f"Publishing message from local publisher queue failed: {e}", exc_info=True)
                 continue
 
     def build_layer_queue_name(self, direction, layer):
@@ -282,7 +287,7 @@ class Resource(ABC):
         try:
             data = yaml.safe_load(decoded_message)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [System Integrity] message: {e}", exc_info=True)
             return
         if data['type'] == 'command':
             method = data.get('method')
@@ -296,7 +301,7 @@ class Resource(ABC):
             method = getattr(self, method_name)
             method(**kwargs)
         except Exception as e:
-            self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}")
+            self.log.error(f"[{self.labeled_name}] failed [System Integrity] command: method {method_name}, error: {e}", exc_info=True)
 
     async def subscribe_debug_queue(self):
         queue_name = self.build_debug_queue_name(self.settings.name)
@@ -318,7 +323,7 @@ class Resource(ABC):
         try:
             data = yaml.safe_load(decoded_message)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse [Debug] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [Debug] message: {e}", exc_info=True)
             return
         if data['type'] == 'command':
             method = data.get('method')
@@ -332,7 +337,7 @@ class Resource(ABC):
             method = getattr(self, method_name)
             method(**kwargs)
         except Exception as e:
-            self.log.error(f"[{self.labeled_name}] failed [Debug] command: method {method_name}, error: {e}")
+            self.log.error(f"[{self.labeled_name}] failed [Debug] command: method {method_name}, error: {e}", exc_info=True)
 
     def resource_log(self, message):
         self.log.info(f"{self.labeled_name} resource log: \n\n{message}\n\n")

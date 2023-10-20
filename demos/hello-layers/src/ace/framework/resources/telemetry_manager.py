@@ -191,7 +191,7 @@ class TelemetryManager(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse message: {e}", exc_info=True)
             return
         await self.handle_subscribe_unsubscribe(data)
 

@@ -29,10 +29,8 @@ class Debug(Resource):
     @property
     def debug_endpoint_routes(self):
         return {
-            'get': {
-                '/layers-messages': self.get_layers_messages,
-            },
             'post': {
+                '/toggle-debug-state': self.toggle_debug_state,
                 '/run-layer': self.run_layer,
             },
         }
@@ -53,13 +51,15 @@ class Debug(Resource):
     async def post_connect(self):
         await self.subscribe_debug_data()
 
-    def get_layers_messages(self):
-        self.log.debug(f"{self.labeled_name} requesting updated messages for layers")
-        asyncio.run_coroutine_threadsafe(self.update_layers_messages_state(), self.bus_loop)
-        self.log.debug(f"{self.labeled_name} requested updated messages for layers")
+    def toggle_debug_state(self, data):
+        state = data['state']
+        self.log.debug(f"{self.labeled_name} requesting debug state change: {state}")
+        asyncio.run_coroutine_threadsafe(self.update_layers_debug_state(state), self.bus_loop)
+        self.log.debug(f"{self.labeled_name} requested debug state change: {state}")
         return {
             'success': True,
-            'message': f"Requested updated messages for layers: {', '.join(self.settings.layers)}"
+            'message': f"Requested debug state change to: {state}",
+            'data': data,
         }
 
     def run_layer(self, data):
@@ -91,14 +91,14 @@ class Debug(Resource):
         message = self.build_message(resource, message={'method': command, 'kwargs': kwargs}, message_type='command')
         await self.publish_message(queue_name, message)
 
-    async def update_layers_messages_state(self):
-        self.log.debug(f"{self.labeled_name} updating layers messages state")
+    async def update_layers_debug_state(self, state):
+        self.log.debug(f"{self.labeled_name} updating layers debug state: {state}")
         for layer in self.settings.layers:
-            await self.update_layer_messages_state(layer)
+            await self.update_layer_debug_state(layer, state)
 
-    async def update_layer_messages_state(self, layer):
-        self.log.info(f"[{self.labeled_name}] sending debug_update_messages_state command to layer: {layer}")
-        await self.execute_resource_command(layer, 'debug_update_messages_state')
+    async def update_layer_debug_state(self, layer, state):
+        self.log.info(f"[{self.labeled_name}] sending debug_update_debug_state command to layer: {layer}, state: {state}")
+        await self.execute_resource_command(layer, 'debug_update_debug_state', {'state': state})
 
     async def run_layer_with_messages(self, layer, messages):
         self.log.info(f"[{self.labeled_name}] sending debug_run_layer_with_messages command to layer: {layer}")
@@ -111,14 +111,23 @@ class Debug(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse data message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse data message: {e}", exc_info=True)
             return
         await self.process_debug_data(data)
 
     async def process_debug_data(self, data):
         self.log.debug(f"{self.labeled_name} processing debug data: {data}")
-        if data['type'] == 'state':
+        if data['type'] == 'debug_state':
+            await self.post_layer_debug_update(data)
+        elif data['type'] == 'layer_state':
             await self.post_layer_messages_update(data)
+
+    async def post_layer_debug_update(self, data):
+        layer = data['layer']
+        state = data['state']
+        self.log.debug(f"{self.labeled_name} POST debug state update for layer: {layer}, state: {state}")
+        data = {'layer': layer, 'state': state}
+        await self.post_to_debug_ui('debug-state', data)
 
     async def post_layer_messages_update(self, data):
         layer = data['layer']

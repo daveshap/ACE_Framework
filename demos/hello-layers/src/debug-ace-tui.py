@@ -28,7 +28,7 @@ Keyboard shortcuts:
     r: Add to 'request' list.
     s: Add to 'response' list.
     t: Add to 'telemetry' list.
-    l: Retrieve current messages for all layers.
+    b: Toggle debug state for all layers.
     x: Send the current messages for the active layer.
     e: Erase all for current layer.
     q: Quit the application.
@@ -100,13 +100,11 @@ class ControlDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         source = self.get_southbound_source(layer)
@@ -143,13 +141,11 @@ class DataDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         source = self.get_northbound_source(layer)
@@ -191,14 +187,12 @@ class RequestDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'direction': m['direction'],
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'direction': data['direction'],
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         direction = data['direction']
@@ -242,14 +236,12 @@ class ResponseDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'direction': m['direction'],
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'direction': data['direction'],
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         direction = data['direction']
@@ -294,14 +286,12 @@ class TelemetryDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'namespace': m['namespace'],
-                'data': m['data'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'namespace': data['namespace'],
+            'data': data['data'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         namespace = data['namespace']
@@ -321,6 +311,7 @@ class DebugAceTui:
     def __init__(self):
         self.style = DEFAULT_STYLE
         self.layer_numbers = [layer[len('layer_'):] for layer in self.settings.layers]
+        self.debug_state = False
 
         self.data_dict = {layer: self.empty_data() for layer in self.settings.layers}
         self.active_layer = None
@@ -360,6 +351,7 @@ class DebugAceTui:
     def debug_endpoint_routes(self):
         return {
             'post': {
+                '/debug-state': self.update_layer_debug_state,
                 '/layer-messages': self.update_layer_messages,
             },
         }
@@ -382,20 +374,33 @@ class DebugAceTui:
             'telemetry': TelemetryDataType(self.settings),
         }
 
+    def update_layer_debug_state(self, data):
+        layer = data['layer']
+        state = data['state']
+        self.add_log_entry(f"{layer} updated debug state: {state}")
+        return {
+            'success': True,
+            'message': f"Updated debug state for layer: {layer}",
+        }
+
     def update_layer_messages(self, data):
         layer = data['layer']
         messages = data['messages']
         for key, data_type in self.data_types.items():
-            if key in messages:
-                self.data_dict[layer][key] = data_type.update_messages(messages[key])
+            if key in messages and messages[key]:
+                for message in messages[key]:
+                    self.data_dict[layer][key].append(data_type.build_ui_message(message))
         self.update_output_display()
+        self.add_log_entry(f"{layer} updated messages")
         return {
             'success': True,
             'message': f"Updated messages for layer: {layer}",
         }
 
-    def get_current_layer_messages(self):
-        self.get_to_debug('layers-messages')
+    def toggle_debug_state(self):
+        self.debug_state = not self.debug_state
+        self.add_log_entry(f"Setting debug state: {'enabled' if self.debug_state else 'disabled'}")
+        self.post_to_debug('toggle-debug-state', {'state': self.debug_state})
 
     def run_active_layer_messages(self):
         data = self.compose_active_layer_messages_data()
@@ -449,10 +454,9 @@ class DebugAceTui:
         def _(event):
             self.open_dialog("telemetry", "Add/edit TELEMETRY messages")
 
-        @self.kb.add('l', filter=self.dialog_not_focused)
+        @self.kb.add('b', filter=self.dialog_not_focused)
         def _(event):
-            self.get_current_layer_messages()
-            self.add_log_entry("Pulling all current layer messages")
+            self.toggle_debug_state()
 
         @self.kb.add('x', filter=self.dialog_not_focused)
         def _(event):

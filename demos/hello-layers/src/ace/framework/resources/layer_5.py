@@ -62,7 +62,7 @@ class Layer5(Layer):
             op_classifier_resp = llm_op_response_content
         )
         self.resource_log(op_log_message)
-        south_op_prompt, north_op_prompt = self.get_op_description(llm_op_response_content, "l5_south", "l5_north")
+        south_op_prompt, north_op_prompt = self.get_op_description(llm_op_response_content, "l5_south.md", "l5_north.md")
 
         layer_instructions = env.get_template("layer_instructions.md")
 
