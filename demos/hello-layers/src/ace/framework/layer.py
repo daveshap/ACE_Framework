@@ -4,11 +4,14 @@ import aio_pika
 from abc import abstractmethod
 import asyncio
 from threading import Thread
+import os
+from jinja2 import Environment, FileSystemLoader
 
 from ace import constants
 from ace.settings import Settings
 from ace.framework.resource import Resource
 from ace.framework.llm.gpt import GPT
+from ace.framework.util import parse_json
 
 
 class LayerSettings(Settings):
@@ -25,7 +28,6 @@ class Layer(Resource):
 
     async def post_connect(self):
         self.set_adjacent_layers()
-        self.set_identity()
         await self.subscribe_telemetry()
         self.set_llm()
         await self.register_busses()
@@ -69,10 +71,6 @@ class Layer(Resource):
         self.log.debug("Deregistering busses...")
         await self.unsubscribe_adjacent_layers()
         self.log.debug("Deregistered busses...")
-
-    @abstractmethod
-    def set_identity(self):
-        pass
 
     @abstractmethod
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
@@ -125,6 +123,48 @@ class Layer(Resource):
             message_strings = [m['message'] for m in messages]
         result = " | ".join(message_strings)
         return result
+    
+    def get_template_dir(self):
+        return os.path.join(os.path.dirname(__file__), "prompts/templates")
+    
+    def get_operations_dir(self):
+        return os.path.join(os.path.dirname(__file__), "prompts/operations")
+    
+    def get_outputs_dir(self):
+        return os.path.join(os.path.dirname(__file__), "prompts/outputs")
+
+    def get_identities_dir(self):
+        return os.path.join(os.path.dirname(__file__), "prompts/identities")
+    
+    def get_op_description(self, content, southbound_outputs_filename, nourthbound_outputs_filename):
+        op_dir = self.get_operations_dir()
+        outputs_dir = self.get_outputs_dir()
+        op_env = Environment(loader=FileSystemLoader(op_dir))
+        outputs_env = Environment(loader=FileSystemLoader(outputs_dir))
+        operation_map = parse_json(content)
+        south_op = operation_map["SOUTH"]
+        north_op = operation_map["NORTH"]
+        
+        match south_op:
+            case "CREATE_REQUEST":
+                op_south_op_descriptiondescription = op_env.get_template("create_request_control.md").render()
+            case "TAKE_ACTION":
+                take_action_control = op_env.get_template("take_action_control.md").render()
+                southbound_outputs = outputs_env.get_template(southbound_outputs_filename).render()
+                south_op_description = take_action_control.render(layer_outputs=southbound_outputs)
+            case default:
+                south_op_description = op_env.get_template("do_nothing_control.md").render()
+        match north_op:
+            case "CREATE_REQUEST":
+                north_op_description = op_env.get_template("create_request_data.md").render()
+            case "TAKE_ACTION":
+                take_action_data = op_env.get_template("take_action_data.md").render()
+                northbound_outputs = outputs_env.get_template(nourthbound_outputs_filename)
+                north_op_description = take_action_data.render(layer_outputs=northbound_outputs)
+            case default:
+                north_op_description = op_env.get_template("do_nothing_data.md").render()
+        
+        return south_op_description, north_op_description
 
     def debug_update_messages_state(self):
         self.log.info(f"[{self.labeled_name}] received debug request to update messages state...")

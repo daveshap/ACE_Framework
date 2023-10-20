@@ -1,16 +1,11 @@
 import time
 
 from ace.framework.layer import Layer, LayerSettings
-from ace.framework.prompts.identities import l4_identity
-from ace.framework.prompts.templates.layer_instructions import layer_instructions
-from ace.framework.prompts.templates.operation_classifier import operation_classifier
-from ace.framework.prompts.templates.log_messages import op_classifier_log, layer_messages_log
-from ace.framework.prompts.ace_context import ace_context
-from ace.framework.prompts.outputs import l4_northbound_outputs, l4_southbound_outputs
 from ace.framework.llm.gpt import GptMessage
-from ace.framework.prompts.operation_descriptions import take_action_data, take_action_control, do_nothing_data, do_nothing_control, create_request_data, create_request_control
 from ace.framework.util import parse_json
 from ace.framework.enums.operation_classification_enum import OperationClassification
+from jinja2 import Environment, FileSystemLoader
+import os
 
 
 class Layer4(Layer):
@@ -30,32 +25,11 @@ class Layer4(Layer):
         self.log.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
-    def set_identity(self):
-        self.identity = l4_identity
-
-    def get_op_description(self, content):
-        operation_map = parse_json(content)
-        south_op = operation_map["SOUTH"]
-        north_op = operation_map["NORTH"]
-        match south_op:
-            case "CREATE_REQUEST":
-                south_op_description = create_request_control
-            case "TAKE_ACTION":
-                south_op_description = take_action_control.render(layer_outputs=l4_southbound_outputs)
-            case default:
-                south_op_description = do_nothing_control
-        match north_op:
-            case "CREATE_REQUEST":
-                north_op_description = create_request_data
-            case "TAKE_ACTION":
-                north_op_description = take_action_data.render(layer_outputs=l4_northbound_outputs)
-            case default:
-                north_op_description = do_nothing_data
-        
-        return south_op_description, north_op_description
-
-
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
+        identity_dir = self.get_identities_dir()
+        identity_env = Environment(loader=FileSystemLoader(identity_dir))
+        identity = identity_env.get_template("l4_identity.md").render()
+
         data_req_messages, control_req_messages = self.parse_req_resp_messages(request_messages)
         data_resp_messages, control_resp_messages = self.parse_req_resp_messages(response_messages)
         prompt_messages = {
@@ -67,9 +41,13 @@ class Layer4(Layer):
             "control_req": self.get_messages_for_prompt(control_req_messages),
             "telemetry" : self.get_messages_for_prompt(telemetry_messages)
         }
+        template_dir = self.get_template_dir()
+        env = Environment(loader=FileSystemLoader(template_dir))
+        operation_classifier = env.get_template("operation_classifier.md")
+        ace_context = env.get_template("ace_context.md").render()
         op_classifier_prompt = operation_classifier.render(
             ace_context = ace_context,
-            identity = self.identity,
+            identity = identity,
             data = prompt_messages["data"],
             data_resp = prompt_messages["data_resp"],
             control = prompt_messages["control"],
@@ -82,20 +60,19 @@ class Layer4(Layer):
 
         llm_op_response: GptMessage = self.llm._create_conversation_completion('gpt-3.5-turbo', llm_op_messages)
         llm_op_response_content = llm_op_response["content"].strip()
+        op_classifier_log = env.get_template("op_log_message.md")
         op_log_message = op_classifier_log.render(
             op_classifier_req = op_classifier_prompt,
             op_classifier_resp = llm_op_response_content
         )
         self.resource_log(op_log_message)
-        south_op_prompt, north_op_prompt = self.get_op_description(llm_op_response_content)
+        south_op_prompt, north_op_prompt = self.get_op_description(llm_op_response_content, "l4_south", "l4_north")
 
-        #If operation classifier says to do nothing, do not bother asking llm for a response
-        if south_op_prompt == north_op_prompt and south_op_prompt == do_nothing_data:
-            return [], []
+        layer_instructions = env.get_template("layer_instructions.md")
 
         layer4_instructions = layer_instructions.render(
             ace_context = ace_context,
-            identity = self.identity,
+            identity = identity,
             data = prompt_messages["data"],
             data_resp = prompt_messages["data_resp"],
             control = prompt_messages["control"],
@@ -113,7 +90,8 @@ class Layer4(Layer):
         
         llm_response: GptMessage = self.llm._create_conversation_completion('gpt-3.5-turbo', llm_messages)
         llm_response_content = llm_response["content"].strip()
-        log_message = layer_messages_log.render(
+        layer_log_messsage = env.get_template("layer_log_message.md")
+        log_message = layer_log_messsage.render(
             llm_req = layer4_instructions,
             llm_resp = llm_response_content
         )
