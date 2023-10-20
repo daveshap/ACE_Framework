@@ -39,7 +39,7 @@ class Layer1(Layer):
         ace_context = env.get_template("ace_context.md")
         layer1_instructions = l1_starting_instructions.render(
             ace_context=ace_context,
-            identity=self.identity
+            identity=identity
         )
 
         llm_messages: [GptMessage] = [
