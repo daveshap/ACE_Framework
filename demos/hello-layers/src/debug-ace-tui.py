@@ -5,8 +5,10 @@ from datetime import datetime
 
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.widgets import Dialog, Frame, Button, Label, TextArea, RadioList
 from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import PygmentsLexer
@@ -317,7 +319,6 @@ class TelemetryDataType(DataType):
 
 class DebugAceTui:
     def __init__(self):
-        self.help_message = DEFAULT_HELP_MESSAGE
         self.style = DEFAULT_STYLE
         self.layer_numbers = [layer[len('layer_'):] for layer in self.settings.layers]
 
@@ -329,6 +330,14 @@ class DebugAceTui:
         self.dialog_not_focused = Condition(lambda: self.dialog is None)
         self.current_dialog_type = None
         self.data_types = self.build_data_types()
+
+        self.help_message = FormattedTextControl(DEFAULT_HELP_MESSAGE)
+        self.help_message_height = self.help_message.text.count('\n')
+        self.help_message_width = max([len(x) for x in self.help_message.text.splitlines()])
+        self.log_display = ''
+        self.log_display_label = Label(text='Logs:')
+        self.log_display_control = FormattedTextControl(self.update_log_display)
+
         self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         # self.current_messages_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         self.debug_endpoint = DebugEndpoint(constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT, self.debug_endpoint_routes)
@@ -443,14 +452,17 @@ class DebugAceTui:
         @self.kb.add('l', filter=self.dialog_not_focused)
         def _(event):
             self.get_current_layer_messages()
+            self.add_log_entry("Pulling all current layer messages")
 
         @self.kb.add('x', filter=self.dialog_not_focused)
         def _(event):
             self.run_active_layer_messages()
+            self.add_log_entry(f"Running messages for layer: {self.active_layer_name}")
 
         @self.kb.add('e', filter=self.dialog_not_focused)
         def _(event):
             self.clear_layer()
+            self.add_log_entry(f"Cleared messages for layer: {self.active_layer_name}")
 
         @self.kb.add('c-s', filter=~self.dialog_not_focused)
         def _(event):
@@ -463,6 +475,7 @@ class DebugAceTui:
     def layer_kb_callback(self, layer):
         def callback(event):
             self.set_active_layer(layer)
+            self.add_log_entry(f"Switched active layer: {self.active_layer_name}")
         return callback
 
     def open_dialog(self, key, title):
@@ -558,6 +571,16 @@ class DebugAceTui:
         del self.data_dict[self.active_layer_name][key][index]
         self.update_after_change(key)
 
+    def current_timestamp(self):
+        return datetime.now().strftime('%H:%M:%S')
+
+    def update_log_display(self):
+        return self.log_display
+
+    def add_log_entry(self, entry):
+        log_time = self.current_timestamp()
+        self.log_display = f"{log_time}: {entry}\n{self.log_display}"
+
     def update_output_display(self):
         text = []
         text.append(f"# ACTIVE LAYER: {self.active_layer_name.upper()}")
@@ -583,7 +606,18 @@ class DebugAceTui:
         self.dialog = None
 
     def run(self):
-        body = Frame(body=HSplit([Label(text=self.help_message), self.data_display]))
+        log_display_window = HSplit([
+            self.log_display_label,
+            Window(content=self.log_display_control, height=self.help_message_height),
+        ])
+        top_bar = VSplit([
+            Window(self.help_message, width=Dimension(max=self.help_message_width)),
+            log_display_window,
+        ])
+        body = Frame(body=HSplit([
+            top_bar,
+            self.data_display,
+        ]))
         root_container = VSplit([body])
         self.layout = Layout(root_container)
         self.app.layout = self.layout
