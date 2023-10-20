@@ -33,7 +33,7 @@ class Logging(Resource):
                 os.remove(f)
                 self.log.debug(f'{self.labeled_name} file {f} has been removed successfully')
             except OSError as e:
-                self.log.error(f'{self.labeled_name} error removing log file: {f} : {e}')
+                self.log.error(f'{self.labeled_name} error removing log file: {f} : {e}', exc_info=True)
 
     # TODO: Add valid status checks.
     def status(self):
@@ -55,7 +55,7 @@ class Logging(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse message: {e}", exc_info=True)
             return
         self.log_message(data)
 

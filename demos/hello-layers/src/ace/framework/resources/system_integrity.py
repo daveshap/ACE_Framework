@@ -94,7 +94,7 @@ class SystemIntegrity(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse message: {e}", exc_info=True)
             return
         if not self.post_complete:
             await self.check_post_complete(data)
@@ -106,7 +106,7 @@ class SystemIntegrity(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse data message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse data message: {e}", exc_info=True)
             return
         if not self.shutdown_complete:
             await self.check_done(data)

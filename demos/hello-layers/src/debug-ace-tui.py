@@ -5,8 +5,10 @@ from datetime import datetime
 
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout.containers import HSplit, VSplit
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window
+from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.widgets import Dialog, Frame, Button, Label, TextArea, RadioList
 from prompt_toolkit.styles import Style
 from prompt_toolkit.lexers import PygmentsLexer
@@ -26,7 +28,7 @@ Keyboard shortcuts:
     r: Add to 'request' list.
     s: Add to 'response' list.
     t: Add to 'telemetry' list.
-    l: Retrieve current messages for all layers.
+    b: Toggle debug state for all layers.
     x: Send the current messages for the active layer.
     e: Erase all for current layer.
     q: Quit the application.
@@ -98,13 +100,11 @@ class ControlDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         source = self.get_southbound_source(layer)
@@ -141,13 +141,11 @@ class DataDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         source = self.get_northbound_source(layer)
@@ -189,14 +187,12 @@ class RequestDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'direction': m['direction'],
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'direction': data['direction'],
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         direction = data['direction']
@@ -240,14 +236,12 @@ class ResponseDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'direction': m['direction'],
-                'message': m['message'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'direction': data['direction'],
+            'message': data['message'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         direction = data['direction']
@@ -292,14 +286,12 @@ class TelemetryDataType(DataType):
         self.reset_values()
         return new_message
 
-    def update_messages(self, data):
-        messages = []
-        for m in data:
-            messages.append({
-                'namespace': m['namespace'],
-                'data': m['data'],
-            })
-        return messages
+    def build_ui_message(self, data):
+        message = {
+            'namespace': data['namespace'],
+            'data': data['data'],
+        }
+        return message
 
     def build_layer_message(self, layer, data):
         namespace = data['namespace']
@@ -317,9 +309,9 @@ class TelemetryDataType(DataType):
 
 class DebugAceTui:
     def __init__(self):
-        self.help_message = DEFAULT_HELP_MESSAGE
         self.style = DEFAULT_STYLE
         self.layer_numbers = [layer[len('layer_'):] for layer in self.settings.layers]
+        self.debug_state = False
 
         self.data_dict = {layer: self.empty_data() for layer in self.settings.layers}
         self.active_layer = None
@@ -329,6 +321,14 @@ class DebugAceTui:
         self.dialog_not_focused = Condition(lambda: self.dialog is None)
         self.current_dialog_type = None
         self.data_types = self.build_data_types()
+
+        self.help_message = FormattedTextControl(DEFAULT_HELP_MESSAGE)
+        self.help_message_height = self.help_message.text.count('\n')
+        self.help_message_width = max([len(x) for x in self.help_message.text.splitlines()])
+        self.log_display = ''
+        self.log_display_label = Label(text='Logs:')
+        self.log_display_control = FormattedTextControl(self.update_log_display)
+
         self.data_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         # self.current_messages_display = TextArea(lexer=PygmentsLexer(YamlLexer), read_only=True)
         self.debug_endpoint = DebugEndpoint(constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT, self.debug_endpoint_routes)
@@ -351,6 +351,7 @@ class DebugAceTui:
     def debug_endpoint_routes(self):
         return {
             'post': {
+                '/debug-state': self.update_layer_debug_state,
                 '/layer-messages': self.update_layer_messages,
             },
         }
@@ -373,22 +374,36 @@ class DebugAceTui:
             'telemetry': TelemetryDataType(self.settings),
         }
 
+    def update_layer_debug_state(self, data):
+        layer = data['layer']
+        state = data['state']
+        self.add_log_entry(f"{layer} updated debug state: {state}")
+        return {
+            'success': True,
+            'message': f"Updated debug state for layer: {layer}",
+        }
+
     def update_layer_messages(self, data):
         layer = data['layer']
         messages = data['messages']
         for key, data_type in self.data_types.items():
-            if key in messages:
-                self.data_dict[layer][key] = data_type.update_messages(messages[key])
+            if key in messages and messages[key]:
+                for message in messages[key]:
+                    self.data_dict[layer][key].append(data_type.build_ui_message(message))
         self.update_output_display()
+        self.add_log_entry(f"{layer} updated messages")
         return {
             'success': True,
             'message': f"Updated messages for layer: {layer}",
         }
 
-    def get_current_layer_messages(self):
-        self.get_to_debug('layers-messages')
+    def toggle_debug_state(self):
+        self.debug_state = not self.debug_state
+        self.add_log_entry(f"Setting debug state: {'enabled' if self.debug_state else 'disabled'}")
+        self.post_to_debug('toggle-debug-state', {'state': self.debug_state})
 
     def run_active_layer_messages(self):
+        self.add_log_entry(f"Running messages for layer: {self.active_layer_name}")
         data = self.compose_active_layer_messages_data()
         self.post_to_debug('run-layer', data)
 
@@ -440,9 +455,9 @@ class DebugAceTui:
         def _(event):
             self.open_dialog("telemetry", "Add/edit TELEMETRY messages")
 
-        @self.kb.add('l', filter=self.dialog_not_focused)
+        @self.kb.add('b', filter=self.dialog_not_focused)
         def _(event):
-            self.get_current_layer_messages()
+            self.toggle_debug_state()
 
         @self.kb.add('x', filter=self.dialog_not_focused)
         def _(event):
@@ -515,16 +530,19 @@ class DebugAceTui:
         self.set_active_layer(self.active_layer_number)
         self.app.layout = self.layout
         self.dialog = None
+        self.add_log_entry(f"Cleared messages for layer: {self.active_layer_name}")
 
     def add(self, key):
         new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key].append(new_message)
         self.update_after_change(key)
+        self.add_log_entry(f"Added '{key}' message for layer: {self.active_layer_name}")
 
     def edit(self, key, index):
         new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key][index] = new_message
         self.update_after_change(key)
+        self.add_log_entry(f"Edited '{key}' message {index + 1} for layer: {self.active_layer_name}")
 
     def update_after_change(self, key):
         self.current_dialog_type = None
@@ -557,6 +575,17 @@ class DebugAceTui:
     def delete_message(self, key, index):
         del self.data_dict[self.active_layer_name][key][index]
         self.update_after_change(key)
+        self.add_log_entry(f"Deleted '{key}' message {index + 1} for layer: {self.active_layer_name}")
+
+    def current_timestamp(self):
+        return datetime.now().strftime('%H:%M:%S')
+
+    def update_log_display(self):
+        return self.log_display
+
+    def add_log_entry(self, entry):
+        log_time = self.current_timestamp()
+        self.log_display = f"{log_time}: {entry}\n{self.log_display}"
 
     def update_output_display(self):
         text = []
@@ -575,6 +604,7 @@ class DebugAceTui:
         self.active_layer_name = f"layer_{layer}"
         self.active_layer = self.data_dict[self.active_layer_name]
         self.update_output_display()
+        self.add_log_entry(f"Switched active layer: {self.active_layer_name}")
 
     def cancel(self):
         self.current_dialog_type.reset_values()
@@ -583,7 +613,18 @@ class DebugAceTui:
         self.dialog = None
 
     def run(self):
-        body = Frame(body=HSplit([Label(text=self.help_message), self.data_display]))
+        log_display_window = HSplit([
+            self.log_display_label,
+            Window(content=self.log_display_control, height=self.help_message_height),
+        ])
+        top_bar = VSplit([
+            Window(self.help_message, width=Dimension(max=self.help_message_width)),
+            log_display_window,
+        ])
+        body = Frame(body=HSplit([
+            top_bar,
+            self.data_display,
+        ]))
         root_container = VSplit([body])
         self.layout = Layout(root_container)
         self.app.layout = self.layout

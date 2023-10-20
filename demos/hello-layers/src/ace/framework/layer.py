@@ -56,7 +56,7 @@ class Layer(Resource):
                 self.southern_layer = self.settings.layers[layer_index + 1]
         except ValueError:
             message = f"Invalid layer name: {self.settings.name}"
-            self.log.error(message)
+            self.log.error(message, exc_info=True)
             raise ValueError(message)
 
     def set_llm(self):
@@ -123,19 +123,19 @@ class Layer(Resource):
             message_strings = [m['message'] for m in messages]
         result = " | ".join(message_strings)
         return result
-    
+
     def get_template_dir(self):
         return os.path.join(os.path.dirname(__file__), "prompts/templates")
-    
+
     def get_operations_dir(self):
         return os.path.join(os.path.dirname(__file__), "prompts/operations")
-    
+
     def get_outputs_dir(self):
         return os.path.join(os.path.dirname(__file__), "prompts/outputs")
 
     def get_identities_dir(self):
         return os.path.join(os.path.dirname(__file__), "prompts/identities")
-    
+
     def get_op_description(self, content, southbound_outputs_filename, nourthbound_outputs_filename):
         op_dir = self.get_operations_dir()
         outputs_dir = self.get_outputs_dir()
@@ -144,69 +144,99 @@ class Layer(Resource):
         operation_map = parse_json(content)
         south_op = operation_map["SOUTH"]
         north_op = operation_map["NORTH"]
-        
+
         match south_op:
             case "CREATE_REQUEST":
-                op_south_op_descriptiondescription = op_env.get_template("create_request_control.md").render()
+                south_op_description = op_env.get_template("create_request_control.md").render()
             case "TAKE_ACTION":
-                take_action_control = op_env.get_template("take_action_control.md").render()
+                take_action_control = op_env.get_template("take_action_control.md")
                 southbound_outputs = outputs_env.get_template(southbound_outputs_filename).render()
                 south_op_description = take_action_control.render(layer_outputs=southbound_outputs)
-            case default:
+            case _:
                 south_op_description = op_env.get_template("do_nothing_control.md").render()
         match north_op:
             case "CREATE_REQUEST":
                 north_op_description = op_env.get_template("create_request_data.md").render()
             case "TAKE_ACTION":
-                take_action_data = op_env.get_template("take_action_data.md").render()
+                take_action_data = op_env.get_template("take_action_data.md")
                 northbound_outputs = outputs_env.get_template(nourthbound_outputs_filename)
                 north_op_description = take_action_data.render(layer_outputs=northbound_outputs)
-            case default:
+            case _:
                 north_op_description = op_env.get_template("do_nothing_data.md").render()
-        
+
         return south_op_description, north_op_description
 
-    def debug_update_messages_state(self):
-        self.log.info(f"[{self.labeled_name}] received debug request to update messages state...")
-        data = {
-            'control': self.get_messages_from_consumer_local_queue('control') if self.northern_layer else [],
-            'data': self.get_messages_from_consumer_local_queue('data') if self.southern_layer else [],
-            'request': self.get_messages_from_consumer_local_queue('request'),
-            'response': self.get_messages_from_consumer_local_queue('response'),
-            'telemetry': self.get_messages_from_consumer_local_queue('telemetry'),
+    def debug_run_layer(self):
+        control_messages, data_messages, request_messages, response_messages, telemetry_messages = self.get_all_local_messages()
+        messages = {
+            'control': control_messages,
+            'data': data_messages,
+            'request': request_messages,
+            'response': response_messages,
+            'telemetry': telemetry_messages,
         }
-        message = self.build_message('debug', message={'layer': self.settings.name, 'messages': data}, message_type='state')
+        total_messages = sum(len(x) for x in messages.values() if x)
+        if total_messages > 0:
+            self.debug_update_messages_state(messages)
+
+    def debug_update_messages_state(self, messages):
+        self.log.info(f"[{self.labeled_name}] received debug request to update messages state...")
+        message = self.build_message('debug', message={'layer': self.settings.name, 'messages': messages}, message_type='layer_state')
         self.push_exchange_message_to_publisher_local_queue(self.settings.debug_data_queue, message)
 
-    def debug_run_layer_with_messages(self, **kwargs):
-        self.log.info(f"[{self.labeled_name}] received debug run layer request, messages: {kwargs}")
+    def debug_update_debug_state(self, **data):
+        state = data['state']
+        self.log.info(f"[{self.labeled_name}] received debug request to update debug state to: {state}")
+        self.set_debug_state(state)
+        message = self.build_message('debug', message={'layer': self.settings.name, 'state': state}, message_type='debug_state')
+        self.push_exchange_message_to_publisher_local_queue(self.settings.debug_data_queue, message)
+
+    def debug_run_layer_with_messages(self, **data):
+        self.log.info(f"[{self.labeled_name}] received debug run layer request, messages: {data}")
+        self.agent_run_and_publish(data['control'], data['data'], data['request'], data['response'], data['telemetry'])
+
+    def get_all_local_messages(self):
+        control_messages, data_messages = None, None
+        if self.northern_layer:
+            control_messages = self.get_messages_from_consumer_local_queue('control')
+        if self.southern_layer:
+            data_messages = self.get_messages_from_consumer_local_queue('data')
+        request_messages = self.get_messages_from_consumer_local_queue('request')
+        response_messages = self.get_messages_from_consumer_local_queue('response')
+        telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
+        return control_messages, data_messages, request_messages, response_messages, telemetry_messages
+
+    def agent_run_and_publish(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
+        self.log.info(f"[{self.labeled_name}] agent run and publish...")
+        messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
+        if messages_northbound and self.northern_layer:
+            for m in messages_northbound:
+                message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
+                self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
+        if messages_southbound and self.southern_layer:
+            for m in messages_southbound:
+                message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
+                self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
+
+    def agent_run_layer(self):
+        control_messages, data_messages, request_messages, response_messages, telemetry_messages = self.get_all_local_messages()
+        self.run_layers_debug_messages(control_messages,
+                                       data_messages,
+                                       request_messages,
+                                       response_messages,
+                                       telemetry_messages,
+                                       )
+        self.agent_run_and_publish(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
 
     def run_layer_in_thread(self):
-        while True and self.layer_running:
-            control_messages, data_messages = None, None
-            if self.northern_layer:
-                control_messages = self.get_messages_from_consumer_local_queue('control')
-            if self.southern_layer:
-                data_messages = self.get_messages_from_consumer_local_queue('data')
-            request_messages = self.get_messages_from_consumer_local_queue('request')
-            response_messages = self.get_messages_from_consumer_local_queue('response')
-            telemetry_messages = self.get_messages_from_consumer_local_queue('telemetry')
-            self.run_layers_debug_messages(control_messages,
-                                           data_messages,
-                                           request_messages,
-                                           response_messages,
-                                           telemetry_messages,
-                                           )
-            messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
-            if messages_northbound and self.northern_layer:
-                for m in messages_northbound:
-                    message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
-                    self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
-            if messages_southbound and self.southern_layer:
-                for m in messages_southbound:
-                    message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
-                    self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
-            time.sleep(constants.LAYER_SLEEP_TIME)
+        while self.layer_running:
+            if self.debug_mode:
+                self.debug_run_layer()
+                time.sleep(constants.DEBUG_LAYER_SLEEP_TIME)
+            else:
+                self.agent_run_layer()
+                if not self.debug_mode:
+                    time.sleep(constants.LAYER_SLEEP_TIME)
 
     async def send_message(self, direction, layer, message, delivery_mode=2):
         queue_name = self.build_layer_queue_name(direction, layer)
@@ -253,7 +283,7 @@ class Layer(Resource):
         try:
             data = yaml.safe_load(message.body.decode())
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}")
+            self.log.error(f"[{self.labeled_name}] could not parse [{direction}] message: {e}", exc_info=True)
             return
         data['direction'] = direction
         source_layer = data['resource']['source']
