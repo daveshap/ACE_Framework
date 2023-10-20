@@ -403,6 +403,7 @@ class DebugAceTui:
         self.post_to_debug('toggle-debug-state', {'state': self.debug_state})
 
     def run_active_layer_messages(self):
+        self.add_log_entry(f"Running messages for layer: {self.active_layer_name}")
         data = self.compose_active_layer_messages_data()
         self.post_to_debug('run-layer', data)
 
@@ -461,12 +462,10 @@ class DebugAceTui:
         @self.kb.add('x', filter=self.dialog_not_focused)
         def _(event):
             self.run_active_layer_messages()
-            self.add_log_entry(f"Running messages for layer: {self.active_layer_name}")
 
         @self.kb.add('e', filter=self.dialog_not_focused)
         def _(event):
             self.clear_layer()
-            self.add_log_entry(f"Cleared messages for layer: {self.active_layer_name}")
 
         @self.kb.add('c-s', filter=~self.dialog_not_focused)
         def _(event):
@@ -479,7 +478,6 @@ class DebugAceTui:
     def layer_kb_callback(self, layer):
         def callback(event):
             self.set_active_layer(layer)
-            self.add_log_entry(f"Switched active layer: {self.active_layer_name}")
         return callback
 
     def open_dialog(self, key, title):
@@ -532,16 +530,19 @@ class DebugAceTui:
         self.set_active_layer(self.active_layer_number)
         self.app.layout = self.layout
         self.dialog = None
+        self.add_log_entry(f"Cleared messages for layer: {self.active_layer_name}")
 
     def add(self, key):
         new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key].append(new_message)
         self.update_after_change(key)
+        self.add_log_entry(f"Added '{key}' message for layer: {self.active_layer_name}")
 
     def edit(self, key, index):
         new_message = self.data_types[key].get_message_from_dialog()
         self.data_dict[self.active_layer_name][key][index] = new_message
         self.update_after_change(key)
+        self.add_log_entry(f"Edited '{key}' message {index + 1} for layer: {self.active_layer_name}")
 
     def update_after_change(self, key):
         self.current_dialog_type = None
@@ -574,6 +575,7 @@ class DebugAceTui:
     def delete_message(self, key, index):
         del self.data_dict[self.active_layer_name][key][index]
         self.update_after_change(key)
+        self.add_log_entry(f"Deleted '{key}' message {index + 1} for layer: {self.active_layer_name}")
 
     def current_timestamp(self):
         return datetime.now().strftime('%H:%M:%S')
@@ -602,6 +604,7 @@ class DebugAceTui:
         self.active_layer_name = f"layer_{layer}"
         self.active_layer = self.data_dict[self.active_layer_name]
         self.update_output_display()
+        self.add_log_entry(f"Switched active layer: {self.active_layer_name}")
 
     def cancel(self):
         self.current_dialog_type.reset_values()
