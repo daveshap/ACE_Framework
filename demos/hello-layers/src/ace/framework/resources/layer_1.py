@@ -33,6 +33,10 @@ class Layer1(Layer):
         self.log.info(f"{self.labeled_name} received command to begin work")
         self.work_begun = True
 
+        identity_dir = self.get_identities_dir()
+        identity_env = Environment(loader=FileSystemLoader(identity_dir))
+        identity = identity_env.get_template("l1_identity.md").render()
+
         template_dir = self.get_template_dir()
         env = Environment(loader=FileSystemLoader(template_dir))
         l1_starting_instructions = env.get_template("l1_starting_instructions.md")
