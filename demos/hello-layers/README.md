@@ -29,8 +29,28 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
 
 The user running the demo will need permissions to execute `docker` commands (e.g.  Rootless mode).
 
+*NOTE: This setup has only been tested from a shell environment, running it from other environments (such as IDEs) may not work.*
+
 ```sh
 pip install -r requirements.txt
+```
+
+### Credentials
+
+You'll need to export the `OPENAI_API_KEY` environment variable on your system to a valid OpenAI API key, for example:
+
+```sh
+export OPENAI_API_KEY="your_openai_api_key_here"
+```
+
+RabbitMQ is configured by default with username `rabbit`, password `carrot`. You can log into the running RabbitMQ web console at `http://localhost:15672` once the system is started up.
+
+You can also customize the RabbitMQ hostname/login credentials by exporting the following variables on your host:
+
+```sh
+export ACE_RABBITMQ_HOSTNAME="some_hostname"
+export ACE_RABBITMQ_USERNAME="some_username"
+export ACE_RABBITMQ_PASSWORD="some_password"
 ```
 
 ## Running the demo using the resource manager
@@ -42,6 +62,8 @@ From the root directory of the demo (where this README resides)
 ```
 
 ## Running the demo in dev mode
+
+If you plan on hacking the Python files in the demo, you'll want to run it in dev mode, which syncs the demo files on your host with the containers, allowing editing without rebuilding the containers.
 
 From the root directory of the demo (where this README resides)
 
