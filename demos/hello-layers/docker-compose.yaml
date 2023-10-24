@@ -17,10 +17,11 @@ x-logging-environment: &logging_environment
   ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
   ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
 
-x-rabbitmq-username: &rabbitmq-username rabbit
-x-rabbitmq-password: &rabbitmq-password carrot
+x-rabbitmq-hostname: &rabbitmq-hostname ${ACE_RABBITMQ_HOSTNAME:-rabbitmq}
+x-rabbitmq-username: &rabbitmq-username ${ACE_RABBITMQ_USERNAME:-rabbit}
+x-rabbitmq-password: &rabbitmq-password ${ACE_RABBITMQ_PASSWORD:-carrot}
 x-rabbitmq-environment: &rabbitmq_environment
-  AMQP_HOST_NAME: rabbitmq
+  AMQP_HOST_NAME: *rabbitmq-hostname
   AMQP_USERNAME: *rabbitmq-username
   AMQP_PASSWORD: *rabbitmq-password
 
