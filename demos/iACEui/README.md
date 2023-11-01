@@ -117,7 +117,7 @@ We've had some community members delve into the iACEui project, providing valuab
 
 ### Key Components
 
-There are three main services driving the ACE Framework and the Frontend:
+The main services driving the ACE Framework and the Frontend:
 
 **Svelte GUI**: Interactive prompt engineering and testing user interface
 
