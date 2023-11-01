@@ -5,7 +5,7 @@ Thank you for taking a look at our demo. If you have any feedback or questions, 
 The goal of this demo is to provide a user frieldly interface to engineer prompts for the ACE Framework. As such, we included an MVP of the ACE Framework infra for testing and demonstration purposes.
 
 <div style="background-color: #fff9e6; color: #333; border: 2px solid #ffcc00; border-radius: 5px; padding: 10px; font-weight: bold;">
-  <span style="font-size: 24px; margin-right: 10px;">⚠️ Warning</span>To run The ACE Framework infra in this demo all prompts must be engineered and saved via the prompt engineering and testing UI.
+  <span style="font-size: 24px; margin-right: 10px;">⚠️</span>To run The ACE Framework infra in this demo all prompts must be engineered and saved via the prompt engineering and testing UI.
 </div>
 
 ## Contributors
@@ -16,7 +16,7 @@ The goal of this demo is to provide a user frieldly interface to engineer prompt
 ## Runing the backend
 
 <div style="background-color: #e6f0ff; color: #333; border: 2px solid #3399ff; border-radius: 5px; padding: 10px; font-weight: bold;">
-  <span style="font-size: 24px; margin-right: 10px;">📘 Note</span>This guide assume you have opened iACEui folder as a project in VSCode. Take this into consideration and adapt to your personal setup.
+  <span style="font-size: 24px; margin-right: 10px;">📘</span>This guide assume you have opened iACEui folder as a project in VSCode. Take this into consideration and adapt to your personal setup.
 </div>
 
 ### Step 1: Set up your environment
@@ -78,7 +78,7 @@ npm run dev
 Experimentation is key here. The UI provides a way to engineer prompts and test theories before starting up the agent. Once everything is working as you expect and the prompts are saved, you can start the rest of the agent.
 
 <div style="background-color: #e6f0ff; color: #333; border: 2px solid #3399ff; border-radius: 5px; padding: 10px; font-weight: bold;">
-  <span style="font-size: 24px; margin-right: 10px;">📘 Note</span>Built into the layers is the ability to prevent a message from being sent to the next layer.  This function detects if the layer wants to send a message with `none` which prvents the message from being sent
+  <span style="font-size: 24px; margin-right: 10px;">📘</span>Built into the layers is the ability to prevent a message from being sent to the next layer.  This function detects if the layer wants to send a message with `none` which prvents the message from being sent
 </div>
 
 Existing strategy for detecting none
@@ -126,7 +126,7 @@ docker-compose up --build
 the `--build` option is only required if you made code changes
 
 <div style="background-color: #e6f0ff; color: #333; border: 2px solid #3399ff; border-radius: 5px; padding: 10px; font-weight: bold;">
-  <span style="font-size: 24px; margin-right: 10px;">📘 Note</span>Cognitive circuits, integrations, and more advanced funcitonality is not part of this demo, and I encourage you to Fork the repository and open a pull request to contribute!
+  <span style="font-size: 24px; margin-right: 10px;">📘</span>Cognitive circuits, integrations, and more advanced funcitonality is not part of this demo, and I encourage you to Fork the repository and open a pull request to contribute!
 </div>
 
 ## Check out the API docs
