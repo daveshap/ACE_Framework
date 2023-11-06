@@ -126,6 +126,7 @@ The following actions are available.
 - update_whiteboard(contents): Replaces the current contents of my whiteboard with the given updated contents,
   in markdown format. This is how I maintain a train of thought and task list for the future.
 - set_next_alarm(time_utc): Sets the next time the alarm should ring, in UTC time.
+- get_resources_for_topic(topic): Searches arXiv for scientific research papers related to a topic
 
 Don't make up new actions, only use the ones I've defined above.
 
