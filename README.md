@@ -43,6 +43,8 @@ Please check out the following files and locations for more details about partic
 3. Discussions: https://github.com/daveshap/ACE_Framework/discussions
    - Jump into the discussions! 
 
+We also have a Public Discord. Keep in mind that this repo is the Single Source of Truth! Discord is just for convenience. If it's not on the repo, it doesn't exist! Join the Autonomous AI Lab here: https://discord.gg/mJKUYNm8qY
+
 <div alt style="text-align: center; transform: scale(.5);">
 <picture>
 <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/ACE%20Framework%20Overall%20Architecture.png" />
