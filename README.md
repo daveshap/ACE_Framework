@@ -1,9 +1,30 @@
-<div alt style="text-align: center; transform: scale(.5);">
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/banner.jpg" />
-<img alt="tldraw" src="https://raw.githubusercontent.com/daveshap/ACE_Framework/main/images/banner.jpg" />
-</picture>
-</div>
+# Project Principles
+
+## Exclusively Open Source
+
+We will be committed to using 100% open source software (OSS) for this project. This is to ensure maximimum accessibility and democratic access.
+
+## Exclusively Local Hardware
+
+No cloud or SaaS providers. This constrains the project to run locally on servers, desktops, laptops, smart home, and portable devices. 
+
+## Principles
+
+### 1. Be Scrappy
+Don't wait for permission or controls. This is a purely volunteer group so if something resonates, go for it. Experiment. Try stuff. Break stuff. Share your results. Use your own sandboxes, report results, and together we'll decide what get's pulled into MAIN via pull request. But as one member said: we need more data! So the principle here is to engage in activities that generate more data, more telemetry, so we can see and feel what's working and what isn't. 
+
+### 2. Avoid Vendor Lockin
+While we generally agree we want to be model agnostic, but acknowledge there are problems with this, the overarching principle is that we don't want to get locked into working with any single vendor. OpenAI in particular. This means we tinker with multiple providers, vendors, models, etc. This also means a preference for Open Source wherever possible. This general principle covers several areas.
+
+### 3. Task-Constrained Approach
+The team acknowledges that the tasks the framework can accomplish are constrained by the capabilities provided to it. Identifying the potential task space is critical, and the framework should be designed with the types of tasks it should be able to accomplish in mind. This means that milestones and capabilities should be measured by tests and tasks so that we can remain empirical and objective oriented.
+
+### 4. Avoiding Overcomplication
+The team agrees on the importance of not overcomplicating the project from the start. Modest milestones and a focus on what is feasible are recommended. As we're doing nothing short of aiming for fully autonomous software, we need to not "boil the ocean" or "eat the whole elephant." Small, incremental steps while keeping the grand vision in mind. 
+
+### 5. Establish New Principles
+We're exploring an entirely new domain of software architecture and design. Some old paradigms will obviously still apply, but some won't. Thus, we are discovering and deriving new principles of autonomous software design as we go. This adds a layer of complexity to our task. 
+
 
 # Intro to this Repo
 
