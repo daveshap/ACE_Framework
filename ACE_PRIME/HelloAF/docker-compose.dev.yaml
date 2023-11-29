@@ -1,0 +1,39 @@
+version: '3'
+
+x-shared-volumes: &shared-volumes
+  - ./src:/app
+
+services:
+
+  telemetry_manager_layer:
+    volumes: *shared-volumes
+
+  logging:
+    volumes: *shared-volumes
+
+  aspirational_layer:
+    volumes: *shared-volumes
+
+  global_strategy_layer:
+    volumes: *shared-volumes
+
+  agent_model_layer:
+    volumes: *shared-volumes
+
+  executive_function_layer:
+    volumes: *shared-volumes
+
+  cognitive_control_layer:
+    volumes: *shared-volumes
+
+  task_prosecution_layer:
+    volumes: *shared-volumes
+
+  interlayer_communication_buses:
+    volumes: *shared-volumes
+
+  system_integrity:
+    volumes: *shared-volumes
+
+  debug:
+    volumes: *shared-volumes
