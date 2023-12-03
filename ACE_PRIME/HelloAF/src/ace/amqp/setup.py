@@ -29,8 +29,8 @@ class AMQPSetupManager:
     def make_exchange_name(self, name):
         return f"exchange.{name}"
 
-    def make_resource_pathway_name(self, name):
-        return self.make_exchange_name(f"pathway.{name}")
+    def make_resource_pathway_name(self, resource_name, pathway):
+        return self.make_exchange_name(f"pathway.{resource_name}.{pathway}")
 
     async def setup_exchanges(self, channel: aio_pika.Channel):
         for name, c in self.exchanges_config.items():
@@ -143,7 +143,7 @@ class AMQPSetupManager:
                 await self.setup_resource_pathway(channel, name, pathway, exchanges)
 
     async def setup_resource_pathway(self, channel: aio_pika.Channel, resource_name: str, pathway: str, exchanges: list):
-        source_exchange_name = self.make_resource_pathway_name(pathway)
+        source_exchange_name = self.make_resource_pathway_name(resource_name, pathway)
         pathway = await channel.declare_exchange(source_exchange_name, aio_pika.ExchangeType.FANOUT)
         self.resource_pathways.setdefault(resource_name, {})
         self.resource_pathways[resource_name][pathway] = {
