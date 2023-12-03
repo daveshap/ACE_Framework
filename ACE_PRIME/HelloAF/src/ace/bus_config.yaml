@@ -4,8 +4,6 @@ resources:
       - layer_1
     # restricted_publish_exchanges: []
     default_pathways:
-      northbound:
-        - exchange_2
       southbound:
         - layer_2
   layer_2:
@@ -53,20 +51,20 @@ resources:
         - layer_5
 
 exchanges:
-  layer_1: []
-  layer_2: []
-  layer_3: []
-  layer_4: []
-  layer_5: []
-  layer_6: []
+  layer_1: {}
+  layer_2: {}
+  layer_3: {}
+  layer_4: {}
+  layer_5: {}
+  layer_6: {}
 
 queues:
-  layer_1: []
-  layer_2: []
-  layer_3: []
-  layer_4: []
-  layer_5: []
-  layer_6: []
+  layer_1: {}
+  layer_2: {}
+  layer_3: {}
+  layer_4: {}
+  layer_5: {}
+  layer_6: {}
 
 bindings:
   - exchange: layer_1

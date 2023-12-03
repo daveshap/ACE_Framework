@@ -12,7 +12,7 @@ EXCHANGE_TYPE_MAP = {
 }
 
 
-class Setup:
+class AMQPSetupManager:
 
     def __init__(self, settings: Settings, resources_config, exchanges_config, queues_config, queue_bindings_config):
         self.log = Logger(self.__class__.__name__)
@@ -43,17 +43,17 @@ class Setup:
         self.log.debug(f"Set up exchange: {exchange_name}, type: {exchange_type}, kwargs: {kwargs}")
         self.exchanges[name] = await channel.declare_exchange(exchange_name, EXCHANGE_TYPE_MAP[exchange_type], **kwargs)
         if exchange_type == 'fanout':
-            self.bind_monitoring_queues(channel, exchange_name)
+            await self.bind_monitoring_queues(channel, exchange_name)
 
-    async def teardown_exchanges(self, channel: aio_pika.Channel, exchange: aio_pika.Exchange):
+    async def teardown_exchanges(self, channel: aio_pika.Channel):
         for exchange in self.exchanges.values():
             await self.teardown_exchange(channel, exchange)
-        self.teardown_monitoring_queues(channel)
+        await self.teardown_monitoring_queues(channel)
 
     async def teardown_exchange(self, channel: aio_pika.Channel, exchange: aio_pika.Exchange):
         # NOTE: exchange._type is not public, but convenient for this task
         if exchange._type == 'fanout':
-            self.unbind_monitoring_queues(channel, exchange.name)
+            await self.unbind_monitoring_queues(channel, exchange.name)
         await exchange.delete()
         self.log.debug(f"Tore down exchange: {exchange.name}")
 
@@ -156,7 +156,7 @@ class Setup:
             self.log.debug(f"Bound queue {exchange_name} to exchange {source_exchange_name}")
 
     async def teardown_resource_pathways(self, channel: aio_pika.Channel):
-        for name, pathways in self.resource_pathways:
+        for name, pathways in self.resource_pathways.items():
             for pathway_data in pathways.values():
                 await self.teardown_resource_pathway(channel, pathway_data)
 
