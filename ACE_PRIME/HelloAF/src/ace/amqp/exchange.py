@@ -38,7 +38,7 @@ class Amqp:
             exchange_type = config.pop('type', 'fanout')
             await self.setup_exchange(channel, name, exchange_type, **config)
 
-    async def setup_exchange(self, channel: aio_pika.Channel, name: str, exchange_type: str, **kwargs):
+    async def setup_exchange(self, channel: aio_pika.Channel, name: str, exchange_type: str = 'fanout', **kwargs):
         exchange_name = self.make_exchange_name(name)
         self.log.debug(f"Set up exchange: {exchange_name}, type: {exchange_type}, kwargs: {kwargs}")
         self.exchanges[name] = await channel.declare_exchange(exchange_name, EXCHAGE_TYPE_MAP[exchange_type], **kwargs)
@@ -138,7 +138,6 @@ class Amqp:
 
     async def setup_resource_pathways(self, channel: aio_pika.Channel):
         for name, c in self.resources_config:
-            self.resource_pathways[name] = {}
             pathways = c.get('default_pathways', [])
             for pathway, exchanges in pathways.items():
                 await self.setup_resource_pathway(channel, name, pathway, exchanges)
@@ -146,6 +145,7 @@ class Amqp:
     async def setup_resource_pathway(self, channel: aio_pika.Channel, resource_name: str, pathway: str, exchanges: list):
         source_exchange_name = self.make_resource_pathway_name(pathway)
         pathway = await channel.declare_exchange(source_exchange_name, aio_pika.ExchangeType.FANOUT)
+        self.resource_pathways.setdefault(resource_name, {})
         self.resource_pathways[resource_name][pathway] = {
             'pathway': pathway,
             'exchanges': exchanges,
