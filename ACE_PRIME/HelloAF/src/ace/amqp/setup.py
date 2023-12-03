@@ -5,14 +5,14 @@ import aio_pika
 
 from ace.logger import Logger
 
-EXCHAGE_TYPE_MAP = {
+EXCHANGE_TYPE_MAP = {
     'fanout': aio_pika.ExchangeType.FANOUT,
     'topic': aio_pika.ExchangeType.TOPIC,
     'direct': aio_pika.ExchangeType.DIRECT
 }
 
 
-class Amqp:
+class Setup:
 
     def __init__(self, settings: Settings, resources_config, exchanges_config, queues_config, queue_bindings_config):
         self.log = Logger(self.__class__.__name__)
@@ -41,7 +41,7 @@ class Amqp:
     async def setup_exchange(self, channel: aio_pika.Channel, name: str, exchange_type: str = 'fanout', **kwargs):
         exchange_name = self.make_exchange_name(name)
         self.log.debug(f"Set up exchange: {exchange_name}, type: {exchange_type}, kwargs: {kwargs}")
-        self.exchanges[name] = await channel.declare_exchange(exchange_name, EXCHAGE_TYPE_MAP[exchange_type], **kwargs)
+        self.exchanges[name] = await channel.declare_exchange(exchange_name, EXCHANGE_TYPE_MAP[exchange_type], **kwargs)
         if exchange_type == 'fanout':
             self.bind_monitoring_queues(channel, exchange_name)
 
@@ -117,11 +117,11 @@ class Amqp:
         for binding in self.queue_bindings_config:
             config = copy.deepcopy(binding)
             queue_name = config.pop('queue')
-            exchange_name = self.make_exchange_name(config.pop('exchange'))
+            exchange_name = config.pop('exchange')
             await self.setup_queue_binding(channel, queue_name, exchange_name, **config)
 
     async def setup_queue_binding(self, channel: aio_pika.Channel, queue_name: str, exchange_name: str, **kwargs):
-        await self.queues[queue_name].bind(exchange_name, **kwargs)
+        await self.queues[queue_name].bind(self.make_exchange_name(exchange_name), **kwargs)
         self.queue_bindings.append({
             'queue': queue_name,
             'exchange': exchange_name,
@@ -137,7 +137,7 @@ class Amqp:
         self.log.debug(f"Unbound queue {queue_name} from exchange {exchange_name}")
 
     async def setup_resource_pathways(self, channel: aio_pika.Channel):
-        for name, c in self.resources_config:
+        for name, c in self.resources_config.items():
             pathways = c.get('default_pathways', [])
             for pathway, exchanges in pathways.items():
                 await self.setup_resource_pathway(channel, name, pathway, exchanges)
