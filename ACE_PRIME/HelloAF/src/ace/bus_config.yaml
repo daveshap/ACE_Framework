@@ -1,3 +1,7 @@
+monitoring_queue_configs: &monitoring_queue_configs
+  logging: {}
+  system-integrity: {}
+
 resources:
   layer_1:
     subscribes_to:
@@ -51,31 +55,95 @@ resources:
         - layer_5
 
 exchanges:
+  debug_data: {}
   layer_1: {}
   layer_2: {}
   layer_3: {}
   layer_4: {}
   layer_5: {}
   layer_6: {}
+  resource_log: {}
+  system_integrity_data: {}
+  telemetry_subscribe: {}
 
 queues:
+  debug_data:
+    durable: false
+  debug.layer_1:
+    durable: false
+  debug.layer_2:
+    durable: false
+  debug.layer_3:
+    durable: false
+  debug.layer_4:
+    durable: false
+  debug.layer_5:
+    durable: false
+  debug.layer_6:
+    durable: false
   layer_1: {}
   layer_2: {}
   layer_3: {}
   layer_4: {}
   layer_5: {}
   layer_6: {}
+  resource_log: {}
+  system_integrity: {}
+  system_integrity_data:
+    durable: false
+  system_integrity.busses: {}
+  system_integrity.debug: {}
+  system_integrity.layer_1: {}
+  system_integrity.layer_2: {}
+  system_integrity.layer_3: {}
+  system_integrity.layer_4: {}
+  system_integrity.layer_5: {}
+  system_integrity.layer_6: {}
+  system_integrity.logging: {}
+  system_integrity.telemetry_manager: {}
+  telemetry_subscribe: {}
+  telemetry.layer_1: {}
+  telemetry.layer_2: {}
+  telemetry.layer_3: {}
+  telemetry.layer_4: {}
+  telemetry.layer_5: {}
+  telemetry.layer_6: {}
+  <<: *monitoring_queue_configs
 
 bindings:
-  - exchange: layer_1
-    queue: layer_1
-  - exchange: layer_2
-    queue: layer_2
-  - exchange: layer_3
-    queue: layer_3
-  - exchange: layer_4
-    queue: layer_4
-  - exchange: layer_5
-    queue: layer_5
-  - exchange: layer_6
-    queue: layer_6
+  debug_data:
+    queues:
+      debug_data: {}
+  layer_1:
+    queues:
+      layer_1: {}
+      <<: *monitoring_queue_configs
+  layer_2:
+    queues:
+      layer_2: {}
+      <<: *monitoring_queue_configs
+  layer_3:
+    queues:
+      layer_3: {}
+      <<: *monitoring_queue_configs
+  layer_4:
+    queues:
+      layer_4: {}
+      <<: *monitoring_queue_configs
+  layer_5:
+    queues:
+      layer_5: {}
+      <<: *monitoring_queue_configs
+  layer_6:
+    queues:
+      layer_6: {}
+      <<: *monitoring_queue_configs
+  resource_log:
+    queues:
+      resource_log: {}
+  system_integrity_data:
+    queues:
+      system_integrity_data: {}
+  telemetry_subscribe:
+    queues:
+      telemetry_subscribe: {}
