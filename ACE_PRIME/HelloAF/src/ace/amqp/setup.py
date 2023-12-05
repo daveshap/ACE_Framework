@@ -2,8 +2,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Union, Any
 from pydantic.fields import Field
 
-from ace.settings import Settings
-from ace.amqp.config import ConfigModel
+from ace.amqp.config_parser import ConfigParser
 import aio_pika
 
 from ace.logger import Logger
@@ -27,9 +26,8 @@ class QueueConfig(BaseModel):
 
 class AMQPSetupManager:
 
-    def __init__(self, settings: Settings, config: ConfigModel):
+    def __init__(self, config: ConfigParser):
         self.log = Logger(self.__class__.__name__)
-        self.settings = settings
         self.config = config
         self.exchanges: Dict[str, aio_pika.Exchange] = {}
         self.queues: Dict[str, aio_pika.Queue] = {}
@@ -43,7 +41,7 @@ class AMQPSetupManager:
 
     async def setup_exchanges(self, channel: aio_pika.Channel):
         for name, config in self.config.get_exchanges().items():
-            self.setup_exchange(channel, name, ExchangeConfig(**config))
+            await self.setup_exchange(channel, name, ExchangeConfig(**config))
 
     async def setup_exchange(self,
                              channel: aio_pika.Channel,
@@ -54,7 +52,7 @@ class AMQPSetupManager:
         self.log.debug(f"Set up: {exchange_name}, config: {config}")
         self.exchanges[name] = await channel.declare_exchange(
             exchange_name,
-            **config.model_dump(exclude_unset=True, exclude_none=True),
+            **config.model_dump(exclude_none=True),
         )
 
     async def teardown_exchanges(self, channel: aio_pika.Channel):
@@ -72,7 +70,7 @@ class AMQPSetupManager:
     async def setup_queue(self, channel: aio_pika.Channel, name: str, config: QueueConfig):
         self.queues[name] = await channel.declare_queue(
             name,
-            **config.model_dump(exclude_unset=True, exclude_none=True),
+            **config.model_dump(exclude_none=True),
         )
         self.log.debug(f"Declared queue {name}, config: {config}")
 
@@ -86,8 +84,7 @@ class AMQPSetupManager:
 
     async def setup_queue_bindings(self, channel: aio_pika.Channel):
         for exchange, bindings in self.config.get_bindings().items():
-            queues = bindings.queues or {}
-            for queue_name, kwargs in queues.items():
+            for queue_name, kwargs in bindings.queues.items():
                 await self.setup_queue_binding(channel, queue_name, exchange, **kwargs)
 
     async def setup_queue_binding(self, channel: aio_pika.Channel, queue_name: str, exchange: str, **kwargs):
@@ -97,8 +94,7 @@ class AMQPSetupManager:
 
     async def teardown_queue_bindings(self, channel: aio_pika.Channel):
         for exchange, bindings in self.config.get_bindings().items():
-            queues = bindings.queues or {}
-            for queue_name in queues.keys():
+            for queue_name in bindings.queues.keys():
                 await self.teardown_queue_binding(channel, queue_name, exchange)
 
     async def teardown_queue_binding(self, channel: aio_pika.Channel, queue_name: str, exchange: str):
@@ -108,8 +104,7 @@ class AMQPSetupManager:
 
     async def setup_resource_pathways(self, channel: aio_pika.Channel):
         for name, c in self.config.get_resources().items():
-            pathways = c.default_pathways or {}
-            for pathway, exchanges in pathways.items():
+            for pathway, exchanges in c.default_pathways.items():
                 await self.setup_resource_pathway(channel, name, pathway, exchanges)
 
     async def setup_resource_pathway(self, channel: aio_pika.Channel, resource_name: str, pathway_name: str, exchanges: List[str]):
