@@ -13,7 +13,7 @@ from queue import Queue
 from ace import constants
 from ace.settings import Settings
 from ace.api_endpoint import ApiEndpoint
-from ace.amqp.connection import get_connection
+from ace.amqp.connection import AMQPConnectionManager
 
 from ace.logger import Logger
 
@@ -23,6 +23,7 @@ class Resource(ABC):
         self.log = Logger(self.__class__.__name__)
         self.api_endpoint = ApiEndpoint(self.api_callbacks)
         self.executor = ThreadPoolExecutor(max_workers=5)
+        self.connection_manager = AMQPConnectionManager(self.settings)
         self.bus_loop = asyncio.new_event_loop()
         self.connection = None
         self.consumer_channel = None
@@ -89,7 +90,7 @@ class Resource(ABC):
 
     async def get_busses_connection_and_channel(self):
         self.log.debug(f"{self.labeled_name} getting busses connection and channels...")
-        self.connection = await get_connection(settings=self.settings, loop=self.bus_loop)
+        self.connection = await self.connection_manager.get_connection(loop=self.bus_loop)
         self.consumer_channel = await self.connection.channel()
         self.publisher_channel = await self.connection.channel()
         self.log.info(f"{self.labeled_name} busses connection established...")
@@ -230,14 +231,6 @@ class Resource(ABC):
         if (orientation == 'southbound' and idx == 0) or (orientation == 'northbound' and idx == len(self.settings.layers) - 1):
             return False
         return True
-
-    def build_all_layer_queue_names(self):
-        queue_names = []
-        for orientation in constants.LAYER_ORIENTATIONS:
-            for idx, layer in enumerate(self.settings.layers):
-                if self.is_existant_layer_queue(orientation, idx):
-                    queue_names.append(self.build_layer_queue_name(orientation, layer))
-        return queue_names
 
     async def try_queue_subscribe(self, queue_name, callback):
         while True:

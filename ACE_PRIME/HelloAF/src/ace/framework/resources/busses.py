@@ -1,6 +1,8 @@
 from ace.settings import Settings
-from ace.amqp.exchange import setup_exchange, teardown_exchange
 from ace.framework.resource import Resource
+from ace.amqp.config_parser import ConfigParser
+from ace.amqp.connection import AMQPConnectionManager
+from ace.amqp.setup import AMQPSetupManager
 
 
 class BussesSettings(Settings):
@@ -22,93 +24,34 @@ class Busses(Resource):
         return self.return_status(True)
 
     async def post_connect(self):
-        await self.create_logging_queues()
-        await self.create_system_integrity_queues()
-        await self.create_exchanges()
-        await self.create_telemetry_queues()
-        await self.create_debug_queues()
+        await self.setup_connection()
+        await self.setup_config_parser()
+        await self.setup_messaging()
 
     async def pre_disconnect(self):
-        await self.destroy_debug_queues()
-        await self.destroy_telemetry_queues()
-        await self.destroy_exchanges()
-        await self.destroy_system_integrity_queues()
-        await self.destroy_logging_queues()
+        await self.teardown_messaging()
+        await self.teardown_connection()
 
-    async def create_exchanges(self):
-        self.log.debug(f"{self.labeled_name} creating exchanges...")
-        for queue_name in self.build_all_layer_queue_names():
-            await self.create_exchange(queue_name)
-        self.log.debug(f"{self.labeled_name} queues created")
+    async def setup_connection(self):
+        self.connection = await self.connection_manager.get_connection(loop=self.bus_loop)
+        self.channel = await self.connection.channel()
 
-    async def create_exchange(self, queue_name, durable=True):
-        await setup_exchange(
-            settings=self.settings,
-            channel=self.publisher_channel,
-            queue_name=queue_name,
-            durable=durable,
-        )
-        self.log.info(f" Created exchange for {queue_name} for resource {self.labeled_name}")
+    async def setup_config_parser(self):
+        self.config_parser = ConfigParser()
+        self.setup = AMQPSetupManager(self.config_parser)
 
-    async def destroy_exchanges(self):
-        self.log.debug(f"{self.labeled_name} destroying exchanges...")
-        for queue_name in self.build_all_layer_queue_names():
-            await self.destroy_exchange(queue_name)
-        self.log.debug(f"{self.labeled_name} exchanges destroyed")
+    async def setup_messaging(self):
+        await self.setup.setup_exchanges(self.channel)
+        await self.setup.setup_queues(self.channel)
+        await self.setup.setup_queue_bindings(self.channel)
+        await self.setup.setup_resource_pathways(self.channel)
 
-    async def destroy_exchange(self, queue_name, durable=True):
-        await teardown_exchange(
-            settings=self.settings,
-            channel=self.publisher_channel,
-            queue_name=queue_name,
-            durable=durable,
-        )
-        self.log.info(f" Destroyed exchange for {queue_name} for resource {self.labeled_name}")
+    async def teardown_messaging(self):
+        await self.setup.teardown_resource_pathways(self.channel)
+        await self.setup.teardown_queue_bindings(self.channel)
+        await self.setup.teardown_queues(self.channel)
+        await self.setup.teardown_exchanges(self.channel)
 
-    async def create_system_integrity_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_system_integrity_queue_name(layer)
-            await self.consumer_channel.declare_queue(queue_name, durable=True)
-        for resource in self.settings.other_resources:
-            queue_name = self.build_system_integrity_queue_name(resource)
-            await self.consumer_channel.declare_queue(queue_name, durable=True)
-        await self.create_exchange(self.settings.system_integrity_data_queue, durable=False)
-
-    async def destroy_system_integrity_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_system_integrity_queue_name(layer)
-            await self.consumer_channel.queue_delete(queue_name)
-        for resource in self.settings.other_resources:
-            queue_name = self.build_system_integrity_queue_name(resource)
-            await self.consumer_channel.queue_delete(queue_name)
-        await self.destroy_exchange(self.settings.system_integrity_data_queue, durable=False)
-
-    async def create_debug_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_debug_queue_name(layer)
-            await self.consumer_channel.declare_queue(queue_name, durable=False)
-        await self.create_exchange(self.settings.debug_data_queue, durable=False)
-
-    async def destroy_debug_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_debug_queue_name(layer)
-            await self.consumer_channel.queue_delete(queue_name)
-        await self.destroy_exchange(self.settings.debug_data_queue, durable=False)
-
-    async def create_logging_queues(self):
-        await self.create_exchange(self.settings.resource_log_queue)
-
-    async def destroy_logging_queues(self):
-        await self.destroy_exchange(self.settings.resource_log_queue)
-
-    async def create_telemetry_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_telemetry_queue_name(layer)
-            await self.consumer_channel.declare_queue(queue_name, durable=True)
-        await self.create_exchange(self.settings.telemetry_subscribe_queue)
-
-    async def destroy_telemetry_queues(self):
-        for layer in self.settings.layers:
-            queue_name = self.build_telemetry_queue_name(layer)
-            await self.consumer_channel.queue_delete(queue_name)
-        await self.destroy_exchange(self.settings.telemetry_subscribe_queue)
+    async def teardown_connection(self):
+        await self.channel.close()
+        await self.connection.close()
