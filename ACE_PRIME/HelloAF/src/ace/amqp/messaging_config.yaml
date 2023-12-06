@@ -5,7 +5,7 @@
 # purposes.
 monitoring_queue_configs: &monitoring_queue_configs
   logging: {}
-  system-integrity: {}
+  system_integrity: {}
 
 # The `resources` section defines the configuration for different resources of
 # the system.
@@ -159,10 +159,11 @@ bindings:
       # Additional configuration for the binding can be provided, by default the
       # default aio_pika bind configuration is used.
       debug_data: {}
+      # Include common monitoring configurations.
+      <<: *monitoring_queue_configs
   layer_1:
     queues:
       layer_1: {}
-      # Include common monitoring configurations.
       <<: *monitoring_queue_configs
   layer_2:
     queues:
@@ -187,9 +188,12 @@ bindings:
   resource_log:
     queues:
       resource_log: {}
+      system_integrity: {}
   system_integrity_data:
     queues:
+      logging: {}
       system_integrity_data: {}
   telemetry_subscribe:
     queues:
       telemetry_subscribe: {}
+      <<: *monitoring_queue_configs
