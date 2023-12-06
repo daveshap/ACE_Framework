@@ -37,6 +37,7 @@ Run a complete test of the setup. This does the following:
 1. Install Docker and Docker Compose in a non-root configuration.
 2. Create the docker containers for the test:
    ```sh
+   # From the root directory of the demo.
    ACE_LOG_LEVEL=DEBUG docker compose -f docker-compose-amqp-test.yaml up
     ```
 3. Log into the test container:
@@ -45,6 +46,7 @@ Run a complete test of the setup. This does the following:
    ```
 4. Run the test:
    ```sh
+   # From inside the helloaf-test-1 container.
    python ace/amqp/test_bus_setup.py
    ```
 
