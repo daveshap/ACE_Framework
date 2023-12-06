@@ -29,7 +29,7 @@ x-command: &default_command ["tail", "-f", "/dev/null"]
 
 services:
 
-  rabbitmq:
+  amqp-test-rabbitmq:
     image: rabbitmq:management
     restart: always
     environment:
@@ -45,7 +45,7 @@ services:
       timeout: 10s
       retries: 3
 
-  test:
+  amqp-test-shell:
     build:
       <<: *default_build
     environment:

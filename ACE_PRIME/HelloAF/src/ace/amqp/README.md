@@ -42,7 +42,7 @@ Run a complete test of the setup. This does the following:
     ```
 3. Log in to the test container:
    ```sh
-   docker exec -it helloaf-test-1 bash
+   docker exec -it helloaf-amqp-test-shell-1 bash
    ```
 4. Run the test:
    ```sh
