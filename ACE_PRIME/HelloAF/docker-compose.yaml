@@ -33,6 +33,9 @@ x-healthcheck: &healthcheck
 
 x-command: &default_command ["python3", "main.py"]
 
+x-depends_on_conditions: &default_depends_on_conditions
+  condition: service_healthy
+
 services:
 
   rabbitmq:
@@ -61,7 +64,7 @@ services:
       ACE_RESOURCE_NAME: logging
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
+      interlayer_communication_buses: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -75,8 +78,8 @@ services:
       ACE_RESOURCE_NAME: telemetry_manager
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -94,36 +97,6 @@ services:
   #     - data:/var/lib/postgresql/data
   #   networks: *default_networks
   #   healthcheck: *healthcheck
-  #
-  # flaskapp:
-  #   build:
-  #     <<: *default_build
-  #   ports:
-  #     - "5000:5000"
-  #   environment:
-  #     <<: *rabbitmq_environment
-  #     ACE_RESOURCE_NAME: flaskapp
-  #   command: *default_command
-  #   depends_on:
-  #     - rabbitmq
-  #   networks: *default_networks
-  #     - *default_networks
-  #   healthcheck: *healthcheck
-  #
-  # logger:
-  #   build:
-  #     <<: *default_build
-  #   environment:
-  #     <<: *rabbitmq_environment
-  #     ACE_RESOURCE_NAME: logger
-  #     DATABASE_URI: postgresql://postgres:password@db:5432/log-db
-  #   command: *default_command
-  #   depends_on:
-  #     - db
-  #     - rabbitmq
-  #   networks: *default_networks
-  #     - *default_networks
-  #   healthcheck: *healthcheck
 
   aspirational_layer:
     build:
@@ -136,9 +109,9 @@ services:
       ACE_RESOURCE_NAME: layer_1
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -153,10 +126,10 @@ services:
       ACE_RESOURCE_NAME: layer_2
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
-      - aspirational_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+      aspirational_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -171,10 +144,10 @@ services:
       ACE_RESOURCE_NAME: layer_3
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
-      - global_strategy_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+      global_strategy_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -189,10 +162,10 @@ services:
       ACE_RESOURCE_NAME: layer_4
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
-      - agent_model_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+      agent_model_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -207,10 +180,10 @@ services:
       ACE_RESOURCE_NAME: layer_5
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
-      - executive_function_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+      executive_function_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -225,10 +198,10 @@ services:
       ACE_RESOURCE_NAME: layer_6
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
-      - telemetry_manager_layer
-      - cognitive_control_layer
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+      cognitive_control_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -242,7 +215,7 @@ services:
       ACE_RESOURCE_NAME: busses
     command: *default_command
     depends_on:
-      - rabbitmq
+      rabbitmq: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -256,8 +229,8 @@ services:
       ACE_RESOURCE_NAME: system_integrity
     command: *default_command
     depends_on:
-      - interlayer_communication_buses
-      - logging
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -271,12 +244,12 @@ services:
       ACE_RESOURCE_NAME: debug
     command: *default_command
     depends_on:
-      - aspirational_layer
-      - global_strategy_layer
-      - agent_model_layer
-      - executive_function_layer
-      - cognitive_control_layer
-      - task_prosecution_layer
+      aspirational_layer: *default_depends_on_conditions
+      global_strategy_layer: *default_depends_on_conditions
+      agent_model_layer: *default_depends_on_conditions
+      executive_function_layer: *default_depends_on_conditions
+      cognitive_control_layer: *default_depends_on_conditions
+      task_prosecution_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
