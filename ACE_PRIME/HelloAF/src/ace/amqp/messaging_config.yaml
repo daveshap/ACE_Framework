@@ -1,14 +1,40 @@
+# The `monitoring_queue_configs` section defines common configurations for
+# monitoring queues.
+#
+# These are queues that are commonly attached to exchanges for monitoring
+# purposes.
 monitoring_queue_configs: &monitoring_queue_configs
   logging: {}
   system-integrity: {}
 
+# The `resources` section defines the configuration for different resources of
+# the system.
+#
+# A resource is any service as defined in the `services` section of the Docker
+# Compose file.
+#
+# Each resource can:
+# - Subscribe to certain exchanges
+# - Setup default pathways for message routing
+# - Declare restrictions for publishing to additional exchanges not present in
+#   the default pathways.
 resources:
   layer_1:
+    # List of exchanges this resource subscribes to
     subscribes_to:
       - layer_1
+    # Optional: List of exchanges this resource is restricted from publishing to.
+    # If specified, the resource can only publish to the exchanges in this list,
+    # and to any listed in `default_pathways`.
+    # If not specified, the resource can publish to any exchange in the system.
     # restricted_publish_exchanges: []
+    #
+    # Default pathways for routing messages.
     default_pathways:
+      # Pathway name this is the string passed as the pathway when calling
+      # send_message_to_pathway().
       southbound:
+        # List of exchanges this pathway sends messages to.
         - layer_2
   layer_2:
     subscribes_to:
@@ -54,7 +80,12 @@ resources:
       northbound:
         - layer_5
 
+# The `exchanges` section defines the AMQP exchanges used in the system.
 exchanges:
+  # The key is the name of the exchange.
+  # The value is the configuration for the exchange.
+  # By default, the exchange configuration is:
+  # - durable: true
   debug_data: {}
   layer_1: {}
   layer_2: {}
@@ -66,7 +97,13 @@ exchanges:
   system_integrity_data: {}
   telemetry_subscribe: {}
 
+# The `queues` section defines the AMQP queues used in the system.
 queues:
+  # The key is the name of the queue.
+  # The value is the configuration for the queue.
+  # By default, the queue configuration is:
+  # - durable: true
+  # - arguments: {}
   debug_data:
     durable: false
   debug.layer_1:
@@ -110,13 +147,22 @@ queues:
   telemetry.layer_6: {}
   <<: *monitoring_queue_configs
 
+# The `bindings` section defines the relationships between:
+# - Exchanges and queues.
+#
+# It specifies which queues should receive messages from which exchanges.
 bindings:
   debug_data:
+    # The queues key maps the exchanges bound to a queue.
     queues:
+      # Bind the `debug_data` queue to the `debug_data` exchange
+      # Additional configuration for the binding can be provided, by default the
+      # default aio_pika bind configuration is used.
       debug_data: {}
   layer_1:
     queues:
       layer_1: {}
+      # Include common monitoring configurations.
       <<: *monitoring_queue_configs
   layer_2:
     queues:
