@@ -60,6 +60,8 @@ services:
         - *logging_environment
       ACE_RESOURCE_NAME: logging
     command: *default_command
+    depends_on:
+      - interlayer_communication_buses
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -72,6 +74,9 @@ services:
         - *logging_environment
       ACE_RESOURCE_NAME: telemetry_manager
     command: *default_command
+    depends_on:
+      - interlayer_communication_buses
+      - logging
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -130,6 +135,10 @@ services:
         - *logging_environment
       ACE_RESOURCE_NAME: layer_1
     command: *default_command
+    depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -144,6 +153,9 @@ services:
       ACE_RESOURCE_NAME: layer_2
     command: *default_command
     depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
       - aspirational_layer
     networks: *default_networks
     healthcheck: *healthcheck
@@ -159,6 +171,9 @@ services:
       ACE_RESOURCE_NAME: layer_3
     command: *default_command
     depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
       - global_strategy_layer
     networks: *default_networks
     healthcheck: *healthcheck
@@ -174,6 +189,9 @@ services:
       ACE_RESOURCE_NAME: layer_4
     command: *default_command
     depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
       - agent_model_layer
     networks: *default_networks
     healthcheck: *healthcheck
@@ -189,6 +207,9 @@ services:
       ACE_RESOURCE_NAME: layer_5
     command: *default_command
     depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
       - executive_function_layer
     networks: *default_networks
     healthcheck: *healthcheck
@@ -204,6 +225,9 @@ services:
       ACE_RESOURCE_NAME: layer_6
     command: *default_command
     depends_on:
+      - interlayer_communication_buses
+      - logging
+      - telemetry_manager_layer
       - cognitive_control_layer
     networks: *default_networks
     healthcheck: *healthcheck
@@ -219,14 +243,6 @@ services:
     command: *default_command
     depends_on:
       - rabbitmq
-      - logging
-      - telemetry_manager_layer
-      - aspirational_layer
-      - global_strategy_layer
-      - agent_model_layer
-      - executive_function_layer
-      - cognitive_control_layer
-      - task_prosecution_layer
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -241,6 +257,7 @@ services:
     command: *default_command
     depends_on:
       - interlayer_communication_buses
+      - logging
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -254,7 +271,12 @@ services:
       ACE_RESOURCE_NAME: debug
     command: *default_command
     depends_on:
-      - system_integrity
+      - aspirational_layer
+      - global_strategy_layer
+      - agent_model_layer
+      - executive_function_layer
+      - cognitive_control_layer
+      - task_prosecution_layer
     networks: *default_networks
     healthcheck: *healthcheck
 
