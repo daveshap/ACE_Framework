@@ -50,4 +50,4 @@ Run a complete test of the setup. This does the following:
    python ace/amqp/test_bus_setup.py
    ```
 
-To see the final RabbitMQ configuration, you can log into the RabbitMQ UI at `http://localhost:15672` -- the username and password are available in `docker-compose.yaml` in the root directory of the demo.
+To see the final RabbitMQ configuration, you can log into the RabbitMQ UI at [http://127.0.0.1:15672](http://127.0.0.1:15672) -- the username and password are available in `docker-compose.yaml` in the root directory of the demo.
