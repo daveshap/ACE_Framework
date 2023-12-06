@@ -40,7 +40,7 @@ Run a complete test of the setup. This does the following:
    # From the root directory of the demo.
    ACE_LOG_LEVEL=DEBUG docker compose -f docker-compose-amqp-test.yaml up
     ```
-3. Log into the test container:
+3. Log in to the test container:
    ```sh
    docker exec -it helloaf-test-1 bash
    ```
