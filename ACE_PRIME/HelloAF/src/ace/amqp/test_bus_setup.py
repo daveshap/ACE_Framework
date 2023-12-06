@@ -7,6 +7,7 @@ from ace.amqp.setup import AMQPSetupManager
 settings = Settings(
     name="test",
     label="Test",
+    amqp_host_name="amqp-test-rabbitmq",
 )
 
 
