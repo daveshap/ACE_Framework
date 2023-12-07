@@ -105,7 +105,7 @@ class TelemetryManager(Resource):
 
     async def make_exchange(self, root):
         exchange_name = self.build_telemetry_exchange_name(root)
-        self.exchanges[root] = self.messaging_config.setup_exchange(self.consumer_channel, exchange_name, ExchangeConfig(type='topic'))
+        self.exchanges[root] = await self.messaging_config.setup_exchange(self.consumer_channel, exchange_name, ExchangeConfig(type='topic'))
 
     async def collect_initial_data_points(self):
         self.log.info(f"{self.labeled_name} starting initial data points collection")

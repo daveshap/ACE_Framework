@@ -75,10 +75,11 @@ class Resource(ABC):
     def set_debug_state(self, debug_mode=None):
         self.debug_mode = bool(os.getenv('ACE_DEBUG_MODE')) if debug_mode is None else debug_mode
 
-    def setup_messaging(self):
+    def configure_messaging(self):
         self.config_parser = ConfigParser()
         self.messaging_config = AMQPSetupManager(self.config_parser)
         self.get_resource_messaging_config()
+        self.log.debug(f"{self.labeled_name} configured messaging...")
 
     def get_resource_messaging_config(self):
         resources = self.config_parser.get_resources()
@@ -127,7 +128,8 @@ class Resource(ABC):
         self.log.info("Starting resource...")
         self.setup_service()
         self.wait_for_local_publisher_queue()
-        self.subscribe_messaging()
+        future = asyncio.run_coroutine_threadsafe(self.subscribe_messaging(), self.bus_loop)
+        future.result()
         self.post_start()
         self.log.info("Resource started")
 
@@ -140,7 +142,7 @@ class Resource(ABC):
     def setup_service(self):
         self.log.debug("Setting up service...")
         self.api_endpoint.start_endpoint()
-        self.setup_messaging()
+        self.configure_messaging()
         self.connect_busses()
 
     def shutdown_service(self):
