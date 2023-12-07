@@ -8,6 +8,7 @@ import aio_pika
 from ace import util
 from ace.settings import Settings
 from ace.framework.resource import Resource
+from ace.amqp.setup import ExchangeConfig
 
 
 class TelemetrySettings(Settings):
@@ -19,7 +20,7 @@ class TelemetryManager(Resource):
     def __init__(self):
         super().__init__()
         self.load_telemetry()
-        self.exchange_created = {k: False for k in self.unique_roots()}
+        self.exchanges = {k: False for k in self.unique_roots()}
 
     def setup_service(self):
         self.initial_collection()
@@ -33,10 +34,6 @@ class TelemetryManager(Resource):
 
     async def post_connect(self):
         await self.make_exchanges()
-        await self.subscribe_telemetry_subscribe()
-
-    async def pre_disconnect(self):
-        await self.unsubscribe_telemetry_subscribe()
 
     def initial_collection(self):
         asyncio.run_coroutine_threadsafe(self.collect_initial_data_points(), self.bus_loop)
@@ -89,7 +86,7 @@ class TelemetryManager(Resource):
                     raise
 
     def build_telemetry_exchange_name(self, root):
-        return f'exchange.telemetry.{root}'
+        return f'telemetry.{root}'
 
     def unique_roots(self):
         return list(set(self.namespace_root(key) for key in self.namespace_map.keys()))
@@ -108,9 +105,7 @@ class TelemetryManager(Resource):
 
     async def make_exchange(self, root):
         exchange_name = self.build_telemetry_exchange_name(root)
-        exchange = await self.publisher_channel.declare_exchange(exchange_name, aio_pika.ExchangeType.TOPIC)
-        self.exchange_created[root] = True
-        return exchange
+        self.exchanges[root] = self.messaging_config.setup_exchange(self.consumer_channel, exchange_name, ExchangeConfig(type='topic'))
 
     async def collect_initial_data_points(self):
         self.log.info(f"{self.labeled_name} starting initial data points collection")
@@ -150,11 +145,11 @@ class TelemetryManager(Resource):
             self.log.debug(f"{self.labeled_name} subscribing queue {queue_name} to telemetry namespace: {namespace}")
             queue = await self.consumer_channel.declare_queue(queue_name, durable=True)
             root = self.namespace_root(namespace)
-            exchange_name = self.build_telemetry_exchange_name(root)
-            while not self.exchange_created[root]:
-                self.log.debug(f"{self.labeled_name} waiting for exchange {exchange_name}...")
+            exchange = self.exchanges[root]
+            while not bool(exchange):
+                self.log.debug(f"{self.labeled_name} waiting for telemetry exchange root: {root}...")
                 await asyncio.sleep(1)
-            await queue.bind(exchange_name, routing_key=namespace)
+            await queue.bind(exchange.name, routing_key=namespace)
             namespaces = [ns for ns in self.namespace_map if fnmatch.fnmatch(ns, namespace)]
             for ns in namespaces:
                 telemetry = self.namespace_map[ns]
@@ -165,18 +160,16 @@ class TelemetryManager(Resource):
             self.log.info(f"{self.labeled_name} subscribed queue {queue_name} to telemetry namespace: {namespace}")
         except Exception as e:
             self.log.error(f"{self.labeled_name} failed to subscribe queue {queue_name} to telemetry namespace {namespace}: {e}", exc_info=True)
-            raise
 
     async def unsubscribe(self, queue_name, namespace):
         try:
             self.log.debug(f"{self.labeled_name} unsubscribing queue {queue_name} from telemetry namespace: {namespace}")
             queue = await self.consumer_channel.declare_queue(queue_name, durable=True)
             root = self.namespace_root(namespace)
-            await queue.unbind(self.build_telemetry_exchange_name(root))
+            await queue.unbind(self.exchanges[root].name)
             self.log.info(f"{self.labeled_name} unsubscribed queue {queue_name} from telemetry namespace: {namespace}")
         except Exception as e:
             self.log.error(f"{self.labeled_name} failed to unsubscribe queue {queue_name} from telemetry namespace {namespace}: {e}", exc_info=True)
-            raise
 
     async def handle_subscribe_unsubscribe(self, data):
         if data['type'] == 'subscribe':
@@ -194,17 +187,3 @@ class TelemetryManager(Resource):
             self.log.error(f"[{self.labeled_name}] could not parse message: {e}", exc_info=True)
             return
         await self.handle_subscribe_unsubscribe(data)
-
-    async def subscribe_telemetry_subscribe(self):
-        self.log.debug(f"{self.labeled_name} subscribing to telemetry subscribe queue...")
-        queue_name = self.settings.telemetry_subscribe_queue
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
-        self.log.info(f"{self.labeled_name} subscribed to telemetry subscribe queue")
-
-    async def unsubscribe_telemetry_subscribe(self):
-        queue_name = self.settings.telemetry_subscribe_queue
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from telemetry subscribe queue...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from telemetry subscribe queue")

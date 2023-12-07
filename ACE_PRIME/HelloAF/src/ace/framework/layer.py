@@ -30,7 +30,6 @@ class Layer(Resource):
         self.set_adjacent_layers()
         await self.subscribe_telemetry()
         self.set_llm()
-        await self.register_busses()
 
     def post_start(self):
         self.subscribe_to_all_telemetry_namespaces()
@@ -43,7 +42,6 @@ class Layer(Resource):
     async def pre_disconnect(self):
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
-        await self.deregister_busses()
 
     def set_adjacent_layers(self):
         self.northern_layer = None
@@ -61,16 +59,6 @@ class Layer(Resource):
 
     def set_llm(self):
         self.llm = GPT()
-
-    async def register_busses(self):
-        self.log.debug("Registering busses...")
-        await self.subscribe_adjacent_layers()
-        self.log.debug("Registered busses...")
-
-    async def deregister_busses(self):
-        self.log.debug("Deregistering busses...")
-        await self.unsubscribe_adjacent_layers()
-        self.log.debug("Deregistered busses...")
 
     @abstractmethod
     def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
@@ -107,8 +95,8 @@ class Layer(Resource):
             else:
                 m['type'] = 'data'
         if messages:
-            data_messages = [m for m in messages if m['direction']=="northbound"]
-            control_messages = [m for m in messages if m['direction']=="southbound"]
+            data_messages = [m for m in messages if m['direction'] == "northbound"]
+            control_messages = [m for m in messages if m['direction'] == "southbound"]
         self.log.debug(f"[{self.labeled_name}] RETURNED CONTROL MESSAGES: {control_messages}")
         self.log.debug(f"[{self.labeled_name}] RETURNED DATA MESSAGES: {data_messages}")
         return data_messages, control_messages
@@ -212,11 +200,11 @@ class Layer(Resource):
         if messages_northbound and self.northern_layer:
             for m in messages_northbound:
                 message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
-                self.push_exchange_message_to_publisher_local_queue(f"northbound.{self.northern_layer}", message)
+                self.push_pathway_message_to_publisher_local_queue("northbound", message)
         if messages_southbound and self.southern_layer:
             for m in messages_southbound:
                 message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
-                self.push_exchange_message_to_publisher_local_queue(f"southbound.{self.southern_layer}", message)
+                self.push_pathway_message_to_publisher_local_queue("southbound", message)
 
     def agent_run_layer(self):
         control_messages, data_messages, request_messages, response_messages, telemetry_messages = self.get_all_local_messages()
@@ -238,12 +226,16 @@ class Layer(Resource):
                 if not self.debug_mode:
                     time.sleep(constants.LAYER_SLEEP_TIME)
 
-    async def send_message(self, direction, layer, message, delivery_mode=2):
-        queue_name = self.build_layer_queue_name(direction, layer)
+    async def send_message(self, queue_name, message, delivery_mode=2):
         if queue_name:
             self.log.debug(f"Send message: {self.labeled_name} ->  {queue_name}")
             exchange = self.build_exchange_name(queue_name)
             await self.publish_message(exchange, message)
+
+    async def send_message_to_pathway(self, pathway_name, message, delivery_mode=2):
+        pathway = self.build_pathway_name(pathway_name)
+        if pathway:
+            await self.send_message(pathway, message)
 
     def is_ping(self, data):
         return data['type'] == 'ping'
@@ -251,12 +243,13 @@ class Layer(Resource):
     def is_pong(self, data):
         return data['type'] == 'pong'
 
-    async def ping(self, direction, layer):
-        self.log.info(f"Sending PING: {self.labeled_name} ->  {self.build_layer_queue_name(direction, layer)}")
-        message = self.build_message(layer, message_type='ping')
-        await self.send_message(direction, layer, message)
+    async def ping(self, direction):
+        pathway = self.build_pathway_name(direction)
+        self.log.info(f"Sending PING: {self.labeled_name} ->  {pathway}")
+        message = self.build_message(pathway, message_type='ping')
+        await self.send_message_to_pathway(direction, message)
 
-    async def handle_ping(self, direction, layer):
+    async def handle_ping(self, direction):
         response_direction = None
         layer = None
         if direction == 'northbound':
@@ -266,8 +259,10 @@ class Layer(Resource):
             response_direction = 'northbound'
             layer = self.northern_layer
         if response_direction and layer:
+            queue_name = self.build_layer_queue_name(response_direction, layer)
+            self.log.info(f"Sending PONG: {self.labeled_name} ->  {queue_name}")
             message = self.build_message(layer, message_type='pong')
-            await self.send_message(response_direction, layer, message)
+            await self.send_message(queue_name, message)
 
     def schedule_post(self):
         asyncio.run_coroutine_threadsafe(self.post(), self.bus_loop)
@@ -275,9 +270,9 @@ class Layer(Resource):
     async def post(self):
         self.log.info(f"{self.labeled_name} received POST request")
         if self.northern_layer:
-            await self.ping('northbound', self.northern_layer)
+            await self.ping('northbound')
         if self.southern_layer:
-            await self.ping('southbound', self.southern_layer)
+            await self.ping('southbound')
 
     async def route_message(self, direction, message):
         try:
@@ -292,7 +287,7 @@ class Layer(Resource):
             return
         elif self.is_ping(data):
             self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {source_layer}, bus direction: {direction}")
-            return await self.handle_ping(direction, source_layer)
+            return await self.handle_ping(direction)
         self.push_message_to_consumer_local_queue(data['type'], data)
 
     async def telemetry_message_handler(self, message: aio_pika.IncomingMessage):
@@ -330,27 +325,3 @@ class Layer(Resource):
             self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
             await queue.cancel(consumer_tag)
             self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
-
-    async def subscribe_adjacent_layers(self):
-        if self.northern_layer:
-            southbound_queue = self.build_layer_queue_name('southbound', self.settings.name)
-            self.log.debug(f"{self.labeled_name} subscribing to {southbound_queue}...")
-            self.consumers[southbound_queue] = await self.try_queue_subscribe(southbound_queue, self.southbound_message_handler)
-        if self.southern_layer:
-            northbound_queue = self.build_layer_queue_name('northbound', self.settings.name)
-            self.log.debug(f"{self.labeled_name} subscribing to {northbound_queue}...")
-            self.consumers[northbound_queue] = await self.try_queue_subscribe(northbound_queue, self.northbound_message_handler)
-
-    async def unsubscribe_adjacent_layers(self):
-        northbound_queue = self.build_layer_queue_name('northbound', self.settings.name)
-        southbound_queue = self.build_layer_queue_name('southbound', self.settings.name)
-        if self.northern_layer and northbound_queue in self.consumers:
-            queue, consumer_tag = self.consumers[northbound_queue]
-            self.log.debug(f"{self.labeled_name} unsubscribing from {northbound_queue}...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from {northbound_queue}")
-        if self.southern_layer and southbound_queue in self.consumers:
-            queue, consumer_tag = self.consumers[southbound_queue]
-            self.log.debug(f"{self.labeled_name} unsubscribing from {southbound_queue}...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from {southbound_queue}")

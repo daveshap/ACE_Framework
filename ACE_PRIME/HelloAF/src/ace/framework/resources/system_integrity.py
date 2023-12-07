@@ -30,16 +30,8 @@ class SystemIntegrity(Resource):
         self.log.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
-    async def post_connect(self):
-        await self.subscribe_system_integrity()
-        await self.subscribe_system_integrity_data()
-
     def post_start(self):
         asyncio.run_coroutine_threadsafe(self.post_layers(), self.bus_loop)
-
-    async def system_integrity_pre_disconnect(self):
-        await self.unsubscribe_system_integrity()
-        await self.unsubscribe_system_integrity_data()
 
     async def publish_message(self, queue_name, message, delivery_mode=2):
         message = aio_pika.Message(
@@ -76,7 +68,6 @@ class SystemIntegrity(Resource):
             if resource != 'busses':
                 self.log.info(f"[{self.labeled_name}] Stopping resource: {resource}")
                 await self.execute_resource_command(resource, 'stop_resource')
-        await self.system_integrity_pre_disconnect()
         self.log.info(f"[{self.labeled_name}] Stopping resource: 'busses'")
         await self.execute_resource_command('busses', 'stop_resource')
         self.stop_resource()
@@ -124,45 +115,17 @@ class SystemIntegrity(Resource):
             self.log.info(f"[{self.labeled_name}] ACE mission done, initiating shutdown of all layers")
             await self.stop_resources()
 
-    async def subscribe_system_integrity(self):
-        self.log.debug(f"{self.labeled_name} subscribing to system integrity queue...")
-        queue_name = self.settings.system_integrity_queue
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_handler)
-        self.log.info(f"{self.labeled_name} Subscribed to system integrity queue")
-
-    async def subscribe_system_integrity_data(self):
-        self.log.debug(f"{self.labeled_name} subscribing to system integrity data queue...")
-        queue_name = self.settings.system_integrity_data_queue
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_data_handler)
-        self.log.info(f"{self.labeled_name} Subscribed to system integrity data queue")
-
-    async def unsubscribe_system_integrity(self):
-        queue_name = self.settings.system_integrity_queue
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from system integrity queue...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} Unsubscribed from system integrity queue")
-
-    async def unsubscribe_system_integrity_data(self):
-        queue_name = self.settings.system_integrity_data_queue
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from system integrity data queue...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} Unsubscribed from system integrity data queue")
-
     def compute_ping_pong_combinations(self):
         layers = self.settings.layers
         combinations = {}
         for i in range(len(layers)):
             # First layer has no northen layer.
             if i != 0:
-                combinations[f"ping.{layers[i-1]}.{layers[i]}"] = False
+                combinations[f"ping.{layers[i-1]}.pathway.{layers[i-1]}.southbound"] = False
                 combinations[f"pong.{layers[i]}.{layers[i-1]}"] = False
             # Last layer has no southern layer.
             if i != len(layers) - 1:
-                combinations[f"ping.{layers[i+1]}.{layers[i]}"] = False
+                combinations[f"ping.{layers[i+1]}.pathway.{layers[i+1]}.northbound"] = False
                 combinations[f"pong.{layers[i]}.{layers[i+1]}"] = False
         return combinations
 

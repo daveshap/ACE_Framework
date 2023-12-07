@@ -20,9 +20,13 @@ monitoring_queue_configs: &monitoring_queue_configs
 #   the default pathways.
 resources:
   layer_1:
-    # List of exchanges this resource subscribes to
+    # Dictionary of queues this resource subscribes to.
     subscribes_to:
-      - layer_1
+      # Key is the the exchange name.
+      # Value is the message handler callback method name, with a signature of:
+      # async def northbound_message_handler(self, message: aio_pika.IncomingMessage)
+      northbound.layer_1: northbound_message_handler
+      system_integrity.layer_1: system_integrity_message_handler
     # Optional: List of exchanges this resource is restricted from publishing to.
     # If specified, the resource can only publish to the exchanges in this list,
     # and to any listed in `default_pathways`.
@@ -35,50 +39,79 @@ resources:
       # send_message_to_pathway().
       southbound:
         # List of exchanges this pathway sends messages to.
-        - layer_2
+        - southbound.layer_2
   layer_2:
     subscribes_to:
-      - layer_2
+      northbound.layer_2: northbound_message_handler
+      southbound.layer_2: southbound_message_handler
+      system_integrity.layer_2: system_integrity_message_handler
     # restricted_publish_exchanges: []
     default_pathways:
       northbound:
-        - layer_1
+        - northbound.layer_1
       southbound:
-        - layer_3
+        - southbound.layer_3
   layer_3:
     subscribes_to:
-      - layer_3
+      northbound.layer_3: northbound_message_handler
+      southbound.layer_3: southbound_message_handler
+      system_integrity.layer_3: system_integrity_message_handler
     # restricted_publish_exchanges: []
     default_pathways:
       northbound:
-        - layer_2
+        - northbound.layer_2
       southbound:
-        - layer_4
+        - southbound.layer_4
   layer_4:
     subscribes_to:
-      - layer_4
+      northbound.layer_4: northbound_message_handler
+      southbound.layer_4: southbound_message_handler
+      system_integrity.layer_4: system_integrity_message_handler
     # restricted_publish_exchanges: []
     default_pathways:
       northbound:
-        - layer_3
+        - northbound.layer_3
       southbound:
-        - layer_5
+        - southbound.layer_5
   layer_5:
     subscribes_to:
-      - layer_5
+      northbound.layer_5: northbound_message_handler
+      southbound.layer_5: southbound_message_handler
+      system_integrity.layer_5: system_integrity_message_handler
     # restricted_publish_exchanges: []
     default_pathways:
       northbound:
-        - layer_4
+        - northbound.layer_4
       southbound:
-        - layer_6
+        - southbound.layer_6
   layer_6:
     subscribes_to:
-      - layer_6
+      southbound.layer_6: southbound_message_handler
+      system_integrity.layer_6: system_integrity_message_handler
     # restricted_publish_exchanges: []
     default_pathways:
       northbound:
-        - layer_5
+        - northbound.layer_5
+  busses:
+    subscribes_to:
+      system_integrity.busses: system_integrity_message_handler
+  debug:
+    subscribes_to:
+      debug_data: message_data_handler
+      system_integrity.debug: system_integrity_message_handler
+  logging:
+    subscribes_to:
+      logging: message_handler
+      resource_log: message_handler
+      system_integrity.logging: system_integrity_message_handler
+  system_integrity:
+    subscribes_to:
+      system_integrity: message_handler
+      system_integrity_data: message_data_handler
+  telemetry_manager:
+    subscribes_to:
+      telemetry_subscribe: message_handler
+      system_integrity.telemetry_manager: system_integrity_message_handler
 
 # The `exchanges` section defines the AMQP exchanges used in the system.
 exchanges:
@@ -87,12 +120,16 @@ exchanges:
   # By default, the exchange configuration is:
   # - durable: true
   debug_data: {}
-  layer_1: {}
-  layer_2: {}
-  layer_3: {}
-  layer_4: {}
-  layer_5: {}
-  layer_6: {}
+  northbound.layer_1: {}
+  northbound.layer_2: {}
+  northbound.layer_3: {}
+  northbound.layer_4: {}
+  northbound.layer_5: {}
+  southbound.layer_2: {}
+  southbound.layer_3: {}
+  southbound.layer_4: {}
+  southbound.layer_5: {}
+  southbound.layer_6: {}
   resource_log: {}
   system_integrity_data: {}
   telemetry_subscribe: {}
@@ -118,12 +155,16 @@ queues:
     durable: false
   debug.layer_6:
     durable: false
-  layer_1: {}
-  layer_2: {}
-  layer_3: {}
-  layer_4: {}
-  layer_5: {}
-  layer_6: {}
+  northbound.layer_1: {}
+  northbound.layer_2: {}
+  northbound.layer_3: {}
+  northbound.layer_4: {}
+  northbound.layer_5: {}
+  southbound.layer_2: {}
+  southbound.layer_3: {}
+  southbound.layer_4: {}
+  southbound.layer_5: {}
+  southbound.layer_6: {}
   resource_log: {}
   system_integrity: {}
   system_integrity_data:
@@ -161,29 +202,45 @@ bindings:
       debug_data: {}
       # Include common monitoring configurations.
       <<: *monitoring_queue_configs
-  layer_1:
+  northbound.layer_1:
     queues:
-      layer_1: {}
+      northbound.layer_1: {}
       <<: *monitoring_queue_configs
-  layer_2:
+  northbound.layer_2:
     queues:
-      layer_2: {}
+      northbound.layer_2: {}
       <<: *monitoring_queue_configs
-  layer_3:
+  northbound.layer_3:
     queues:
-      layer_3: {}
+      northbound.layer_3: {}
       <<: *monitoring_queue_configs
-  layer_4:
+  northbound.layer_4:
     queues:
-      layer_4: {}
+      northbound.layer_4: {}
       <<: *monitoring_queue_configs
-  layer_5:
+  northbound.layer_5:
     queues:
-      layer_5: {}
+      northbound.layer_5: {}
       <<: *monitoring_queue_configs
-  layer_6:
+  southbound.layer_2:
     queues:
-      layer_6: {}
+      southbound.layer_2: {}
+      <<: *monitoring_queue_configs
+  southbound.layer_3:
+    queues:
+      southbound.layer_3: {}
+      <<: *monitoring_queue_configs
+  southbound.layer_4:
+    queues:
+      southbound.layer_4: {}
+      <<: *monitoring_queue_configs
+  southbound.layer_5:
+    queues:
+      southbound.layer_5: {}
+      <<: *monitoring_queue_configs
+  southbound.layer_6:
+    queues:
+      southbound.layer_6: {}
       <<: *monitoring_queue_configs
   resource_log:
     queues:

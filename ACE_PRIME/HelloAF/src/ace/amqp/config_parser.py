@@ -13,7 +13,7 @@ QueuesModel = RootModel[Dict[str, Dict[str, Any]]]
 
 
 class ResourcesModel(BaseModel):
-    subscribes_to: Optional[List[str]] = []
+    subscribes_to: Optional[Dict[str, str]] = {}
     restricted_publish_exchanges: Optional[List[str]] = []
     default_pathways: Optional[Dict[str, List[str]]] = {}
 

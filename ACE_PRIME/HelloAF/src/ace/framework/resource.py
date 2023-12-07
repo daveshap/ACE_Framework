@@ -13,7 +13,9 @@ from queue import Queue
 from ace import constants
 from ace.settings import Settings
 from ace.api_endpoint import ApiEndpoint
+from ace.amqp.config_parser import ConfigParser
 from ace.amqp.connection import AMQPConnectionManager
+from ace.amqp.setup import AMQPSetupManager
 
 from ace.logger import Logger
 
@@ -42,10 +44,6 @@ class Resource(ABC):
     @property
     def labeled_name(self):
         return f"{self.settings.name} ({self.settings.label})"
-
-    @property
-    def system_integrity_managed_resources(self):
-        return self.settings.layers + self.settings.other_resources
 
     @property
     def api_callbacks(self):
@@ -77,6 +75,20 @@ class Resource(ABC):
     def set_debug_state(self, debug_mode=None):
         self.debug_mode = bool(os.getenv('ACE_DEBUG_MODE')) if debug_mode is None else debug_mode
 
+    def setup_messaging(self):
+        self.config_parser = ConfigParser()
+        self.messaging_config = AMQPSetupManager(self.config_parser)
+        self.get_resource_messaging_config()
+
+    def get_resource_messaging_config(self):
+        resources = self.config_parser.get_resources()
+        try:
+            self.resource_config = resources[self.settings.name]
+        except KeyError as e:
+            message = f"{self.labeled_name} resource config not found: {e}"
+            self.log.error(message)
+            raise KeyError(message)
+
     def connect_busses(self):
         self.log.debug(f"{self.labeled_name} connecting to busses...")
         Thread(target=self.connect_busses_in_thread).start()
@@ -101,7 +113,7 @@ class Resource(ABC):
 
         async def close_connections():
             await asyncio.sleep(1)
-            self.unsubscribe_system_integrity_queue_if_needed()
+            self.unsubscribe_messaging()
             await self.pre_disconnect()
             await self.publisher_channel.close()
             await self.consumer_channel.close()
@@ -111,19 +123,11 @@ class Resource(ABC):
 
         asyncio.run_coroutine_threadsafe(close_connections(), self.bus_loop)
 
-    def subscribe_system_integrity_queue_if_needed(self):
-        if self.settings.name in self.system_integrity_managed_resources:
-            asyncio.run_coroutine_threadsafe(self.subscribe_system_integrity_queue(), self.bus_loop)
-
-    def unsubscribe_system_integrity_queue_if_needed(self):
-        if self.settings.name in self.system_integrity_managed_resources:
-            asyncio.run_coroutine_threadsafe(self.unsubscribe_system_integrity_queue(), self.bus_loop)
-
     def start_resource(self):
         self.log.info("Starting resource...")
         self.setup_service()
         self.wait_for_local_publisher_queue()
-        self.subscribe_system_integrity_queue_if_needed()
+        self.subscribe_messaging()
         self.post_start()
         self.log.info("Resource started")
 
@@ -136,6 +140,7 @@ class Resource(ABC):
     def setup_service(self):
         self.log.debug("Setting up service...")
         self.api_endpoint.start_endpoint()
+        self.setup_messaging()
         self.connect_busses()
 
     def shutdown_service(self):
@@ -170,6 +175,10 @@ class Resource(ABC):
         # Kick the queue to break the loop.
         self.push_exchange_message_to_publisher_local_queue(None, None)
 
+    def push_pathway_message_to_publisher_local_queue(self, pathway_name, message):
+        pathway = self.build_pathway_name(pathway_name)
+        self.push_exchange_message_to_publisher_local_queue(pathway, message)
+
     def push_exchange_message_to_publisher_local_queue(self, queue_name, message):
         data = (queue_name, message)
         self.bus_loop.call_soon_threadsafe(self.publisher_local_queue.put_nowait, data)
@@ -186,6 +195,12 @@ class Resource(ABC):
             except Exception as e:
                 self.log.error(f"Publishing message from local publisher queue failed: {e}", exc_info=True)
                 continue
+
+    def build_pathway_name(self, pathway_name):
+        if pathway_name in self.resource_config.default_pathways:
+            return f"pathway.{self.settings.name}.{pathway_name}"
+        self.log.error(f"Invalid pathway name for resource {self.settings.name}: {pathway_name}")
+        return None
 
     def build_layer_queue_name(self, direction, layer):
         queue = None
@@ -260,18 +275,29 @@ class Resource(ABC):
                 self.log.warning(f"Error occurred: {str(e)}. Trying again in {constants.QUEUE_SUBSCRIBE_RETRY_SECONDS} seconds.")
                 await asyncio.sleep(constants.QUEUE_SUBSCRIBE_RETRY_SECONDS)
 
-    async def subscribe_system_integrity_queue(self):
-        queue_name = self.build_system_integrity_queue_name(self.settings.name)
-        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}...")
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.system_integrity_message_handler)
+    async def subscribe_messaging(self):
+        for queue_name, handler in self.resource_config.subscribes_to.items():
+            await self.subscribe_queue(queue_name, handler)
 
-    async def unsubscribe_system_integrity_queue(self):
-        queue_name = self.build_system_integrity_queue_name(self.settings.name)
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
+    async def subscribe_queue(self, queue_name: str, handler: str):
+        try:
+            handler_method = getattr(self, handler)
+        except AttributeError:
+            message = f"Queue handler for queue {queue_name} not found: {handler}"
+            self.log.error(message)
+            raise AttributeError(message)
+        self.log.debug(f"{self.labeled_name} subscribing to {queue_name}, handler: {handler}...")
+        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, handler_method)
+
+    async def unsubscribe_messaging(self):
+        for queue_name, queue_config in self.consumers.items():
+            queue, consumer_tag = queue_config
+            await self.unsubscribe_queue(queue_name, queue, consumer_tag)
+
+    async def unsubscribe_queue(self, queue_name: str, queue: aio_pika.Queue, consumer_tag: str):
+        self.log.debug(f"{self.labeled_name} unsubscribing from {queue_name}...")
+        await queue.cancel(consumer_tag)
+        self.log.info(f"{self.labeled_name} unsubscribed from {queue_name}")
 
     async def system_integrity_message_handler(self, message: aio_pika.IncomingMessage):
         async with message.process():

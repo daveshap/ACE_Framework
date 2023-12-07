@@ -50,10 +50,12 @@ class AMQPSetupManager:
                              ):
         exchange_name = self.make_exchange_name(name)
         self.log.debug(f"Set up: {exchange_name}, config: {config}")
-        self.exchanges[name] = await channel.declare_exchange(
+        exchange = await channel.declare_exchange(
             exchange_name,
             **config.model_dump(exclude_none=True),
         )
+        self.exchanges[name] = exchange
+        return exchange
 
     async def teardown_exchanges(self, channel: aio_pika.Channel):
         for name, exchange in self.exchanges.items():
@@ -68,11 +70,13 @@ class AMQPSetupManager:
             await self.setup_queue(channel, name, QueueConfig(**config))
 
     async def setup_queue(self, channel: aio_pika.Channel, name: str, config: QueueConfig):
-        self.queues[name] = await channel.declare_queue(
+        queue = await channel.declare_queue(
             name,
             **config.model_dump(exclude_none=True),
         )
         self.log.debug(f"Declared queue {name}, config: {config}")
+        self.queues[name] = queue
+        return queue
 
     async def teardown_queues(self, channel: aio_pika.Channel):
         for queue in self.queues.values():

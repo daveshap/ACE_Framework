@@ -48,9 +48,6 @@ class Debug(Resource):
         super().shutdown_service()
         self.debug_endpoint.stop_endpoint()
 
-    async def post_connect(self):
-        await self.subscribe_debug_data()
-
     def toggle_debug_state(self, data):
         state = data['state']
         self.log.debug(f"{self.labeled_name} requesting debug state change: {state}")
@@ -73,9 +70,6 @@ class Debug(Resource):
             'message': f"Requested run layer for layer: {layer}",
             'data': data,
         }
-
-    async def debug_pre_disconnect(self):
-        await self.unsubscribe_debug_data()
 
     async def publish_message(self, queue_name, message, delivery_mode=2):
         message = aio_pika.Message(
@@ -140,17 +134,3 @@ class Debug(Resource):
         async with httpx.AsyncClient() as client:
             response = await client.post(f'http://localhost:{constants.DEFAULT_DEBUG_UI_ENDPOINT_PORT}/{path}', json=data)
             self.log.debug(f"{self.labeled_name} POST response from debug UI: {response.text}")
-
-    async def subscribe_debug_data(self):
-        self.log.debug(f"{self.labeled_name} subscribing to debug data queue...")
-        queue_name = self.settings.debug_data_queue
-        self.consumers[queue_name] = await self.try_queue_subscribe(queue_name, self.message_data_handler)
-        self.log.info(f"{self.labeled_name} subscribed to debug data queue")
-
-    async def unsubscribe_debug_data(self):
-        queue_name = self.settings.debug_data_queue
-        if queue_name in self.consumers:
-            queue, consumer_tag = self.consumers[queue_name]
-            self.log.debug(f"{self.labeled_name} unsubscribing from debug data queue...")
-            await queue.cancel(consumer_tag)
-            self.log.info(f"{self.labeled_name} unsubscribed from debug data queue")
