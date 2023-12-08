@@ -129,7 +129,6 @@ services:
       interlayer_communication_buses: *default_depends_on_conditions
       logging: *default_depends_on_conditions
       telemetry_manager_layer: *default_depends_on_conditions
-      aspirational_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -147,7 +146,6 @@ services:
       interlayer_communication_buses: *default_depends_on_conditions
       logging: *default_depends_on_conditions
       telemetry_manager_layer: *default_depends_on_conditions
-      global_strategy_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -165,7 +163,6 @@ services:
       interlayer_communication_buses: *default_depends_on_conditions
       logging: *default_depends_on_conditions
       telemetry_manager_layer: *default_depends_on_conditions
-      agent_model_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -183,7 +180,6 @@ services:
       interlayer_communication_buses: *default_depends_on_conditions
       logging: *default_depends_on_conditions
       telemetry_manager_layer: *default_depends_on_conditions
-      executive_function_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -201,7 +197,6 @@ services:
       interlayer_communication_buses: *default_depends_on_conditions
       logging: *default_depends_on_conditions
       telemetry_manager_layer: *default_depends_on_conditions
-      cognitive_control_layer: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
@@ -244,12 +239,8 @@ services:
       ACE_RESOURCE_NAME: debug
     command: *default_command
     depends_on:
-      aspirational_layer: *default_depends_on_conditions
-      global_strategy_layer: *default_depends_on_conditions
-      agent_model_layer: *default_depends_on_conditions
-      executive_function_layer: *default_depends_on_conditions
-      cognitive_control_layer: *default_depends_on_conditions
-      task_prosecution_layer: *default_depends_on_conditions
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
     networks: *default_networks
     healthcheck: *healthcheck
 
