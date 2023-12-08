@@ -3,7 +3,6 @@ from ace.framework.layer import Layer, LayerSettings
 from ace.framework.llm.gpt import GptMessage
 from ace.framework.util import parse_json
 from jinja2 import Environment, FileSystemLoader
-import os
 
 
 class Layer1(Layer):
