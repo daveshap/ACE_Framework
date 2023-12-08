@@ -69,16 +69,17 @@ class Layer(Resource):
         Thread(target=self.run_layer_in_thread).start()
 
     def run_layers_debug_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
-        if control_messages:
-            self.log.debug(f"[{self.labeled_name}] RUN LAYER CONTROL MESSAGES: {control_messages}")
-        if data_messages:
-            self.log.debug(f"[{self.labeled_name}] RUN LAYER DATA MESSAGES: {data_messages}")
-        if request_messages:
-            self.log.debug(f"[{self.labeled_name}] RUN LAYER REQUEST MESSAGES: {request_messages}")
-        if response_messages:
-            self.log.debug(f"[{self.labeled_name}] RUN LAYER RESPONSE MESSAGES: {response_messages}")
-        if telemetry_messages:
-            self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
+        if self.layer_running:
+            if control_messages:
+                self.log.debug(f"[{self.labeled_name}] RUN LAYER CONTROL MESSAGES: {control_messages}")
+            if data_messages:
+                self.log.debug(f"[{self.labeled_name}] RUN LAYER DATA MESSAGES: {data_messages}")
+            if request_messages:
+                self.log.debug(f"[{self.labeled_name}] RUN LAYER REQUEST MESSAGES: {request_messages}")
+            if response_messages:
+                self.log.debug(f"[{self.labeled_name}] RUN LAYER RESPONSE MESSAGES: {response_messages}")
+            if telemetry_messages:
+                self.log.debug(f"[{self.labeled_name}] RUN LAYER TELEMETRY MESSAGES: {telemetry_messages}")
 
     def parse_req_resp_messages(self, messages=None):
         messages = messages or []
@@ -197,6 +198,8 @@ class Layer(Resource):
     def agent_run_and_publish(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
         self.log.info(f"[{self.labeled_name}] agent run and publish...")
         messages_northbound, messages_southbound = self.process_layer_messages(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
+        if not self.layer_running:
+            messages_northbound, messages_southbound = [], []
         if messages_northbound and self.northern_layer:
             for m in messages_northbound:
                 message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
