@@ -27,6 +27,7 @@ class Resource(ABC):
         self.executor = ThreadPoolExecutor(max_workers=5)
         self.connection_manager = AMQPConnectionManager(self.settings)
         self.bus_loop = asyncio.new_event_loop()
+        self.resource_running = False
         self.connection = None
         self.consumer_channel = None
         self.publisher_channel = None
@@ -131,10 +132,12 @@ class Resource(ABC):
         future = asyncio.run_coroutine_threadsafe(self.subscribe_messaging(), self.bus_loop)
         future.result()
         self.post_start()
+        self.resource_running = True
         self.log.info("Resource started")
 
     def stop_resource(self):
         self.log.info("Shutting down resource...")
+        self.resource_running = False
         self.pre_stop()
         self.shutdown_service()
         self.log.info("Resource shut down")
@@ -361,9 +364,10 @@ class Resource(ABC):
             self.log.error(f"[{self.labeled_name}] failed [Debug] command: method {method_name}, error: {e}", exc_info=True)
 
     def resource_log(self, message):
-        self.log.info(f"{self.labeled_name} resource log: \n\n{message}\n\n")
-        log_message = self.build_message('logging', message={'message': message}, message_type='log')
-        self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, log_message)
+        if self.resource_running:
+            self.log.info(f"{self.labeled_name} resource log: \n\n{message}\n\n")
+            log_message = self.build_message('logging', message={'message': message}, message_type='log')
+            self.push_exchange_message_to_publisher_local_queue(self.settings.resource_log_queue, log_message)
 
     def telemetry_subscribe_to_namespace(self, namespace):
         self.telemetry_subscribe_unsubscribe_namespace('subscribe', namespace)
