@@ -35,6 +35,9 @@ class TelemetryManager(Resource):
     async def post_connect(self):
         await self.make_exchanges()
 
+    async def pre_disconnect(self):
+        await self.teardown_messaging()
+
     def initial_collection(self):
         asyncio.run_coroutine_threadsafe(self.collect_initial_data_points(), self.bus_loop)
 
@@ -102,6 +105,9 @@ class TelemetryManager(Resource):
     async def make_exchanges(self):
         for root in self.unique_roots():
             await self.make_exchange(root)
+
+    async def teardown_messaging(self):
+        await self.messaging_config.teardown_exchanges(self.consumer_channel)
 
     async def make_exchange(self, root):
         exchange_name = self.build_telemetry_exchange_name(root)
