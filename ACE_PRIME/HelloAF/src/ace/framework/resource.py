@@ -114,7 +114,7 @@ class Resource(ABC):
 
         async def close_connections():
             await asyncio.sleep(1)
-            self.unsubscribe_messaging()
+            await self.unsubscribe_messaging()
             await self.pre_disconnect()
             await self.publisher_channel.close()
             await self.consumer_channel.close()
