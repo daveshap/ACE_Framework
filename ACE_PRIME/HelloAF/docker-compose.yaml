@@ -50,9 +50,9 @@ services:
     networks: *default_networks
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
-      interval: 30s
+      interval: 3s
       timeout: 10s
-      retries: 3
+      retries: 10
 
   logging:
     build:
