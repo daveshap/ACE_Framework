@@ -136,3 +136,17 @@ class AMQPSetupManager:
             self.log.debug(f"Unbound {pathway.name} from {self.exchanges[exchange_name].name}")
         await pathway.delete()
         self.log.debug(f"Removed {pathway.name}")
+
+    async def setup_all(self, channel: aio_pika.Channel):
+        # Ensure the setup order is correct: exchanges, queues, bindings, pathways
+        await self.setup_exchanges(channel)
+        await self.setup_queues(channel)
+        await self.setup_queue_bindings(channel)
+        await self.setup_resource_pathways(channel)
+
+    async def teardown_all(self, channel: aio_pika.Channel):
+        # Ensure the teardown order is correct: pathways, bindings, queues, then exchanges
+        await self.teardown_resource_pathways(channel)
+        await self.teardown_queue_bindings(channel)
+        await self.teardown_queues(channel)
+        await self.teardown_exchanges(channel)

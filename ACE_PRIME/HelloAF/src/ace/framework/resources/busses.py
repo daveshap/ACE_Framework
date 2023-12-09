@@ -27,13 +27,7 @@ class Busses(Resource):
         await self.teardown_messaging()
 
     async def setup_messaging(self):
-        await self.messaging_config.setup_exchanges(self.consumer_channel)
-        await self.messaging_config.setup_queues(self.consumer_channel)
-        await self.messaging_config.setup_queue_bindings(self.consumer_channel)
-        await self.messaging_config.setup_resource_pathways(self.consumer_channel)
+        await self.messaging_config.setup_all(self.consumer_channel)
 
     async def teardown_messaging(self):
-        await self.messaging_config.teardown_resource_pathways(self.consumer_channel)
-        await self.messaging_config.teardown_queue_bindings(self.consumer_channel)
-        await self.messaging_config.teardown_queues(self.consumer_channel)
-        await self.messaging_config.teardown_exchanges(self.consumer_channel)
+        await self.messaging_config.teardown_all(self.consumer_channel)

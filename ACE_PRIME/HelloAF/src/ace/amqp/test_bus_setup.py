@@ -23,11 +23,7 @@ async def test_setup_and_teardown():
     setup = AMQPSetupManager(config_parser)
     channel = await connection.channel()  # Create a channel
 
-    # Ensure the setup order is correct: exchanges, queues, bindings, pathways
-    await setup.setup_exchanges(channel)
-    await setup.setup_queues(channel)
-    await setup.setup_queue_bindings(channel)
-    await setup.setup_resource_pathways(channel)
+    await setup.setup_all(channel)
 
     # Step 4: Sleep until the user continues
     instructions = """
@@ -38,11 +34,7 @@ Press Enter to tear down...
     input(instructions)
 
     # Step 5: Call all the teardown methods in the proper order
-    # Ensure the teardown order is correct: pathways, bindings, queues, then exchanges
-    await setup.teardown_resource_pathways(channel)
-    await setup.teardown_queue_bindings(channel)
-    await setup.teardown_queues(channel)
-    await setup.teardown_exchanges(channel)
+    await setup.teardown_all(channel)
 
     # Close the channel and connection
     await channel.close()
