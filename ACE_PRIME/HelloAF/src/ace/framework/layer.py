@@ -1,4 +1,5 @@
 import time
+import copy
 import yaml
 import aio_pika
 from abc import abstractmethod
@@ -17,7 +18,7 @@ from ace.framework.util import parse_json
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
     model: str = 'gpt-3.5-turbo-1106'
-    ai_retry_count: int = 3
+    activation_mode: str = 'loop'
 
 
 class Layer(Resource):
@@ -202,11 +203,13 @@ class Layer(Resource):
             messages_northbound, messages_southbound = [], []
         if messages_northbound and self.northern_layer:
             for m in messages_northbound:
-                message = self.build_message(self.northern_layer, message=m, message_type=m['type'])
+                pathway = self.build_pathway_name("northbound")
+                message = self.build_message(pathway, message=m, message_type=m['type'])
                 self.push_pathway_message_to_publisher_local_queue("northbound", message)
         if messages_southbound and self.southern_layer:
             for m in messages_southbound:
-                message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
+                pathway = self.build_pathway_name("southbound")
+                message = self.build_message(pathway, message=m, message_type=m['type'])
                 self.push_pathway_message_to_publisher_local_queue("southbound", message)
 
     def agent_run_layer(self):
@@ -220,6 +223,12 @@ class Layer(Resource):
         self.agent_run_and_publish(control_messages, data_messages, request_messages, response_messages, telemetry_messages)
 
     def run_layer_in_thread(self):
+        if self.settings.activation_mode == 'loop':
+            self.run_layer_in_loop()
+        elif self.settings.activation_mode == 'events':
+            self.run_layer_via_events()
+
+    def run_layer_in_loop(self):
         while self.layer_running:
             if self.debug_mode:
                 self.debug_run_layer()
@@ -229,22 +238,53 @@ class Layer(Resource):
                 if not self.debug_mode:
                     time.sleep(constants.LAYER_SLEEP_TIME)
 
-    async def send_message(self, queue_name, message, delivery_mode=2):
+    # TODO: This probably needs to be async, or some other method to hold the thread
+    # open so events can be received.
+    def run_layer_via_events(self):
+        while self.layer_running:
+            time.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+
+    def build_event_message(self, destination, event, data=None):
+        data = data or {}
+        final_data = copy.deepcopy(data)
+        final_data['event'] = event
+        message = self.build_message(destination, message=final_data, message_type='event')
+        return message
+
+    def send_event_to_pathway(self, pathway_name, event, data=None):
+        pathway = self.build_pathway_name(pathway_name)
+        if pathway:
+            self.send_event(pathway, event, data)
+
+    def send_event(self, queue_name, event, data=None):
         if queue_name:
-            self.log.debug(f"Send message: {self.labeled_name} ->  {queue_name}")
+            self.log.debug(f"Send event '{event}': {self.labeled_name} ->  {queue_name}, data: {data}")
+            message = self.build_event_message(queue_name, event, data)
             exchange = self.build_exchange_name(queue_name)
-            await self.publish_message(exchange, message)
+            asyncio.run_coroutine_threadsafe(
+                self.publish_message(exchange, message),
+                self.bus_loop
+            )
 
     async def send_message_to_pathway(self, pathway_name, message, delivery_mode=2):
         pathway = self.build_pathway_name(pathway_name)
         if pathway:
             await self.send_message(pathway, message)
 
+    async def send_message(self, queue_name, message, delivery_mode=2):
+        if queue_name:
+            self.log.debug(f"Send message: {self.labeled_name} ->  {queue_name}")
+            exchange = self.build_exchange_name(queue_name)
+            await self.publish_message(exchange, message)
+
     def is_ping(self, data):
         return data['type'] == 'ping'
 
     def is_pong(self, data):
         return data['type'] == 'pong'
+
+    def is_event(self, data):
+        return data['type'] == 'event'
 
     async def ping(self, direction):
         pathway = self.build_pathway_name(direction)
@@ -266,6 +306,9 @@ class Layer(Resource):
             self.log.info(f"Sending PONG: {self.labeled_name} ->  {queue_name}")
             message = self.build_message(layer, message_type='pong')
             await self.send_message(queue_name, message)
+
+    def handle_event(self, event, data):
+        self.log.info(f"[{self.labeled_name}] handle event: {event}, data: {data}")
 
     def schedule_post(self):
         asyncio.run_coroutine_threadsafe(self.post(), self.bus_loop)
@@ -291,6 +334,12 @@ class Layer(Resource):
         elif self.is_ping(data):
             self.log.info(f"[{self.labeled_name}] received a [ping] message from layer: {source_layer}, bus direction: {direction}")
             return await self.handle_ping(direction)
+        elif self.is_event(data):
+            self.log.info(f"[{self.labeled_name}] received an [event] message from layer: {source_layer}, bus direction: {direction}")
+            data.pop('type')
+            event = data.pop('event')
+            self.handle_event(event, data)
+            return
         self.push_message_to_consumer_local_queue(data['type'], data)
 
     async def telemetry_message_handler(self, message: aio_pika.IncomingMessage):
