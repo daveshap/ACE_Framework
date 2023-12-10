@@ -90,4 +90,4 @@ class Layer6(Layer):
         if event == "execute":
             self.agent_run_layer()
             await asyncio.sleep(constants.EVENT_LAYER_SLEEP_TIME)
-            self.send_event_to_pathway("northbound", "execute")
+            # self.send_event_to_pathway("northbound", "execute")
