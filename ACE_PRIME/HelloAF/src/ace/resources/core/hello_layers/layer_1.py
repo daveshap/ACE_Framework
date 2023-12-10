@@ -73,7 +73,7 @@ class Layer1(Layer):
                     "southbound", message
                 )
         time.sleep(constants.EVENT_LAYER_SLEEP_TIME)
-        self.send_event_to_pathway("southbound", 'execute')
+        self.send_event_to_pathway("southbound", "execute")
 
     def declare_done(self):
         self.log.info(f"{self.labeled_name} declaring work done")

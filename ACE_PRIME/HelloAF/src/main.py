@@ -41,25 +41,19 @@ def loader(resource_name):
         logger.debug(f"ACE_RESOURCE_SUBDIRECTORY: {subdirectory}")
         for directory in RESOURCE_LOADER_DIRECTORIES:
             import_path = f"ace.resources.{directory}.{subdirectory}.{resource_name}"
-            resource_class = load_resource(
-                resource_class_name, import_path
-            )
+            resource_class = load_resource(resource_class_name, import_path)
             if resource_class:
                 break
         if not resource_class:
             import_path = f"ace.framework.resources.{resource_name}"
             logger.debug(f"No custom resource found, importing from {import_path}")
-            resource_class = load_resource(
-                resource_class_name, import_path
-            )
+            resource_class = load_resource(resource_class_name, import_path)
         if not resource_class:
             logger.error(
                 f"No import available for resource {resource_name}",
             )
             return False
-        logger.debug(
-            f"Imported {resource_class_name} from {import_path}"
-        )
+        logger.debug(f"Imported {resource_class_name} from {import_path}")
         resource = resource_class()
         logger.debug(f"Created an instance of {resource_class}")
         logger.info(f"Calling start_resource method on the {resource_class} instance")
