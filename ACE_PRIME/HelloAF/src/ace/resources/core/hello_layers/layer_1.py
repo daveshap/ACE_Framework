@@ -72,7 +72,7 @@ class Layer1(Layer):
                 self.push_pathway_message_to_publisher_local_queue(
                     "southbound", message
                 )
-        time.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+        time.sleep(constants.DEBUG_LAYER_SLEEP_TIME)
         self.send_event_to_pathway("southbound", "execute")
 
     def declare_done(self):
@@ -153,5 +153,5 @@ class Layer1(Layer):
         await super().handle_event(event, data)
         if event == "execute":
             self.agent_run_layer()
-            await asyncio.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+            await asyncio.sleep(constants.DEBUG_LAYER_SLEEP_TIME)
             self.send_event_to_pathway("southbound", "execute")

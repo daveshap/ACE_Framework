@@ -95,5 +95,5 @@ class Layer3(Layer):
         await super().handle_event(event, data)
         if event == "execute":
             self.agent_run_layer()
-            await asyncio.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+            await asyncio.sleep(constants.DEBUG_LAYER_SLEEP_TIME)
             self.send_event_to_pathway("southbound", "execute")
