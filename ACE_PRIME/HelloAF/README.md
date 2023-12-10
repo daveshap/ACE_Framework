@@ -1,4 +1,4 @@
-# "Hello, Layers!" Demo
+# "HelloAF" PRIME Demo
 
 ## Objective
 
@@ -14,9 +14,7 @@ In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If 
    * Resources are started from the top down, and shut down from the bottom up
    * The resource manager periodically monitors the 'health' of every resource, restarting containers as necessary
 2. Once all resources are up, a simple communication exchange of test messages ensures all layers are communicating along the busses (Power On Self-Test)
-3. With the communication test checks complete, the ACE attempts to fullfill its mission:
-   * This is accomplished by fully exercising the agents at each layer of the ACE
-   * The mission is simple: output "Hello, Layers!" to the console
+3. With the communication test checks complete, the ACE attempts to fullfill its mission
 4. Ooohs and ahhhs ensue :P
 
 ## Setup
@@ -37,7 +35,7 @@ pip install -r requirements.txt
 
 ### Credentials
 
-You'll need to export the `OPENAI_API_KEY` environment variable on your system to a valid OpenAI API key, for example:
+If you're using OpenAI models, you'll need to export the `OPENAI_API_KEY` environment variable on your system to a valid OpenAI API key, for example:
 
 ```sh
 export OPENAI_API_KEY="your_openai_api_key_here"
@@ -87,3 +85,34 @@ To adjust these, you can pass the following environment variables when running v
 ```sh
 ACE_THIRD_PARTY_LOG_LEVEL=DEBUG ACE_LOG_LEVEL=DEBUG ./dev.sh
 ```
+
+The `logging` resource stores log messages, by default clearing old log messages at the start of a new run. You can log into the `logging` resource:
+
+```sh
+docker exec -it helloaf-logging-1 bash
+```
+
+By default, logs are stored in that resource at `/var/log/ace`.
+
+
+## Debugging
+
+There is a `debug` resource that allows you to connect to a running ACE via a simple text user interface. This allows you to:
+
+1. Pause the ACE
+2. View current messages on the bus at the time the ACE was paused
+3. Edit bus messages
+4. Submit bus messages for an individual layer into the ACE for that layer to execute
+
+To use the debugger, log into the `debug` resource:
+```sh
+docker exec -it helloaf-debug-1 bash
+```
+
+Run the debugging interface:
+
+```sh
+python debug-ace-tui.py
+```
+
+Simple event logging and keyboard shortcuts are listed at the top.
