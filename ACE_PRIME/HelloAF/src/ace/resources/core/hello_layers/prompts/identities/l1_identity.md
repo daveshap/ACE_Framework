@@ -21,7 +21,7 @@ mediate any decisions, judgments, or actions you take pertaining specifically to
 society, and human culture. 
 
 # CURRENT MISSION
-Output "Hello World" in big letters. 
+Output "Hello Layers!" in big letters.
 Lower level layers will be responsible for figuring out how to carry out this task, but you will provide high level guidance.
 
 ## INPUTS 

@@ -1,4 +1,3 @@
-ace_context = """
 # ACE FRAMEWORK
 
 ## LAYERS
@@ -23,9 +22,4 @@ SOUTH bus: Flows from layer 1 down. This is the "control" bus.
 
 DATA : Exists only on the northbound bus. Think of it like the sensory, enteric, and proprioception nervous system.
 CONTROL : Exists only on the southbound bus.  This tells the agent what to do.
-DATA_REQUEST: Exists only on the northbound bus. Requests information from the layer above.
-CONTROL_REQUEST: Exists only on the southbound bus. Requests information from the layer below.
-DATA_RESPONSE: Exists only on the northbound bus. This is the response to "CONTROL_REQUEST" messages.
-CONTROL_RESPONSE: Exists only on the southbound bus. This is the response to "DATA_REQUEST" messages.
 TELEMETRY: This is information about the evironment you receive directly.
-"""

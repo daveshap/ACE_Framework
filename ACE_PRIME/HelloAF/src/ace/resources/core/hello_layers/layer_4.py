@@ -1,6 +1,10 @@
+import asyncio
+
+from ace import constants
 from ace.framework.layer import Layer, LayerSettings
 from ace.framework.llm.gpt import GptMessage
 from ace.framework.util import parse_json
+from ace.resources.core.hello_layers.util import get_template_dir, get_identities_dir
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -28,7 +32,7 @@ class Layer4(Layer):
         response_messages,
         telemetry_messages,
     ):
-        identity_dir = self.get_identities_dir()
+        identity_dir = get_identities_dir()
         identity_env = Environment(loader=FileSystemLoader(identity_dir))
         identity = identity_env.get_template("l4_identity.md").render()
 
@@ -47,7 +51,7 @@ class Layer4(Layer):
             "control_req": self.get_messages_for_prompt(control_req_messages),
             "telemetry": self.get_messages_for_prompt(telemetry_messages),
         }
-        template_dir = self.get_template_dir()
+        template_dir = get_template_dir()
         env = Environment(loader=FileSystemLoader(template_dir))
         ace_context = env.get_template("ace_context.md").render()
 
@@ -84,3 +88,10 @@ class Layer4(Layer):
         )
 
         return messages_northbound, messages_southbound
+
+    async def handle_event(self, event, data):
+        await super().handle_event(event, data)
+        if event == "execute":
+            self.agent_run_layer()
+            await asyncio.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+            self.send_event_to_pathway("southbound", "execute")

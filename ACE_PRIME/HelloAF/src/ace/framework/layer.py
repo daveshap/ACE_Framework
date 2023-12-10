@@ -18,7 +18,7 @@ from ace.framework.util import parse_json
 class LayerSettings(Settings):
     mode: str = "OpenAI"
     model: str = "gpt-3.5-turbo-1106"
-    activation_mode: str = "loop"
+    activation_mode: str = "events"
 
 
 class Layer(Resource):
@@ -138,18 +138,6 @@ class Layer(Resource):
             message_strings = [m["message"] for m in messages]
         result = " | ".join(message_strings)
         return result
-
-    def get_template_dir(self):
-        return os.path.join(os.path.dirname(__file__), "prompts/templates")
-
-    def get_operations_dir(self):
-        return os.path.join(os.path.dirname(__file__), "prompts/operations")
-
-    def get_outputs_dir(self):
-        return os.path.join(os.path.dirname(__file__), "prompts/outputs")
-
-    def get_identities_dir(self):
-        return os.path.join(os.path.dirname(__file__), "prompts/identities")
 
     def get_op_description(
         self, content, southbound_outputs_filename, nourthbound_outputs_filename
@@ -335,7 +323,7 @@ class Layer(Resource):
         if self.settings.activation_mode == "loop":
             self.run_layer_in_loop()
         elif self.settings.activation_mode == "events":
-            self.run_layer_via_events()
+            asyncio.run_coroutine_threadsafe(self.run_layer_via_events(), self.bus_loop)
 
     def run_layer_in_loop(self):
         while self.layer_running:
@@ -349,9 +337,9 @@ class Layer(Resource):
 
     # TODO: This probably needs to be async, or some other method to hold the thread
     # open so events can be received.
-    def run_layer_via_events(self):
+    async def run_layer_via_events(self):
         while self.layer_running:
-            time.sleep(constants.EVENT_LAYER_SLEEP_TIME)
+            await asyncio.sleep(constants.EVENT_LAYER_SLEEP_TIME)
 
     def build_event_message(self, destination, event, data=None):
         data = data or {}
@@ -419,7 +407,7 @@ class Layer(Resource):
             message = self.build_message(layer, message_type="pong")
             await self.send_message(queue_name, message)
 
-    def handle_event(self, event, data):
+    async def handle_event(self, event, data):
         self.log.info(f"[{self.labeled_name}] handle event: {event}, data: {data}")
 
     def schedule_post(self):
@@ -459,8 +447,7 @@ class Layer(Resource):
             )
             data.pop("type")
             event = data.pop("event")
-            self.handle_event(event, data)
-            return
+            return await self.handle_event(event, data)
         self.push_message_to_consumer_local_queue(data["type"], data)
 
     async def telemetry_message_handler(self, message: aio_pika.IncomingMessage):
