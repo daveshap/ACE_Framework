@@ -10,7 +10,7 @@ from ace import constants
 
 logger = Logger(os.path.basename(__file__))
 
-HOST = f'http://localhost:{constants.DEFAULT_API_ENDPOINT_PORT}'
+HOST = f"http://localhost:{constants.DEFAULT_API_ENDPOINT_PORT}"
 
 
 def main():
@@ -36,5 +36,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

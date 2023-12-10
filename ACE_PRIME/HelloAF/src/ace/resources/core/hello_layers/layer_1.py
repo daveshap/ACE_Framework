@@ -6,7 +6,6 @@ from jinja2 import Environment, FileSystemLoader
 
 
 class Layer1(Layer):
-
     def __init__(self):
         super().__init__()
         self.message_count = 0
@@ -41,20 +40,20 @@ class Layer1(Layer):
         l1_starting_instructions = env.get_template("l1_starting_instructions.md")
         ace_context = env.get_template("ace_context.md")
         layer1_instructions = l1_starting_instructions.render(
-            ace_context=ace_context,
-            identity=identity
+            ace_context=ace_context, identity=identity
         )
 
         llm_messages: [GptMessage] = [
             {"role": "user", "content": layer1_instructions},
         ]
 
-        llm_response: GptMessage = self.llm.create_conversation_completion('gpt-3.5-turbo', llm_messages)
+        llm_response: GptMessage = self.llm.create_conversation_completion(
+            "gpt-3.5-turbo", llm_messages
+        )
         llm_response_content = llm_response["content"].strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
-            llm_req=layer1_instructions,
-            llm_resp=llm_response_content
+            llm_req=layer1_instructions, llm_resp=llm_response_content
         )
         self.resource_log(log_message)
         llm_messages = parse_json(llm_response_content)
@@ -63,15 +62,28 @@ class Layer1(Layer):
 
         if messages_southbound:
             for m in messages_southbound:
-                message = self.build_message(self.southern_layer, message=m, message_type=m['type'])
-                self.push_pathway_message_to_publisher_local_queue("southbound", message)
+                message = self.build_message(
+                    self.southern_layer, message=m, message_type=m["type"]
+                )
+                self.push_pathway_message_to_publisher_local_queue(
+                    "southbound", message
+                )
 
     def declare_done(self):
         self.log.info(f"{self.labeled_name} declaring work done")
-        message = self.build_message('system_integrity', message_type='done')
-        self.push_exchange_message_to_publisher_local_queue(self.settings.system_integrity_data_queue, message)
+        message = self.build_message("system_integrity", message_type="done")
+        self.push_exchange_message_to_publisher_local_queue(
+            self.settings.system_integrity_data_queue, message
+        )
 
-    def process_layer_messages(self, control_messages, data_messages, request_messages, response_messages, telemetry_messages):
+    def process_layer_messages(
+        self,
+        control_messages,
+        data_messages,
+        request_messages,
+        response_messages,
+        telemetry_messages,
+    ):
         identity_dir = self.get_identities_dir()
         identity_env = Environment(loader=FileSystemLoader(identity_dir))
         identity = identity_env.get_template("l1_identity.md").render()
@@ -83,13 +95,17 @@ class Layer1(Layer):
                 self.declare_done()
                 self.done = True
             return [], []
-        data_req_messages, control_req_messages = self.parse_req_resp_messages(request_messages)
-        data_resp_messages, control_resp_messages = self.parse_req_resp_messages(response_messages)
+        data_req_messages, control_req_messages = self.parse_req_resp_messages(
+            request_messages
+        )
+        data_resp_messages, control_resp_messages = self.parse_req_resp_messages(
+            response_messages
+        )
         prompt_messages = {
             "data": self.get_messages_for_prompt(data_messages),
             "data_resp": self.get_messages_for_prompt(data_resp_messages),
             "data_req": self.get_messages_for_prompt(data_req_messages),
-            "telemetry": self.get_messages_for_prompt(telemetry_messages)
+            "telemetry": self.get_messages_for_prompt(telemetry_messages),
         }
 
         template_dir = self.get_template_dir()
@@ -111,12 +127,13 @@ class Layer1(Layer):
             {"role": "user", "content": layer1_instructions},
         ]
 
-        llm_response: GptMessage = self.llm.create_conversation_completion('gpt-3.5-turbo', llm_messages)
+        llm_response: GptMessage = self.llm.create_conversation_completion(
+            "gpt-3.5-turbo", llm_messages
+        )
         llm_response_content = llm_response["content"].strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
-            llm_req=layer1_instructions,
-            llm_resp=llm_response_content
+            llm_req=layer1_instructions, llm_resp=llm_response_content
         )
         self.resource_log(log_message)
         llm_messages = parse_json(llm_response_content)

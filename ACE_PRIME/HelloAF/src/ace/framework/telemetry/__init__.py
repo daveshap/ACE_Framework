@@ -44,7 +44,9 @@ class Telemetry:
         data_points.extend(data)
         if len(data_points) > self.settings.data_depth:
             remove_count = len(data_points) - self.settings.data_depth
-            self.log.debug(f"{self.labeled_name} truncating oldest {remove_count} data points for namespace: {namespace}")
+            self.log.debug(
+                f"{self.labeled_name} truncating oldest {remove_count} data points for namespace: {namespace}"
+            )
             self.data_points[namespace] = data_points[remove_count:]
 
     async def publish(self, namespace, data):
@@ -53,33 +55,47 @@ class Telemetry:
         self.log.debug(f"{self.labeled_name} published telemetry data to: {namespace}")
 
     async def collect_data(self, namespace):
-        self.log.debug(f"{self.labeled_name} collecting data for namespace: {namespace}")
+        self.log.debug(
+            f"{self.labeled_name} collecting data for namespace: {namespace}"
+        )
         data = await self.collect_data_sample(namespace)
         if data is not None:
-            self.log.debug(f"{self.labeled_name} collected data for namespace {namespace}: {data}")
+            self.log.debug(
+                f"{self.labeled_name} collected data for namespace {namespace}: {data}"
+            )
             data = data if isinstance(data, list) else [data]
             self.manage_data_points(namespace, data)
-            self.log.debug(f"{self.labeled_name} collected data for namespace: {namespace}")
+            self.log.debug(
+                f"{self.labeled_name} collected data for namespace: {namespace}"
+            )
 
     async def get_data(self, namespace, return_data_points=1):
         data_points = self.data_points[namespace]
-        self.log.debug(f"{self.labeled_name} getting data for namespace: {namespace}, data points: {data_points}")
+        self.log.debug(
+            f"{self.labeled_name} getting data for namespace: {namespace}, data points: {data_points}"
+        )
         if return_data_points > 1:
             return data_points[-return_data_points:]
         return data_points[-1] if len(data_points) > 0 else None
 
     async def collection_event(self, namespace):
-        self.log.debug(f"{self.labeled_name} starting data collection event for namespace: {namespace}")
+        self.log.debug(
+            f"{self.labeled_name} starting data collection event for namespace: {namespace}"
+        )
         await self.collect_data(namespace)
         data = await self.get_data(namespace)
         await self.publish(namespace, data)
-        self.log.debug(f"{self.labeled_name} finished data collection event for namespace: {namespace}")
+        self.log.debug(
+            f"{self.labeled_name} finished data collection event for namespace: {namespace}"
+        )
 
     async def schedule_collection(self, namespace):
         if namespace in self.settings.namespaces:
             interval = self.settings.namespaces[namespace]
             if interval > 0:
-                self.log.info(f"{self.labeled_name} scheduled data collection interval for namespace: {namespace}, interval seconds: {interval}")
+                self.log.info(
+                    f"{self.labeled_name} scheduled data collection interval for namespace: {namespace}, interval seconds: {interval}"
+                )
                 while not self.stop_event[namespace].is_set():
                     await self.collection_event(namespace)
                     await asyncio.sleep(interval)
@@ -87,7 +103,9 @@ class Telemetry:
     def start_collecting(self, namespace):
         self.stop_event[namespace] = asyncio.Event()
         loop = asyncio.get_event_loop()
-        self.scheduler[namespace] = loop.create_task(self.schedule_collection(namespace))
+        self.scheduler[namespace] = loop.create_task(
+            self.schedule_collection(namespace)
+        )
 
     def stop_collecting(self, namespace):
         if namespace in self.settings.namespaces:

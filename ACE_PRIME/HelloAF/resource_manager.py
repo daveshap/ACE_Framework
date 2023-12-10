@@ -12,12 +12,11 @@ from ace.logger import Logger
 
 logger = Logger(os.path.basename(__file__))
 
-DEFAULT_DOCKER_COMPOSE_FILE = 'docker-compose.yaml'
+DEFAULT_DOCKER_COMPOSE_FILE = "docker-compose.yaml"
 DEFAULT_MONITOR_SECONDS = 60
 
 
-class ResourceManager():
-
+class ResourceManager:
     def __init__(self, args):
         self.args = args
         self.client = docker.from_env()
@@ -27,7 +26,10 @@ class ResourceManager():
     def get_service_container(self, service_name):
         for container in self.client.containers.list(all=True):
             labels = container.labels
-            if 'com.docker.compose.service' in labels and labels['com.docker.compose.service'] == service_name:
+            if (
+                "com.docker.compose.service" in labels
+                and labels["com.docker.compose.service"] == service_name
+            ):
                 return container
         return None
 
@@ -35,15 +37,23 @@ class ResourceManager():
         logger.debug(f"Loading docker-compose file: {self.args.compose_file}")
         with open(self.args.compose_file) as f:
             compose_config = yaml.safe_load(f)
-        logger.debug(f"Extracting dependencies for services: {compose_config['services'].keys()}")
-        services = {service: config.get('depends_on', []) for service, config in compose_config['services'].items()}
+        logger.debug(
+            f"Extracting dependencies for services: {compose_config['services'].keys()}"
+        )
+        services = {
+            service: config.get("depends_on", [])
+            for service, config in compose_config["services"].items()
+        }
         return services
 
     def get_containers(self):
         logger.debug("Initializing Docker client")
         service_names = self.services.keys()
         logger.debug(f"Extracting container objects for services: {service_names}")
-        containers = {service_name: self.get_service_container(service_name) for service_name in service_names}
+        containers = {
+            service_name: self.get_service_container(service_name)
+            for service_name in service_names
+        }
         return containers
 
     def restart_with_deps(self, resource, restarted=None):
@@ -93,9 +103,9 @@ class ResourceManager():
             for resource, container in self.containers.items():
                 # Refresh the container object
                 container.reload()
-                health = container.attrs['State']['Health']['Status']
+                health = container.attrs["State"]["Health"]["Status"]
                 logger.debug(f"Resource {resource} health: {health}")
-                if health != 'healthy':
+                if health != "healthy":
                     self.restart_with_deps(resource)
 
     def wait_for_interrupt(self):
@@ -115,18 +125,39 @@ class ResourceManager():
             self.run_with_monitor()
         except KeyboardInterrupt:
             if self.args.detach:
-                logger.info("Keyboard interrupt received, shutting down all resources...")
+                logger.info(
+                    "Keyboard interrupt received, shutting down all resources..."
+                )
                 self.stop_all_containers()
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description='ACE Framework demo resource manager.')
-    parser.add_argument('-b', '--build', action='store_true', help='Build the Docker containers')
-    parser.add_argument('-d', '--detach', action='store_true', help='Run containers in the background')
-    parser.add_argument('-r', '--restart-deps', action='store_true', help='Restart dependent containers on a container restart')
-    parser.add_argument('-c', '--compose-file', default=DEFAULT_DOCKER_COMPOSE_FILE, help='Docker Compose file to use (default: %(default)s)')
-    parser.add_argument('-m', '--monitor-seconds', default=DEFAULT_MONITOR_SECONDS, type=int, help='Number of seconds between monitor checks (default: %(default)s) -- set to 0 to disable')
+    parser = argparse.ArgumentParser(description="ACE Framework demo resource manager.")
+    parser.add_argument(
+        "-b", "--build", action="store_true", help="Build the Docker containers"
+    )
+    parser.add_argument(
+        "-d", "--detach", action="store_true", help="Run containers in the background"
+    )
+    parser.add_argument(
+        "-r",
+        "--restart-deps",
+        action="store_true",
+        help="Restart dependent containers on a container restart",
+    )
+    parser.add_argument(
+        "-c",
+        "--compose-file",
+        default=DEFAULT_DOCKER_COMPOSE_FILE,
+        help="Docker Compose file to use (default: %(default)s)",
+    )
+    parser.add_argument(
+        "-m",
+        "--monitor-seconds",
+        default=DEFAULT_MONITOR_SECONDS,
+        type=int,
+        help="Number of seconds between monitor checks (default: %(default)s) -- set to 0 to disable",
+    )
     args = parser.parse_args()
 
     manager = ResourceManager(args)

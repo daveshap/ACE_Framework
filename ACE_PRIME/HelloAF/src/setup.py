@@ -23,8 +23,7 @@ setup(
     # long_description_content_type="text/markdown",
     url="https://github.com/daveshap/ACE_Framework",
     packages=find_packages(),
-    package_data={
-    },
+    package_data={},
     install_requires=install_requirement,
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -32,7 +31,6 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.9",
-    entry_points={
-    },
+    entry_points={},
     scripts=[],
 )

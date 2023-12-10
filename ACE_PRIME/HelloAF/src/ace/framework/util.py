@@ -14,9 +14,12 @@ def has_environment_variable(name):
 def get_environment_variable(name):
     value = os.getenv(name)
     if value is None or value.strip() == "":
-        raise EnvironmentError(f"{name} environment variable not set! Check your .env file.")
+        raise EnvironmentError(
+            f"{name} environment variable not set! Check your .env file."
+        )
 
     return value
+
 
 def parse_json(input_string):
     try:

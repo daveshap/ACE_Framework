@@ -6,12 +6,11 @@ from ace.framework.telemetry import Telemetry, TelemetrySettings
 USER_ENCOURAGEMENT_PHRASE = "You got this!"
 
 ENVIRONMENT_CONSTANTS = {
-    'user.encouragement': USER_ENCOURAGEMENT_PHRASE,
+    "user.encouragement": USER_ENCOURAGEMENT_PHRASE,
 }
 
 
 class TelemetryUser(Telemetry):
-
     def __init__(self, publisher=None):
         super().__init__(publisher)
         signal.signal(signal.SIGUSR1, self.schedule_receive_event)
@@ -22,8 +21,8 @@ class TelemetryUser(Telemetry):
             name="telemetry_user",
             label="Telemetry - User",
             namespaces={
-                'user.encouragement': 0,
-            }
+                "user.encouragement": 0,
+            },
         )
 
     async def collect_data_sample(self, namespace):
@@ -37,4 +36,4 @@ class TelemetryUser(Telemetry):
 
     async def receive_encouragement_event(self):
         self.log.info(f"{self.labeled_name} add some encouragement...")
-        await self.collection_event('user.encouragement')
+        await self.collection_event("user.encouragement")

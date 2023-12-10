@@ -12,7 +12,6 @@ class LoggingSettings(Settings):
 
 
 class Logging(Resource):
-
     def __init__(self):
         super().__init__()
         if self.settings.clear_logs_on_start:
@@ -27,13 +26,18 @@ class Logging(Resource):
 
     def clear_logs(self):
         self.log.info(f"{self.labeled_name} clearing old logs...")
-        files = glob.glob(self.settings.log_dir + '/*.log')
+        files = glob.glob(self.settings.log_dir + "/*.log")
         for f in files:
             try:
                 os.remove(f)
-                self.log.debug(f'{self.labeled_name} file {f} has been removed successfully')
+                self.log.debug(
+                    f"{self.labeled_name} file {f} has been removed successfully"
+                )
             except OSError as e:
-                self.log.error(f'{self.labeled_name} error removing log file: {f} : {e}', exc_info=True)
+                self.log.error(
+                    f"{self.labeled_name} error removing log file: {f} : {e}",
+                    exc_info=True,
+                )
 
     # TODO: Add valid status checks.
     def status(self):
@@ -47,7 +51,9 @@ class Logging(Resource):
         try:
             data = yaml.safe_load(body)
         except yaml.YAMLError as e:
-            self.log.error(f"[{self.labeled_name}] could not parse message: {e}", exc_info=True)
+            self.log.error(
+                f"[{self.labeled_name}] could not parse message: {e}", exc_info=True
+            )
             return
         self.log_message(data)
 
@@ -55,14 +61,16 @@ class Logging(Resource):
         self.executor.submit(self._write_log, data)
 
     def _write_log(self, data):
-        timestamp = data.get('timestamp', 'unknown')
-        message_type = data.get('type', 'unknown')
-        resource = data.get('resource', {})
-        source = resource.get('source', 'unknown')
-        destination = resource.get('destination', 'unknown')
-        message = data.get('message', '')
+        timestamp = data.get("timestamp", "unknown")
+        message_type = data.get("type", "unknown")
+        resource = data.get("resource", {})
+        source = resource.get("source", "unknown")
+        destination = resource.get("destination", "unknown")
+        message = data.get("message", "")
         filename = f"{source}.{destination}.log"
         filepath = os.path.join(self.settings.log_dir, filename)
         os.makedirs(self.settings.log_dir, exist_ok=True)
-        with open(filepath, 'a') as f:
-            f.write(f"{timestamp}: ({message_type}) {source} -> {destination}: {message}\n")
+        with open(filepath, "a") as f:
+            f.write(
+                f"{timestamp}: ({message_type}) {source} -> {destination}: {message}\n"
+            )

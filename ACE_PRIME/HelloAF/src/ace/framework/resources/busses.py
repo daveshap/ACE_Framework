@@ -7,7 +7,6 @@ class BussesSettings(Settings):
 
 
 class Busses(Resource):
-
     @property
     def settings(self):
         return BussesSettings(

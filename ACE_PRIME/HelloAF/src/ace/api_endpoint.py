@@ -19,7 +19,7 @@ class StatusHandler(BaseHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         self.ROUTES = {
-            '/status': self.CALLBACKS.get('status', self._handle_default),
+            "/status": self.CALLBACKS.get("status", self._handle_default),
         }
         super().__init__(*args, **kwargs)
 
@@ -44,7 +44,7 @@ class StatusHandler(BaseHTTPRequestHandler):
 
     def respond(self, status_code, content):
         self.send_response(status_code)
-        self.send_header('Content-type', 'application/json')
+        self.send_header("Content-type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(content).encode())
 
@@ -53,7 +53,9 @@ class StatusHandler(BaseHTTPRequestHandler):
 
 
 class ApiEndpoint:
-    def __init__(self, callbacks, api_endpoint_port=constants.DEFAULT_API_ENDPOINT_PORT):
+    def __init__(
+        self, callbacks, api_endpoint_port=constants.DEFAULT_API_ENDPOINT_PORT
+    ):
         self.callbacks = callbacks
         self.api_endpoint_port = api_endpoint_port
         self.server = None
@@ -61,7 +63,7 @@ class ApiEndpoint:
     def start_endpoint(self):
         logger.info("Starting API endpoint...")
         StatusHandler.set_callbacks(self.callbacks)
-        self.server = HTTPServer(('localhost', self.api_endpoint_port), StatusHandler)
+        self.server = HTTPServer(("localhost", self.api_endpoint_port), StatusHandler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.start()
         logger.info("API endpoint started")

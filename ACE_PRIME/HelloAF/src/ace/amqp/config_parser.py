@@ -5,8 +5,8 @@ from pathlib import Path
 
 from ace.logger import Logger
 
-REQUIRED_CONFIG_SECTIONS = ('resources', 'exchanges', 'queues', 'bindings')
-DEFAULT_CONFIG_FILE_PATH = Path(__file__).parent / 'messaging_config.yaml'
+REQUIRED_CONFIG_SECTIONS = ("resources", "exchanges", "queues", "bindings")
+DEFAULT_CONFIG_FILE_PATH = Path(__file__).parent / "messaging_config.yaml"
 
 ExchangesModel = RootModel[Dict[str, Dict[str, Any]]]
 QueuesModel = RootModel[Dict[str, Dict[str, Any]]]
@@ -29,7 +29,7 @@ class ConfigModel(BaseModel):
     queues: QueuesModel
     bindings: Dict[str, BindingsModel]
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def check_required_sections(cls, data):
         for section in REQUIRED_CONFIG_SECTIONS:
@@ -47,7 +47,7 @@ class ConfigParser:
     def load_config(self) -> ConfigModel:
         if not Path(self.config_path).is_file():
             raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
-        with open(self.config_path, 'r') as config_file:
+        with open(self.config_path, "r") as config_file:
             try:
                 config_data = yaml.safe_load(config_file)
             except yaml.YAMLError as e:
