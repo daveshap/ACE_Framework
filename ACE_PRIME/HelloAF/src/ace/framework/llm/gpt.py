@@ -3,6 +3,8 @@ from typing import List, TypedDict, Optional
 
 import openai
 
+from ace.logger import Logger
+
 
 class GptMessage(TypedDict):
     role: str
@@ -12,7 +14,10 @@ class GptMessage(TypedDict):
 
 class GPT:
 
-    def _create_conversation_completion(self, model, conversation: List[GptMessage]) -> GptMessage:
+    def __init__(self):
+        self.log = Logger(self.__class__.__name__)
+
+    def create_conversation_completion(self, model, conversation: List[GptMessage]) -> GptMessage:
         # print("_create_conversation_completion called for conversation: " + str(conversation))
         # openai.api_key = self.api_key
         chat_completion = openai.ChatCompletion.create(
@@ -22,8 +27,8 @@ class GPT:
         response = chat_completion.choices[0].message
         return response
 
-    def _create_image(self, prompt, size='256x256') -> str:
-        print("Generating image for prompt: " + prompt)
+    def create_image(self, prompt, size='256x256') -> str:
+        self.log.debug("Generating image for prompt: " + prompt)
         openai.api_key = self.api_key
         result = openai.Image.create(
             prompt=prompt,
@@ -31,6 +36,6 @@ class GPT:
             size=size
         )
         image_url = result.data[0].url
-        print(".... finished generating image for prompt" + prompt + ":\n" + image_url)
+        self.log.debug(".... finished generating image for prompt" + prompt + ":\n" + image_url)
         return image_url
 

@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class MessageType(Enum):
     DATA = "DATA"
     PASS_THROUGH = "PASS_THROUGH"
