@@ -17,6 +17,9 @@ x-logging-environment: &logging_environment
   ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
   ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
 
+x-resource-subdirectory-environment: &resource_subdirectory_environment
+  ACE_RESOURCE_SUBDIRECTORY: ${ACE_RESOURCE_SUBDIRECTORY:-}
+
 x-rabbitmq-hostname: &rabbitmq-hostname ${ACE_RABBITMQ_HOSTNAME:-rabbitmq}
 x-rabbitmq-username: &rabbitmq-username ${ACE_RABBITMQ_USERNAME:-rabbit}
 x-rabbitmq-password: &rabbitmq-password ${ACE_RABBITMQ_PASSWORD:-carrot}
@@ -61,6 +64,7 @@ services:
       <<:
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: logging
     command: *default_command
     depends_on:
@@ -75,6 +79,7 @@ services:
       <<:
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: telemetry_manager
     command: *default_command
     depends_on:
@@ -106,6 +111,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_1
     command: *default_command
     depends_on:
@@ -123,6 +129,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_2
     command: *default_command
     depends_on:
@@ -140,6 +147,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_3
     command: *default_command
     depends_on:
@@ -157,6 +165,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_4
     command: *default_command
     depends_on:
@@ -174,6 +183,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_5
     command: *default_command
     depends_on:
@@ -191,6 +201,7 @@ services:
         - *secrets_environment
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: layer_6
     command: *default_command
     depends_on:
@@ -207,6 +218,7 @@ services:
       <<:
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: busses
     command: *default_command
     depends_on:
@@ -221,6 +233,7 @@ services:
       <<:
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: system_integrity
     command: *default_command
     depends_on:
@@ -236,6 +249,7 @@ services:
       <<:
         - *rabbitmq_environment
         - *logging_environment
+        - *resource_subdirectory_environment
       ACE_RESOURCE_NAME: debug
     command: *default_command
     depends_on:

@@ -116,3 +116,26 @@ python debug-ace-tui.py
 ```
 
 Simple event logging and keyboard shortcuts are listed at the top.
+
+## Building custom intelligence layers
+
+A simple loading mechanism allows you to implement custom resources when starting up the ACE.
+
+This allows you to benefit from the existing support features (containers, messaging framework, logging, debugging, telemetry support, etc.) while still implementing your own layer intelligence.
+
+1. Create a directory under `resources/custom` -- the directory name must be a valid Python identifier, e.g. `example_ace`
+2. Inside the directory, place one Python file for each layer
+  * The filename must be the name of the layer resource, e.g. `layer_1` would be `layer_1.py`
+  * The class name in the file must be the camel-cased version of the file name, e.g. `layer_1` becomes `Layer1`
+  * The class must inherit from the base `Layer` class:
+    ```python
+    from ace.framework.layer import Layer
+    class Layer1(Layer):
+        # Layer logic
+    ```
+3. Start the ACE using the `dev.sh` script, passing the name of the created directory in the `ACE_RESOURCE_SUBDIRECTORY` environment variable:
+   ```sh
+   ACE_RESOURCE_SUBDIRECTORY=example_ace ACE_LOG_LEVEL=DEBUG ./dev.sh
+   ```
+
+For more information on how to implement the layers, examine the existing layer code under `resources/core`.

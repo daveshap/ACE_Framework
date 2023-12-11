@@ -37,7 +37,7 @@ def loader(resource_name):
         logger.debug(
             f"Converted resource_name to resource_class: {resource_class_name}"
         )
-        subdirectory = os.environ.get("ACE_RESOURCE_SUBDIRECTORY", "hello_layers")
+        subdirectory = os.environ.get("ACE_RESOURCE_SUBDIRECTORY") or "hello_layers"
         logger.debug(f"ACE_RESOURCE_SUBDIRECTORY: {subdirectory}")
         for directory in RESOURCE_LOADER_DIRECTORIES:
             import_path = f"ace.resources.{directory}.{subdirectory}.{resource_name}"
