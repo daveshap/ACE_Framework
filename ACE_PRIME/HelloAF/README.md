@@ -2,9 +2,7 @@
 
 ## Objective
 
-A right of passage when learning any new software framework (and a simple first step to ensure its basic systems are operating correctly) is the ubiquitous "Hello, World!" demo.
-
-In the same spirit, "Hello, Layers!" is the ACE Framework's most basic demo. If you run this and it outputs "Hello, Layers!", you just ran a bare bones ACE :)
+This demo combines Team 1 and Team 2's work from the initial demos, and integrates [AgentForge](https://github.com/DataBassGit/AgentForge) into a container-base environment commmunicating via AMQP messaging.
 
 ## What happens under the hood
 
