@@ -29,18 +29,11 @@ class SystemIntegrity(Resource):
         self.log.debug(f"Checking {self.labeled_name} status")
         return self.return_status(True)
 
-    def post_start(self):
-        asyncio.run_coroutine_threadsafe(self.post_layers(), self.bus_loop)
-
     async def publish_message(self, queue_name, message, delivery_mode=2):
         message = aio_pika.Message(body=message, delivery_mode=delivery_mode)
         await self.publisher_channel.default_exchange.publish(
             message, routing_key=queue_name
         )
-
-    async def post_layers(self):
-        for layer in self.settings.layers:
-            await self.post_layer(layer)
 
     async def execute_resource_command(self, resource, command, kwargs=None):
         kwargs = kwargs or {}
@@ -59,10 +52,17 @@ class SystemIntegrity(Resource):
         self.log.info(f"[{self.labeled_name}] sending POST command to layer: {layer}")
         await self.execute_resource_command(layer, "schedule_post")
 
+    async def post_layers(self):
+        for layer in self.settings.layers:
+            await self.post_layer(layer)
+
+    async def run_layer(self, layer):
+        self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
+        await self.execute_resource_command(layer, "run_layer")
+
     async def run_layers(self):
         for layer in self.settings.layers:
-            self.log.info(f"[{self.labeled_name}] Running layer: {layer}")
-            await self.execute_resource_command(layer, "run_layer")
+            await self.run_layer(layer)
 
     async def stop_resources(self):
         for layer in reversed(self.settings.layers):
@@ -111,6 +111,7 @@ class SystemIntegrity(Resource):
             )
             return
         if not self.shutdown_complete:
+            await self.check_layer_started(data)
             await self.check_done(data)
 
     async def check_post_complete(self, data):
@@ -124,6 +125,16 @@ class SystemIntegrity(Resource):
                 self.post_complete = True
                 await self.run_layers()
                 await self.begin_work()
+
+    async def check_layer_started(self, data):
+        if data["type"] == "layer_started":
+            layer = data["resource"]["source"]
+            if self.post_complete:
+                self.log.info(f"[{self.labeled_name}] ACE layer {layer} has been restarted after POST, re-running layer")
+                await self.run_layer(layer)
+            else:
+                self.log.info(f"[{self.labeled_name}] ACE layer {layer} has started")
+                await self.post_layer(layer)
 
     async def check_done(self, data):
         if data["type"] == "done":

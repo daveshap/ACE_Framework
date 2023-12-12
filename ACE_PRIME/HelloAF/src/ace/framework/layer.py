@@ -32,6 +32,7 @@ class Layer(Resource):
         self.set_llm()
 
     def post_start(self):
+        self.declare_layer_started()
         self.subscribe_to_all_telemetry_namespaces()
         asyncio.run_coroutine_threadsafe(self.subscribe_debug_queue(), self.bus_loop)
 
@@ -42,6 +43,13 @@ class Layer(Resource):
     async def pre_disconnect(self):
         await self.unsubscribe_telemetry()
         self.unsubscribe_from_all_telemetry_namespaces()
+
+    def declare_layer_started(self):
+        self.log.info(f"{self.labeled_name} declaring layer started")
+        message = self.build_message("system_integrity", message_type="layer_started")
+        self.push_exchange_message_to_publisher_local_queue(
+            self.settings.system_integrity_data_queue, message
+        )
 
     def set_adjacent_layers(self):
         self.northern_layer = None
