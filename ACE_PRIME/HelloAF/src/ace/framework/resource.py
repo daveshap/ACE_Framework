@@ -254,16 +254,6 @@ class Resource(ABC):
         self.log.debug(f"Publishing message, exchange {exchange.name}")
         await exchange.publish(message, routing_key="")
 
-    def is_existant_layer_queue(self, orientation, idx):
-        # Queue names are [direction].[destination_layer], so there is no:
-        # 1. southbound to the first layer
-        # 2. northbound to the last layer
-        if (orientation == "southbound" and idx == 0) or (
-            orientation == "northbound" and idx == len(self.settings.layers) - 1
-        ):
-            return False
-        return True
-
     async def try_queue_subscribe(self, queue_name, callback):
         while True:
             self.log.debug(f"Trying to subscribe to queue: {queue_name}...")
