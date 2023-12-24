@@ -93,6 +93,30 @@ docker exec -it helloaf-logging-1 bash
 By default, logs are stored in that resource at `/var/log/ace`.
 
 
+## Getting shell access to a resource
+
+All resources are docker containers, so follow the standard mechanisms for getting shell access, e.g:
+
+```sh
+# List the containers with service names.
+docker compose ps
+# Execute bash on a running service of your choice.
+docker compose exec cognitive_control_layer bash
+```
+
+
+## Restarting a single resource
+
+All resources are docker containers, so follow the standard mechanisms for restarting a container, e.g:
+
+```sh
+# List the containers with service names.
+docker compose ps
+# Restart the service of your choice.
+docker compose restart task_prosecution_layer
+```
+
+
 ## Debugging
 
 There is a `debug` resource that allows you to connect to a running ACE via a simple text user interface. This allows you to:
