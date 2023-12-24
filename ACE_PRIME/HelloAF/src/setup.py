@@ -14,11 +14,11 @@ with open(path.join(FILE_DIR, "ace", "version.py")) as f:
     version = re.match(r'^__version__ = "([\w\.]+)"$', f.read().strip())[1]
 
 setup(
-    name="hello-layers",
+    name="hello-af",
     version=version,
     author="Chad Phillips",
     author_email="xxx@example.com",
-    description="Hello Layers! ACE Demo",
+    description="HelloAF ACE Demo",
     # long_description=long_description,
     # long_description_content_type="text/markdown",
     url="https://github.com/daveshap/ACE_Framework",

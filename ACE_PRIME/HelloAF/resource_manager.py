@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import argparse
 
 import docker
@@ -8,8 +9,11 @@ import yaml
 import time
 import subprocess
 
-from ace.logger import Logger
+# Expose the ace package.
+src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(src_dir)
 
+from ace.logger import Logger  # noqa: E402
 logger = Logger(os.path.basename(__file__))
 
 DEFAULT_DOCKER_COMPOSE_FILE = "docker-compose.yaml"
