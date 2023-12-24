@@ -29,7 +29,7 @@ x-rabbitmq-environment: &rabbitmq_environment
   AMQP_PASSWORD: *rabbitmq-password
 
 x-healthcheck: &healthcheck
-  test: ["CMD", "/usr/local/bin/check_resource_health.py"]
+  test: ["CMD", "python3", "/usr/local/bin/check_resource_health.py"]
   interval: 5s
   timeout: 3s
   retries: 3
