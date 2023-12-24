@@ -1,0 +1,68 @@
+version: '3'
+
+x-python-image: &default_python_image python:3.11-slim
+x-networks: &default_networks
+  - ace-framework-network
+
+x-build: &default_build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    BASE_IMAGE: *default_python_image
+
+x-secrets-environment: &secrets_environment
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+x-logging-environment: &logging_environment
+  ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
+  ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
+
+x-rabbitmq-hostname: &rabbitmq-hostname ${ACE_RABBITMQ_HOSTNAME:-rabbitmq}
+x-rabbitmq-username: &rabbitmq-username ${ACE_RABBITMQ_USERNAME:-rabbit}
+x-rabbitmq-password: &rabbitmq-password ${ACE_RABBITMQ_PASSWORD:-carrot}
+x-rabbitmq-environment: &rabbitmq_environment
+  AMQP_HOST_NAME: *rabbitmq-hostname
+  AMQP_USERNAME: *rabbitmq-username
+  AMQP_PASSWORD: *rabbitmq-password
+
+x-command: &default_command ["tail", "-f", "/dev/null"]
+
+services:
+
+  amqp-test-rabbitmq:
+    image: rabbitmq:management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: *rabbitmq-username
+      RABBITMQ_DEFAULT_PASS: *rabbitmq-password
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks: *default_networks
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  amqp-test-shell:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+      ACE_RESOURCE_NAME: test
+    command: *default_command
+    networks: *default_networks
+    volumes:
+      - ./src:/app
+
+networks:
+  ace-framework-network:
+
+volumes:
+  rabbitmq-data:
+    driver: local
+  rabbitmq-config:
+    driver: local

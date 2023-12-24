@@ -16,8 +16,7 @@ from ace.framework.util import parse_json
 
 class LayerSettings(Settings):
     mode: str = 'OpenAI'
-    model: str = 'gpt-3.5-turbo'
-    ai_retry_count: int = 3
+    model: str = 'gpt-3.5-turbo-1106'
 
 
 class Layer(Resource):

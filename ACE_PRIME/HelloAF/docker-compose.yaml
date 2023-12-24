@@ -1,0 +1,270 @@
+version: '3'
+
+x-python-image: &default_python_image python:3.11-slim
+x-networks: &default_networks
+  - ace-framework-network
+
+x-build: &default_build
+  context: .
+  dockerfile: Dockerfile
+  args:
+    BASE_IMAGE: *default_python_image
+
+x-secrets-environment: &secrets_environment
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+x-logging-environment: &logging_environment
+  ACE_LOG_LEVEL: ${ACE_LOG_LEVEL:-}
+  ACE_THIRD_PARTY_LOG_LEVEL: ${ACE_THIRD_PARTY_LOG_LEVEL:-}
+
+x-resource-subdirectory-environment: &resource_subdirectory_environment
+  ACE_RESOURCE_SUBDIRECTORY: ${ACE_RESOURCE_SUBDIRECTORY:-}
+
+x-rabbitmq-hostname: &rabbitmq-hostname ${ACE_RABBITMQ_HOSTNAME:-rabbitmq}
+x-rabbitmq-username: &rabbitmq-username ${ACE_RABBITMQ_USERNAME:-rabbit}
+x-rabbitmq-password: &rabbitmq-password ${ACE_RABBITMQ_PASSWORD:-carrot}
+x-rabbitmq-environment: &rabbitmq_environment
+  AMQP_HOST_NAME: *rabbitmq-hostname
+  AMQP_USERNAME: *rabbitmq-username
+  AMQP_PASSWORD: *rabbitmq-password
+
+x-healthcheck: &healthcheck
+  test: ["CMD", "python3", "/usr/local/bin/check_resource_health.py"]
+  interval: 5s
+  timeout: 3s
+  retries: 3
+
+x-command: &default_command ["python3", "main.py"]
+
+x-depends_on_conditions: &default_depends_on_conditions
+  condition: service_healthy
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: *rabbitmq-username
+      RABBITMQ_DEFAULT_PASS: *rabbitmq-password
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks: *default_networks
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  logging:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: logging
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  telemetry_manager_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: telemetry_manager
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  # db:
+  #   image: postgres:15.1-bullseye
+  #   environment:
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_DB=log-db
+  #     - POSTGRES_HOST=db
+  #     - PGDATA=/var/lib/postgresql/data/pgdata
+  #   ports:
+  #     - 5435:5432
+  #   volumes:
+  #     - data:/var/lib/postgresql/data
+  #   networks: *default_networks
+  #   healthcheck: *healthcheck
+
+  aspirational_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_1
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  global_strategy_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_2
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  agent_model_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_3
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  executive_function_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_4
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  cognitive_control_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_5
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  task_prosecution_layer:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *secrets_environment
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: layer_6
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+      telemetry_manager_layer: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  interlayer_communication_buses:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: busses
+    command: *default_command
+    depends_on:
+      rabbitmq: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  system_integrity:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: system_integrity
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+  debug:
+    build:
+      <<: *default_build
+    environment:
+      <<:
+        - *rabbitmq_environment
+        - *logging_environment
+        - *resource_subdirectory_environment
+      ACE_RESOURCE_NAME: debug
+    command: *default_command
+    depends_on:
+      interlayer_communication_buses: *default_depends_on_conditions
+      logging: *default_depends_on_conditions
+    networks: *default_networks
+    healthcheck: *healthcheck
+
+networks:
+  ace-framework-network:
+
+volumes:
+  data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  rabbitmq-config:
+    driver: local
