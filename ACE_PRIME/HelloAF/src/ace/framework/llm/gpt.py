@@ -1,7 +1,7 @@
 # llm/gpt.py
 from typing import List, TypedDict, Optional
 
-import openai
+from openai import OpenAI
 
 from ace.logger import Logger
 
@@ -15,13 +15,14 @@ class GptMessage(TypedDict):
 class GPT:
     def __init__(self):
         self.log = Logger(self.__class__.__name__)
+        self.client = OpenAI()
 
     def create_conversation_completion(
         self, model, conversation: List[GptMessage]
     ) -> GptMessage:
         # print("_create_conversation_completion called for conversation: " + str(conversation))
         # openai.api_key = self.api_key
-        chat_completion = openai.ChatCompletion.create(
+        chat_completion = self.client.chat.completions.create(
             model=model, messages=conversation
         )
         response = chat_completion.choices[0].message

@@ -1,4 +1,5 @@
 import time
+
 import copy
 import yaml
 import aio_pika
@@ -17,7 +18,7 @@ from ace.framework.util import parse_json
 
 class LayerSettings(Settings):
     mode: str = "OpenAI"
-    model: str = "gpt-3.5-turbo-1106"
+    model: str = "gpt-4"        # Changed from gpt-3.5-turbo to gpt-4 
     activation_mode: str = "events"
 
 

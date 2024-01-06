@@ -42,7 +42,7 @@ class Layer1(Layer):
         template_dir = get_template_dir()
         env = Environment(loader=FileSystemLoader(template_dir))
         l1_starting_instructions = env.get_template("l1_starting_instructions.md")
-        ace_context = env.get_template("ace_context.md")
+        ace_context = env.get_template("ace_context.md").render()
         layer1_instructions = l1_starting_instructions.render(
             ace_context=ace_context, identity=identity
         )
@@ -54,7 +54,8 @@ class Layer1(Layer):
         llm_response: GptMessage = self.llm.create_conversation_completion(
             "gpt-3.5-turbo", llm_messages
         )
-        llm_response_content = llm_response["content"].strip()
+
+        llm_response_content = llm_response.content.strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
             llm_req=layer1_instructions, llm_resp=llm_response_content
@@ -104,9 +105,11 @@ class Layer1(Layer):
         data_req_messages, control_req_messages = self.parse_req_resp_messages(
             request_messages
         )
+
         data_resp_messages, control_resp_messages = self.parse_req_resp_messages(
             response_messages
         )
+
         prompt_messages = {
             "data": self.get_messages_for_prompt(data_messages),
             "data_resp": self.get_messages_for_prompt(data_resp_messages),
@@ -134,7 +137,7 @@ class Layer1(Layer):
         ]
 
         llm_response: GptMessage = self.llm.create_conversation_completion(
-            "gpt-3.5-turbo", llm_messages
+            self.settings.model, llm_messages
         )
         llm_response_content = llm_response["content"].strip()
         layer_log_messsage = env.get_template("layer_log_message.md")

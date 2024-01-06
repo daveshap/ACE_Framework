@@ -76,9 +76,9 @@ class Layer3(Layer):
         ]
 
         llm_response: GptMessage = self.llm.create_conversation_completion(
-            "gpt-3.5-turbo", llm_messages
+            self.settings.model, llm_messages
         )
-        llm_response_content = llm_response["content"].strip()
+        llm_response_content = llm_response.content.strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
             llm_req=layer3_instructions, llm_resp=llm_response_content
