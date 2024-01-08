@@ -1,4 +1,6 @@
 import asyncio
+import subprocess
+import shlex
 
 from ace import constants
 from ace.framework.layer import Layer, LayerSettings
@@ -71,9 +73,9 @@ class Layer6(Layer):
         ]
 
         llm_response: GptMessage = self.llm.create_conversation_completion(
-            "gpt-3.5-turbo", llm_messages
+            self.settings.model, llm_messages
         )
-        llm_response_content = llm_response["content"].strip()
+        llm_response_content = llm_response.content.strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
             llm_req=layer6_instructions, llm_resp=llm_response_content
@@ -82,6 +84,23 @@ class Layer6(Layer):
         llm_messages = parse_json(llm_response_content)
         # No sourthbound messages
         messages_northbound, _ = self.parse_req_resp_messages(llm_messages)
+
+        # Test for executing the commands in the output.
+        # messages_northbound, output = self.parse_req_resp_messages(llm_messages)
+        # self.log.info(f"Output: {output}")   # Added for testing.
+        # if isinstance(output, list):
+        #     for message in output:
+        #         if isinstance(message, dict) and "message" in message:
+        #             # command = shlex.split(message["message"])  # Splits the command into program and arguments
+        #             command = message["message"]  # For testing.
+        #             try:
+        #                 # Execute the command without invoking the shell for security reasons
+        #                 result = subprocess.run(command, capture_output=True, text=True, check=True)
+        #                 self.log.info(f"Command output: {result.stdout}")
+        #             except subprocess.CalledProcessError as e:
+        #                 self.log.error(f"Command execution failed: {e}")
+        #             except Exception as e:
+        #                 self.log.error(f"Unexpected error: {e}")
 
         return messages_northbound, []
 

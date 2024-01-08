@@ -72,9 +72,9 @@ class Layer2(Layer):
         ]
 
         llm_response: GptMessage = self.llm.create_conversation_completion(
-            "gpt-3.5-turbo", llm_messages
+            self.settings.model, llm_messages
         )
-        llm_response_content = llm_response["content"].strip()
+        llm_response_content = llm_response.content.strip()
         layer_log_messsage = env.get_template("layer_log_message.md")
         log_message = layer_log_messsage.render(
             llm_req=layer2_instructions, llm_resp=llm_response_content
@@ -90,6 +90,7 @@ class Layer2(Layer):
     async def handle_event(self, event, data):
         await super().handle_event(event, data)
         if event == "execute":
+            await asyncio.sleep(constants.DEBUG_LAYER_SLEEP_TIME)   # Temperary Layer Communication Fix
             self.agent_run_layer()
             await asyncio.sleep(constants.DEBUG_LAYER_SLEEP_TIME)
             self.send_event_to_pathway("southbound", "execute")
