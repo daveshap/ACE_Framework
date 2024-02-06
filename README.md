@@ -2,7 +2,7 @@
 
 ## Exclusively Open Source
 
-We will be committed to using 100% open source software (OSS) for this project. This is to ensure maximimum accessibility and democratic access.
+We will be committed to using 100% open source software (OSS) for this project. This is to ensure maximum accessibility and democratic access.
 
 ## Exclusively Local Hardware
 
